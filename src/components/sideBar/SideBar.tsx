@@ -36,17 +36,17 @@ export function SideBar({width}: SideBarProps) {
         }}}>
             <Typography variant={"h2"}>ATLANTIS</Typography>
             <Typography variant={"subtitle1"}>Swimming school</Typography>
-            <List sx={{m: 0, "@media (min-width:600px)":{py: "36px",width:"100%"}}}>
+            <List sx={{ display:"flex", flexDirection: "column", alignItems: "flex-start", m: 0, "@media (min-width:600px)":{py: "36px",width:"100%"}}}>
                 {MenuItems.map((item: IMenuItems, idx: number) =>
 
-                        <ListItem key={item.link} sx={{ display: "flex", justifyContent: "space-between", width:"100%", p:0}}>
+                        <ListItem key={item.link} sx={{ display: "flex", justifyContent: "flex-start", width:"100%", p:0}}>
                             <ListItemButton
                                 sx={
                                 {
                                     "@media (min-width:600px)":{
                                         py:"16px",
                                         width: "100%",
-                                        justifyContent: "center"
+                                        justifyContent: "flex-start"
                                     },
                                     '&.Mui-selected': {
                                         backgroundColor: 'primary.main', // Цвет фона для выбранной кнопки
