@@ -4,17 +4,22 @@ import { useClients } from "../../clients/hooks/clientManagementHooks"
 
 const TotalClients = ()=> {
     const {clients} = useClients();
+
+    const headerStyle = {
+        color: theme => theme.palette.text.secondary,
+    }
     return <Box 
                 display={"flex"} 
                 flexDirection={"column"} 
                 alignItems={"center"} 
-                bgcolor={"paper"} 
-                borderRadius={10}
+                sx = {{backgroundColor: theme => theme.palette.background.paper}}
+                borderRadius={2}
                 width={"150px"}
                 height={"150px"}
+                p={"16px"}
             >
-        <Typography variant={"h4"}>Всего клиентов</Typography>
-        <Typography variant={"h2"}>{clients.length}</Typography>
+        <Typography sx={headerStyle} variant={"body2"}>Всего</Typography><Typography sx={headerStyle} variant={"body2"}>Клиентов</Typography>
+        <Typography variant={"h1"}>{clients.length}</Typography>
     </Box>
 };
 
