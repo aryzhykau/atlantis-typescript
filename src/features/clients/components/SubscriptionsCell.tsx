@@ -3,7 +3,7 @@ import {useState} from "react";
 import {Box, IconButton, Modal, Typography} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import {ClientSubscriptionForm} from "./ClientSubscriptionForm.tsx";
-import dayjs, {Dayjs} from "dayjs";
+import dayjs, from "dayjs";
 
 
 const SubscriptionsCell = ({params} : {params: GridRenderCellParams}) => {
@@ -30,10 +30,13 @@ const SubscriptionsCell = ({params} : {params: GridRenderCellParams}) => {
 
     return <>
         <Box display={"flex"} justifyContent={"center"} alignItems={"center"} overflow={"scroll"}>
-    { !params.row.active_subscription ? <IconButton onClick={handleOpen}>
-        <AddIcon/>
-    </IconButton> : <Typography variant={"body2"}>Абонемент {params.row.active_subscription.subscription.title} до {dayjs(params.row.active_subscription.end_date).format("DD.MM.YYYY")}</Typography>
-
+            { !params.row.active_subscription ?
+                <IconButton onClick={handleOpen}>
+                    <AddIcon/>
+                </IconButton>
+                : <Typography variant={"body2"}>
+                    Абонемент {params.row.active_subscription.subscription.title} до {dayjs(params.row.active_subscription.end_date).format("DD.MM.YYYY")}
+                </Typography>
     }
         </Box>
             <Modal open={modalOpen} onClose={handleModalClose}>

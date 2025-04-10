@@ -34,6 +34,7 @@ export function ClientSubscriptionForm({client, onClose }: ClientsFormProps) {
     const { subscriptions } = useSubscriptions();
 
 
+
     const clientFields : IClientFormField[] = [
         { name: "subscription_id", label: "Абонемент", validation: yup.number().required("Выберите абонемент") },
     ];

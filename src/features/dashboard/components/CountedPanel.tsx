@@ -1,13 +1,13 @@
 import {Box, Typography} from "@mui/material";
 
 interface ICountedPanelProps {
-    headerLines?: string[];
+    headerLines: string[];
     data: number
 }
 
 const CountedPanel = ({headerLines, data}: ICountedPanelProps) => {
     const headerStyle = {
-        color: theme => theme.palette.text.secondary,
+        color: (theme: { palette: { text: { secondary: string; }; }; }) => theme.palette.text.secondary,
     };
 
     return <Box
