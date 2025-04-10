@@ -3,7 +3,7 @@ import {useState} from "react";
 import {Box, IconButton, Modal, Typography} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import {ClientSubscriptionForm} from "./ClientSubscriptionForm.tsx";
-import dayjs, from "dayjs";
+import dayjs from "dayjs";
 
 
 const SubscriptionsCell = ({params} : {params: GridRenderCellParams}) => {
