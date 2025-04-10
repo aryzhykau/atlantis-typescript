@@ -35,7 +35,7 @@ export function SideBar({width}: SideBarProps) {
             p: 0,  // Добавляем паддинг для экранов больше 600px
         }}}>
             <Typography variant={"h2"}>ATLANTIS</Typography>
-            <Typography variant={"subtitle1"}>Swimming school</Typography>
+            <Typography variant={"subtitle1"}>Swimming academy</Typography>
             <List sx={{ display:"flex", flexDirection: "column", alignItems: "flex-start", m: 0, "@media (min-width:600px)":{py: "36px",width:"100%"}}}>
                 {MenuItems.map((item: IMenuItems, idx: number) =>
 
@@ -64,7 +64,7 @@ export function SideBar({width}: SideBarProps) {
                                 divider={true}
                                 onClick={() => handleListItemClick( idx)}
                             >
-                                <Box display={"flex"} justifyContent={"space-between"}>
+                                <Box display={"flex"} justifyContent={"space-between"} alignItems={"center"}>
                                     <ListItemIcon sx={{color: "inherit"}}>
                                         {item.icon}
                                     </ListItemIcon>

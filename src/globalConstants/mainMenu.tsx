@@ -11,7 +11,8 @@ import {DashboardLayout} from "../layouts/Dashboard.tsx";
 import { TrainingSettings } from "../layouts/trainingTypesSubscriptions/TrainingSettings.tsx";
 import {MobileClientsLayout} from "../layouts/clients/MobileClients.tsx";
 import Calendar from "../layouts/calendar/Calendar.tsx";
-import Test from "../layouts/Test.tsx";
+
+import InvoicesPayments from "../layouts/invoicesPyaments/InvoicesPayments.tsx";
 
 
 
@@ -55,7 +56,7 @@ export const MenuItems: IMenuItems[] = [
         title: "Платежи",
         link: "invoices",
         icon: <PaymentsIcon/>,
-        page: <Test/>,
+        page: <InvoicesPayments/>,
         mobilePage: <></>
     }
 ];
