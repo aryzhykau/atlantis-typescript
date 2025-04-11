@@ -10,6 +10,7 @@ export const invoicesApi = baseApi.injectEndpoints({
                     user_id: user_id,
                     only_unpaid: only_unpaid.toString()
                 },
+
                 url: '/invoices',
                 method: 'GET',
             }),

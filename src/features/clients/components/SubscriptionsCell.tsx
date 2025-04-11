@@ -49,3 +49,5 @@ const SubscriptionsCell = ({params} : {params: GridRenderCellParams}) => {
 }
 
 export default SubscriptionsCell;
+
+

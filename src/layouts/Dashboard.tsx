@@ -6,7 +6,7 @@ import {useState} from "react";
 
 export function DashboardLayout() {
     const {clients} = useClients();
-    const [newClients, setNewClients] = useState(clients.filter((client) => dayjs(client.created_at) >= dayjs().startOf("month")));
+    const [newClients,] = useState(clients.filter((client) => dayjs(client.created_at) >= dayjs().startOf("month")));
     return (
     <Box display={"flex"} justifyContent={"flex-start"} gap={"10px"} alignItems={"flex-start"}>
         <CountedPanel data={clients.length} headerLines={["Всего", "Клиентов"]}></CountedPanel>

@@ -1,4 +1,7 @@
 import {GridColDef} from "@mui/x-data-grid";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
+import {IClientGet} from "../../clients/models/client.ts";
 
 
 const dateFormater = ( value: never ) => {
@@ -27,13 +30,30 @@ const priceFormatter = (value: never) => {
 };
 
 
+const typeFormatter = (value: never) => {
+    switch (value) {
+        case "SUBSCRIPTION":
+            return "Оплата подписки"
+        case "SINGLE":
+            return "Разовая оплата"
+        case "TRIAL":
+            return "Пробное занятие"
+        default:
+            return "Тип неизвестен"
+    }
+}
+
+const userFormatter = (value : IClientGet) => {
+    return value.first_name + " " + value.last_name;
+}
+
+
 
 
 export const invoicesColumns: GridColDef[] = [
-    {field: 'id', headerName: 'ID', width: 80},
-    {field: 'invoice_type', headerName: 'Тип', flex: 1},
-    {field: 'amount', headerName: 'Сумма', flex: 1, valueFormatter: priceFormatter},
-    {field: 'created_at', headerName: 'Создан', flex: 1, valueFormatter: dateFormater},
-    {field: 'paid_at', headerName: 'Оплачено', width: 100, valueFormatter: dateFormater},
-    {field: 'client_subscription_id', headerName: 'Идентификатор подписки', flex: 1},
+    {field: 'created_at', headerName: 'Дата выставления', width: 200, valueFormatter: dateFormater},
+    {field: 'paid_at', headerName: 'Оплачено', width: 100,display: "flex", align: "center",headerAlign: "center", renderCell: params =>  params.row.paid_at ? <CheckCircleIcon color={"success"}/> : <RemoveCircleIcon color={"error"}/>},
+    {field: 'amount', headerName: 'Сумма', width: 100, valueFormatter: priceFormatter},
+    {field: 'user', headerName: 'Клиент', flex: 1, valueFormatter: userFormatter},
+    {field: 'invoice_type', headerName: 'Тип', flex: 1, valueFormatter: typeFormatter},
 ];
