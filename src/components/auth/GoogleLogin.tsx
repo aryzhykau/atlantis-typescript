@@ -25,7 +25,7 @@ export function GoogleLoginBtn() {
 
                 </Box>
             )}
-            {isLoading && (
+            {isLoading && import.meta.env.VITE_ENV === "prod" &&(
                 <Box display={"flex"} justifyContent={"center"} alignItems={"center"} mt={4} flexDirection={"column"}>
                     <CircularProgress/>
                 </Box>
