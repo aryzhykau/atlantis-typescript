@@ -1,15 +1,9 @@
-import React, {useEffect} from "react";
-import {useGetInvoicesQuery} from "../../store/apis/invoices.ts";
-import {Box} from "@mui/material";
+import React from "react";
+
+import { InvoicesDataView } from "../../features/invoices/components/InvoicesDataView.tsx";
 
 
 const InvoicesPayments: React.FC = () => {
-    const {data, refetch} = useGetInvoicesQuery({ only_unpaid: false})
-
-    useEffect(() => {
-        refetch()
-    }, []);
-
-    return <>{} </>
+    return <><InvoicesDataView></InvoicesDataView></>
 }
 export default InvoicesPayments;

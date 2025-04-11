@@ -57,6 +57,7 @@ export const clientColums: GridColDef[] = [
         field: "subscriptions",
         headerName: "Абонемент",
         width:280,
+        display: "flex",
         sortable: false,
         renderCell: (params) => <SubscriptionsCell params={params}></SubscriptionsCell>
     },
