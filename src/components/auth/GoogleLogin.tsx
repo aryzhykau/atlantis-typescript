@@ -1,4 +1,4 @@
-import {Button} from "@mui/material";
+import {Box, Button, CircularProgress, Typography} from "@mui/material";
 import GoogleLoginIcon from "../../assets/icons/google-signin-icon.svg?react"
 import {useAuth} from "../../hooks/useAuth.tsx";
 
@@ -18,7 +18,19 @@ export function GoogleLoginBtn() {
             >
                 Войти через Google
             </Button>
-            {isLoading && <h1> Loading...</h1>}
+            {isLoading && import.meta.env.VITE_ENV === "dev" &&(
+                <Box display={"flex"} justifyContent={"center"} alignItems={"center"} mt={4} flexDirection={"column"}>
+                    <Typography variant={"h3"}>Ожидаем загрузки сервера, это может занять до минуты. Пожалуйста подождите</Typography>
+                    <CircularProgress/>
+
+                </Box>
+            )}
+            {isLoading && (
+                <Box display={"flex"} justifyContent={"center"} alignItems={"center"} mt={4} flexDirection={"column"}>
+                    <CircularProgress/>
+                </Box>
+            )}
         </>
+
     )
 }
