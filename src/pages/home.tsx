@@ -1,5 +1,5 @@
 import {useGetCurrentUserQuery} from "../store/apis/userApi.ts";
-import {Alert, Backdrop, Box, CircularProgress, Paper, Snackbar, Typography} from "@mui/material";
+import {Alert, Box, CircularProgress, Paper, Snackbar, Typography} from "@mui/material";
 import HomeLayout from "../layouts/HomeLayout.tsx";
 import {Outlet} from "react-router-dom";
 import {useEffect} from "react";
