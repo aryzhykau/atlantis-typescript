@@ -19,7 +19,7 @@ const CalendarDayColumn: React.FC<ICalendarDayColumnProps> = ({day, trainings}) 
 
     return (
         <ListItem key={day.day_name} sx ={{backgroundColor: theme => theme.palette.background.paper ,display: "flex", justifyContent:"flex-start", flexDirection:"column", px: 0, height:"100%"}}>
-            <Box display={"flex"} flexDirection={"column"} alignItems={"center"}  justifyContent={"flex-start"}>
+            <Box display={"flex"} flexDirection={"column"} alignItems={"flex-start"}  justifyContent={"flex-start"}>
                 <Box
                     display={"flex"}
                     flexDirection={"column"}
@@ -47,6 +47,7 @@ const CalendarDayColumn: React.FC<ICalendarDayColumnProps> = ({day, trainings}) 
             <Divider sx={{width: "100%", my: "8px", borderColor: "black"}}/>
             <Box
                 sx={{
+                    width: "100%",
                     maxHeight: "700px",
                     overflowY: "scroll",
                 }}
@@ -54,7 +55,7 @@ const CalendarDayColumn: React.FC<ICalendarDayColumnProps> = ({day, trainings}) 
 
             {trainings.map((training) => {
                 return (
-                    <Box key={training.id} sx={{width: "100%", px: "4px", mb: "8px"}}>
+                    <Box key={training.id} sx={{width: "100%", px: "6px", mb: "8px"}}>
                     <TrainingCard key={training.id} training={training}/>
                     </Box>
                 )

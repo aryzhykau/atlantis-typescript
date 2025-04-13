@@ -22,8 +22,9 @@ const TrainingCard = ({training}:{training: ITrainingGet}) => {
         backgroundColor: (theme: Theme) => theme.palette.background.default,
         width: "100%",
         borderRadius: "5px",
-        padding: "8px",
-        borderLeft:`2px solid ${trainingType?.color}`
+        padding: "4px",
+        borderLeft:`2px solid ${trainingType?.color}`,
+        boxSizing: "border-box",
 
 
 
@@ -39,6 +40,7 @@ const TrainingCard = ({training}:{training: ITrainingGet}) => {
                     <AccordionSummary
                         expandIcon={<ArrowDropDownIcon sx={{color:(theme: Theme) => theme.palette.text.disabled}}/>}
                         sx={{
+                            width: "100%",
                             p: 0,
                             backgroundColor: (theme: Theme) => theme.palette.background.default,
 
@@ -65,7 +67,7 @@ const TrainingCard = ({training}:{training: ITrainingGet}) => {
                         }}
                     >
                         <Box display={"flex"} flexDirection={"column"} justifyContent={"flex-start"}>
-                        {training.clients.map(client=> {
+                        {training.clients.map((client, index)=> {
                             return (
                                 <>
                                     <Box display={"flex"} gap={1} justifyContent={"flex-start"} alignItems={"center"}>
@@ -80,7 +82,7 @@ const TrainingCard = ({training}:{training: ITrainingGet}) => {
                                         <PhoneEnabledIcon fontSize={"small"} sx={{color: (theme: Theme) => theme.palette.text.disabled}}/>
                                         <Typography variant={"body2"} color={"textDisabled"}>{client.client.phone}</Typography>
                                     </Box>
-                                    <Divider sx={{my: "8px"}} />
+                                    {index !== training.clients.length-1 && <Divider sx={{my: "8px"}} />}
                                 </>
                             )
                         })}
