@@ -29,7 +29,7 @@ export const useTrainings = (trainer_id?: number, start_week?: string, end_week?
         isSuccess,
         error,
         refetch: refetchTrainings
-    } = useGetTrainingsQuery({trainer_id, start_week, end_week});
+    } = useGetTrainingsQuery({trainer_id, start_week, end_week}, {refetchOnMountOrArgChange: true});
 
     // Обновление тренировки
     const [
