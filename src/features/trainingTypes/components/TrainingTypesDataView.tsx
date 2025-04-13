@@ -24,7 +24,7 @@ const style = {
     justifyContent: "center",
 };
 
-const trainingTypeInitialValues = {title: "", price: 0, require_subscription: false}
+const trainingTypeInitialValues = {title: "", price: 0, color: "#FFFFFF", require_subscription: false}
 
 export function TrainingTypesDataView() {
     const [modalOpen, setModalOpen] = useState<boolean>(false);
@@ -45,6 +45,7 @@ export function TrainingTypesDataView() {
         setFormInitValues({
             price: row.price,
             title: row.title,
+            color: row.color,
             require_subscription: row.require_subscription,
         })
         setTrainingTypeId(row.id);

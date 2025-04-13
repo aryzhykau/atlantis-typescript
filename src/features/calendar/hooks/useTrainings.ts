@@ -4,9 +4,12 @@ import {
     useUpdateTrainingMutation,
     useDeleteTrainingMutation
 } from "../../../store/apis/trainings.ts";
+import {useMemo} from "react";
+import {ITrainingGet} from "../models/training.ts";
 
-export const useTrainings = () => {
+export const useTrainings = (trainer_id?: number, start_week?: string, end_week?: string) => {
     // Создание тренировки
+
     const [
         createTraining,
         {
@@ -26,7 +29,7 @@ export const useTrainings = () => {
         isSuccess,
         error,
         refetch: refetchTrainings
-    } = useGetTrainingsQuery();
+    } = useGetTrainingsQuery({trainer_id, start_week, end_week});
 
     // Обновление тренировки
     const [
@@ -51,13 +54,28 @@ export const useTrainings = () => {
         }
     ] = useDeleteTrainingMutation();
 
+    // Преобразование тренировок в формат, сгруппированный по дате
+    const groupedTrainingsByDate = useMemo(() => {
+        console.log("trainings have been changed")
+        return trainings.reduce((acc: Record<string, ITrainingGet[]>, training) => {
+            const date = training.training_datetime.split('T')[0]; // Извлекаем только дату (без времени)
+            if (!acc[date]) {
+                acc[date] = [];
+            }
+            acc[date].push(training);
+            return acc;
+        }, {});
+    }, [trainings]);
+
     return {
         createTraining,
         updateTraining,
         deleteTraining,
         refetchTrainings,
 
+
         trainings,
+        groupedTrainingsByDate, // Добавили сгруппированные тренировки
         createdTraining,
         updatedTraining,
 

@@ -1,9 +1,8 @@
 import {Dayjs} from "dayjs";
 
 export interface ITrainingClient {
-    client_id: number;
-    covered_by_subscription: boolean;
-    trial_training: boolean;
+    client_id: number | null;
+    trial_training?: boolean;
 }
 export interface ITraining {
     trainer_id: number | null;
@@ -15,8 +14,25 @@ export interface ITraining {
 
 
 
-export interface ITrainingGet extends ITraining {
-    id: string;
-    created_at: string;
-    updated_at: string;
+export interface ITrainingGet {
+    id: number
+    trainer_id: number
+    training_type_id: number
+    training_datetime: string
+    clients: ITrainingClientGet[]
+}
+
+export interface ITrainingClientGet {
+    trial_training: boolean
+    invoice_id: number
+    is_birthday: boolean
+    client: ITrainingClientObject
+}
+
+export interface ITrainingClientObject {
+    first_name: string
+    last_name: string
+    email: string
+    phone: string
+    birth_date: string
 }

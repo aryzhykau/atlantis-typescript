@@ -4,7 +4,6 @@ import weekOfYear from 'dayjs/plugin/weekOfYear'; // Плагин для раб�
 import isoWeek from 'dayjs/plugin/isoWeek'; // Плагин для ISO-недель
 import 'dayjs/locale/ru';
 
-
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
 
@@ -16,12 +15,8 @@ const useCalendar = () => {
 
     // Получить все дни текущей недели, начиная с понедельника
     const getWeekDays = (currentDate: Dayjs): { day_name: string; isToday: boolean; date: Dayjs }[] => {
-        // Если сегодня воскресенье, начнем неделю с понедельника.
-        const startOfWeek = currentDate.isoWeekday() === 7
-            ? currentDate.startOf('isoWeek') // Начало текущей недели
-            : currentDate.startOf('isoWeek');
+        const startOfWeek = currentDate.startOf('isoWeek'); // Начало текущей недели
 
-        // Создаем массив из 7 объектов, один на каждый день недели
         return Array.from({ length: 7 }, (_, i) => {
             const date = startOfWeek.add(i, 'day'); // Каждый следующий день недели
             return {
@@ -41,7 +36,17 @@ const useCalendar = () => {
     };
 
     const currentMonths = getMonthsFromWeek(currentWeekDays); // Массив месяцев для текущей недели
-    const selectedWeekMonths = getMonthsFromWeek(selectedWeekDays); // Массив месяцев для выбранной недели
+    const selectedWeekMonths = getMonthsFromWeek(selectedWeekDays); // Массив месяцев выбранной недели
+
+    // Получить дату начала и конца выбранной недели (понедельник и воскресенье)
+    const getStartAndEndOfWeek = (date: Dayjs): { startOfWeek: Dayjs; endOfWeek: Dayjs } => {
+        const startOfWeek = date.startOf('isoWeek'); // Начало недели (понедельник)
+        const endOfWeek = date.endOf('isoWeek'); // Конец недели (воскресенье)
+        return { startOfWeek, endOfWeek };
+    };
+
+    const { startOfWeek: selectedStartOfWeek, endOfWeek: selectedEndOfWeek } =
+        getStartAndEndOfWeek(selectedDate);
 
     // Функции для переключения недели
     const goToNextWeek = () => setSelectedDate((prev) => prev.add(1, 'week')); // Следующая неделя
@@ -54,6 +59,8 @@ const useCalendar = () => {
         selectedDate, // Текущая выбранная дата
         selectedWeekDays, // Массив из 7 объектов с информацией о днях выбранной недели
         selectedWeekMonths, // Массив месяцев выбранной недели
+        selectedStartOfWeek, // Дата начала выбранной недели (понедельник)
+        selectedEndOfWeek, // Дата конца выбранной недели (воскресенье)
         goToNextWeek, // Перейти на неделю вперед
         goToPreviousWeek, // Перейти на неделю назад
     };

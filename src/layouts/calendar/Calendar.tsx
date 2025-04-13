@@ -7,20 +7,40 @@ import CalendarDayColumn from "../../features/calendar/components/CalendarDayCol
 import Fab from '@mui/material/Fab';
 import TrainingForm from "../../features/calendar/components/TrainingForm.tsx";
 import {useState} from "react";
+import {useTrainings} from "../../features/calendar/hooks/useTrainings.ts";
 
 
 
 const Calendar = () => {
     const {
         today,// Текущая выбранная дата
+        selectedStartOfWeek,
+        selectedEndOfWeek,
         selectedWeekDays, // Массив из 7 дней выбранной недели
         selectedWeekMonths, // Массив месяцев выбранной недели
         goToNextWeek, // Перейти на неделю вперед
         goToPreviousWeek,
     } = useCalendar();
 
+    const [trainerId, ] = useState<number | undefined>(undefined);
+    const {groupedTrainingsByDate} = useTrainings(trainerId, selectedStartOfWeek.format(), selectedEndOfWeek.format());
+
     const [modalOpen, setModalOpen] = useState(false);
 
+
+
+    const style = {
+        position: "absolute",
+        width: "50%",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        bgcolor: "background.paper",
+        p: 4,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+    };
 
     return (
         <>
@@ -56,9 +76,23 @@ const Calendar = () => {
 
                 width: "100%"
             }}>
-                {selectedWeekDays.map((day) => (
-                    <CalendarDayColumn key={day.day_name} day={day}/>
-                ))}
+                {selectedWeekDays.map((day) => {
+                    // console.log(groupedTrainingsByDate)
+                    // Преобразуем дату в формат ключа (YYYY-MM-DD)
+                    const dayKey = day.date.format('YYYY-MM-DD');
+                    // console.log(dayKey)
+                    // console.log(groupedTrainingsByDate[dayKey])
+
+                    // Берём тренировки из groupedTrainingsByDate по ключу
+                    const trainingsForDay = groupedTrainingsByDate[dayKey] || [];
+                    console.log(day.day_name)
+                    // console.log(trainingsForDay)
+
+                    return (
+                        <CalendarDayColumn key={day.day_name} day={day} trainings={trainingsForDay} />
+                    );
+                })}
+
             </List>
             <Fab
                 onClick={() => setModalOpen(true)}
@@ -76,13 +110,21 @@ const Calendar = () => {
             </Fab>
         </Box>
         <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-            <TrainingForm initialValues={{
-                trainer_id: null,
-                training_date: today,
-                training_time: today,
-                training_type_id:  null,
-                clients: []
-            }} onClose={() => setModalOpen(false)}/>
+            <Box sx={style}>
+                <TrainingForm
+                    initialValues={{
+                        trainer_id: null,
+                        training_date: today,
+                        training_time: null,
+                        training_type_id:  null,
+                        clients: []
+                    }}
+                    onClose={() => setModalOpen(false)}
+                    trainerId={trainerId}
+                    startWeek={selectedStartOfWeek.format()}
+                    endWeek={selectedEndOfWeek.format()}
+                />
+            </Box>
         </Modal>
     </>
 

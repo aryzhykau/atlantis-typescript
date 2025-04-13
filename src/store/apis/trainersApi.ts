@@ -11,6 +11,13 @@ export const trainersApi = baseApi.injectEndpoints({
                  // отправляешь токен Google на сервер
             }),
         }),
+        getTrainer: builder.query<ITrainerGet, number>({
+            query: (id) => ({
+                url: `/trainers/${id}`,
+                method: 'GET',
+            }),
+
+        }),
         createTrainer: builder.mutation<ITrainer, {trainerData: ITrainer }>({
             query: ({trainerData, }) =>  ({
                 url: '/trainers',
@@ -38,4 +45,4 @@ export const trainersApi = baseApi.injectEndpoints({
     }),
 });
 
-export const { useCreateTrainerMutation, useGetTrainersQuery, useDeleteTrainerMutation, useUpdateTrainerMutation } = trainersApi;
+export const { useCreateTrainerMutation, useGetTrainersQuery, useGetTrainerQuery, useDeleteTrainerMutation, useUpdateTrainerMutation } = trainersApi;

@@ -42,7 +42,6 @@ export const useTrainers = () => {
         isSuccess: isDeleteSuccess
     }] = useDeleteTrainerMutation();
 
-
     // Функция-обертка для удаления тренера
     // const removeTrainer = async (trainerId: number) => {
     //   try {

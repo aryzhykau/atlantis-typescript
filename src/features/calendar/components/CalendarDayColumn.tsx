@@ -1,12 +1,22 @@
 import {ICalendarDay} from "../models/calendarDay.ts";
 import {Box, Divider, ListItem, Typography} from "@mui/material";
+import {ITrainingGet} from "../models/training.ts";
+import {useEffect} from "react";
+import TrainingCard from "./TrainingCard.tsx";
 
 
 interface ICalendarDayColumnProps {
     day: ICalendarDay;
+    trainings: ITrainingGet[]
 }
 
-const CalendarDayColumn: React.FC<ICalendarDayColumnProps> = ({day}) => {
+const CalendarDayColumn: React.FC<ICalendarDayColumnProps> = ({day, trainings}) => {
+
+    useEffect(() => {
+        // console.log(day.day_name)
+        console.log(trainings)
+    }, []);
+
     return (
         <ListItem key={day.day_name} sx ={{backgroundColor: theme => theme.palette.background.paper ,display: "flex", justifyContent:"flex-start", flexDirection:"column", px: 0}}>
             <Box display={"flex"} flexDirection={"column"} alignItems={"center"}  justifyContent={"flex-start"}>
@@ -35,6 +45,13 @@ const CalendarDayColumn: React.FC<ICalendarDayColumnProps> = ({day}) => {
                 <Typography variant={"caption"} color={"textSecondary"}>{day.day_name}</Typography>
             </Box>
             <Divider sx={{width: "100%", my: "8px", borderColor: "black"}}/>
+            {trainings.map((training) => {
+                return (
+                    <Box key={training.id} sx={{width: "100%", px: "4px", mb: "4px"}}>
+                    <TrainingCard key={training.id} training={training}/>
+                    </Box>
+                )
+            })}
         </ListItem>
     )
 }

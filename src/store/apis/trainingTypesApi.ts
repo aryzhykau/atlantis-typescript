@@ -9,6 +9,12 @@ export const trainingTypesApi = baseApi.injectEndpoints({
                 method: 'GET',
             }),
         }),
+        getTrainingType: builder.query<ITrainingTypeGet, number>({
+            query: (id) => ({
+                url: `/training_types/${id}`,
+                method: 'GET',
+            }),
+        }),
         createTrainingType: builder.mutation<ITrainingTypeGet, {trainingTypeData: ITrainingType; }>({
             query: ({trainingTypeData}) =>  ({
                 url: '/training_types',
@@ -34,4 +40,4 @@ export const trainingTypesApi = baseApi.injectEndpoints({
     }),
 });
 
-export const { useCreateTrainingTypeMutation, useGetTrainingTypesQuery, useUpdateTrainingTypeMutation, useDeleteTrainingTypeMutation } = trainingTypesApi;
+export const { useCreateTrainingTypeMutation, useGetTrainingTypesQuery, useGetTrainingTypeQuery, useUpdateTrainingTypeMutation, useDeleteTrainingTypeMutation } = trainingTypesApi;

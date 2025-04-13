@@ -1,5 +1,6 @@
 export interface ITrainingType {
     title: string;
+    color: string;
     price: number;
     require_subscription: boolean;
 }

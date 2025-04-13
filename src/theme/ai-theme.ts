@@ -131,7 +131,7 @@ const darkTheme = createTheme({
         },
         background: {
             default: '#121212', // Почти чёрный фон
-            paper: '#1e1e1e',  // Тёмно-серый фон для карточек
+            paper: '#1e1e1e',
         },
         text: {
             primary: '#ecf0f1', // Светлый текст на тёмном фоне
@@ -201,7 +201,7 @@ const darkTheme = createTheme({
             color: '#ecf0f1',
         },
         body2: {
-            fontSize: '0.875rem',
+            fontSize: '0.8rem',
             fontWeight: 400,
             lineHeight: 1.6,
             color: '#ecf0f1',
