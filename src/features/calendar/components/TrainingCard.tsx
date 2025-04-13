@@ -69,7 +69,7 @@ const TrainingCard = ({training}:{training: ITrainingGet}) => {
                                 <>
                                     <Box display={"flex"} gap={1} justifyContent={"flex-start"} alignItems={"center"}>
                                         <Typography variant={"body2"}>{client.client.first_name} {client.client.last_name}</Typography>
-                                        {client.is_birthday && <CakeRoundedIcon fontSize={"small"}/>}
+                                        {dayjs(training.training_datetime).tz(dayjs.tz.guess()).format("DD-MM") == dayjs(client.client.birth_date).tz(dayjs.tz.guess()).format("DD-MM") && <CakeRoundedIcon fontSize={"small"}/>}
                                     </Box>
                                     <Box display={"flex"} gap={1}>
                                         <EmailOutlinedIcon fontSize={"small"} sx={{color: (theme: Theme) => theme.palette.text.disabled}}/>

@@ -25,7 +25,6 @@ export interface ITrainingGet {
 export interface ITrainingClientGet {
     trial_training: boolean
     invoice_id: number
-    is_birthday: boolean
     client: ITrainingClientObject
 }
 
