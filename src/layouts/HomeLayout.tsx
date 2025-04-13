@@ -52,7 +52,7 @@ export default function HomeLayout({ children,  data, isLoading }: HomeLayoutPro
 
 
             {/* Основной контент */}
-            <Box sx={{gridColumn: "2", gridRow: "2", p: 3, overflow: "auto"}}>
+            <Box sx={{gridColumn: "2", gridRow: "2", p: 3 , overflow: "auto"}}>
                 {children}
             </Box>
         </Box>

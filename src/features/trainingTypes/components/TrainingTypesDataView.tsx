@@ -3,7 +3,7 @@ import {DataGrid, GridRenderCellParams} from "@mui/x-data-grid";
 import TrainingTypeForm from "./TrainingTypeForm.tsx";
 import {useState} from "react";
 import {useTrainingTypes} from "../hooks/useTrainingTypes.ts";
-import {trainingTypeColumns} from "../tables/trainingTypeColumns.ts";
+import {trainingTypeColumns} from "../tables/trainingTypeColumns.tsx";
 import {ITrainingType, ITrainingTypeGet} from "../models/trainingType.ts";
 import Actions from "../../../components/datagrid/Actions.tsx";
 import CreateEntityButton from "../../../components/buttons/CreateEntityButton.tsx";

@@ -50,7 +50,7 @@ export function InvoicesDataView() {
 
     return (
         <>
-                <Box display={"flex"} justifyContent={"flex-start"} alignItems={"center"} flexDirection={"column"}>
+                <Box display={"flex"} justifyContent={"flex-start"} alignItems={"center"} flexDirection={"column"} flex={1}>
 
                     <Box mb={2} display={"flex"} justifyContent={"flex-start"} gap={10} alignItems={"center"} sx={{ width: '100%' }}>
                         <Typography variant={"h5"}>Инвойсы</Typography>

@@ -1,4 +1,5 @@
 import {GridColDef} from "@mui/x-data-grid";
+import TrainingTypeColorCircle from "../components/TrainingTypeColorCircle.tsx";
 
 const dateFormater = ( value: never ) => {
 
@@ -28,6 +29,7 @@ const priceFormatter = (value: never) => {
 
 
 export const trainingTypeColumns: GridColDef[] = [
+    {field: 'color', headerName: "#", width:30, align: "center", display: "flex", renderCell: params => <TrainingTypeColorCircle circleColor={params.row.color}/>},
     {field: 'title', headerName: 'Название', flex: 1},
     {field: 'price', headerName: 'Стоимость', width: 100, valueFormatter: priceFormatter},
     {field: 'require_subscription', headerName: 'Требуется подписка', type: 'boolean', flex: 1},

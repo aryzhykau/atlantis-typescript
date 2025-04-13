@@ -45,7 +45,7 @@ const TrainingCard = ({training}:{training: ITrainingGet}) => {
 
                         }}>
                         <Box display={"flex"} flexDirection={"column"} width={"100%"} >
-                            <Typography variant={"h6"}>{trainingType.title}</Typography>
+                            <Typography variant={"body1"}>{trainingType.title}</Typography>
                             <Box display={"flex"} alignItems={"flex-start"} justifyContent={"flex-start"} gap={2} my={"2px"}>
                                 <Typography variant={"body2"} color={"textDisabled"}>Тренер: </Typography>
                                 <Typography variant={"body2"}>{trainer.first_name} {trainer.last_name}</Typography>
@@ -53,8 +53,9 @@ const TrainingCard = ({training}:{training: ITrainingGet}) => {
                             <Box display={"flex"} alignItems={"flex-start"} justifyContent={"flex-start"} gap={2} my={"2px"}>
                                 <Typography variant={"body2"} color={"textDisabled"}>Клиентов: </Typography>
                                 <Typography variant={"body2"}>{training.clients.length}</Typography>
+                                <Typography variant={"body1"} alignSelf={"flex-end"}>{trainingTime}</Typography>
                             </Box>
-                            <Typography variant={"body1"} alignSelf={"flex-end"}>{trainingTime}</Typography>
+
                         </Box>
                     </AccordionSummary>
                     <AccordionDetails
