@@ -1,12 +1,10 @@
-import {Box, Button, IconButton, Modal} from "@mui/material";
+import {Box, Button, Modal} from "@mui/material";
 import {DataGrid, GridRenderCellParams} from "@mui/x-data-grid";
 import { clientColums, } from "../../features/clients/tables/clientsColumns.tsx";
 
 import { useState} from "react";
 import { ClientsForm } from "../../features/clients/components/ClientsForm.tsx";
 import { useClients } from "../../features/clients/hooks/clientManagementHooks.ts";
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import EditIcon from '@mui/icons-material/Edit';
 import {useSnackbar} from "../../hooks/useSnackBar.tsx";
 import Switch from '@mui/material/Switch';
 import dayjs from "dayjs";
@@ -14,8 +12,21 @@ import dayjs from "dayjs";
 import TextField from '@mui/material/TextField';
 import {IClientFormValues} from "../../features/clients/models/client.ts";
 import {ClientDeleteModal} from "../../features/clients/components/ClientDeleteModal.tsx";
+import Actions from "../../components/datagrid/Actions.tsx";
 
 
+const style = {
+    position: "absolute",
+    width: "35%",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    bgcolor: "background.paper",
+    p: 4,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+};
 
 
 export function ClientsLayout() {
@@ -36,11 +47,13 @@ export function ClientsLayout() {
         setModalOpen(true);
         setFormInitValues(undefined);
     }
+
     const handleDeleteBtnClick = (params: GridRenderCellParams) => {
         setIsDeletingModal(true);
         setModalOpen(true);
         setClientId(params.id);
     }
+
     const handleDeleteConfirmBtnClick = async () => {
         try {
             if (clientId === null) throw new Error()
@@ -56,6 +69,7 @@ export function ClientsLayout() {
             displaySnackbar("Ошибка при удалении клиента", "error");
         }
     }
+
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.value === "") {
             setDisplayClients(clients);
@@ -79,6 +93,7 @@ export function ClientsLayout() {
             birth_date: params.row.birth_date ? dayjs(params.row.birth_date): null
         });
     }
+
     const handleDeleteCancelBtnClick = () => {
         setModalOpen(false);
         setIsDeletingModal(false);
@@ -87,19 +102,28 @@ export function ClientsLayout() {
 
     const handleModalClose = () => setModalOpen(false);
 
+    const handleSwitchChange = async (event: React.ChangeEvent<HTMLInputElement>, params: GridRenderCellParams) => {
+        const isActive = event.target.checked;
+        try {
+            displaySnackbar("Обновляем клиента", "info");
+            await updateClient({
+                clientId: Number(params.id),
+                clientData: {...params.row, active: isActive},
+            }).unwrap();
+            displaySnackbar(
+                `Клиент ${params.row.first_name} ${params.row.last_name} ${isActive ? "теперь активен и может посещать тренировки" : "приостановлен и не сможет посещать тренировки"}`,
+                "success"
+            );
+            await refetchClients();
+        } catch (error) {
+            console.error(error);
+            displaySnackbar(
+                "Ошибка при изменении состояния активности клиента",
+                "error"
+            );
+        }
+    }
 
-    const style = {
-        position: "absolute",
-        width: "35%",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        bgcolor: "background.paper",
-        p: 4,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-    };
 
     const extendedClientColumns = clientColums.map((column) => column);
 
@@ -110,27 +134,7 @@ export function ClientsLayout() {
         renderCell: (params) => (
             <Switch
                 checked={Boolean(params.row.active)}
-                onChange={async (event) => {
-                    const isActive = event.target.checked;
-                    try {
-                        displaySnackbar("Обновляем клиента", "info");
-                        await updateClient({
-                            clientId: Number(params.id),
-                            clientData: {...params.row, active: isActive},
-                        }).unwrap();
-                        displaySnackbar(
-                            `Клиент ${params.row.first_name} ${params.row.last_name} ${isActive ? "теперь активен и может посещать тренировки" : "приостановлен и не сможет посещать тренировки"}`,
-                            "success"
-                        );
-                        await refetchClients();
-                    } catch (error) {
-                        console.error(error);
-                        displaySnackbar(
-                            "Ошибка при изменении состояния активности клиента",
-                            "error"
-                        );
-                    }
-                }}
+                onChange={(event) => {handleSwitchChange(event, params)}}
                 color="primary"
             />
         ),
@@ -141,27 +145,11 @@ export function ClientsLayout() {
         headerName: "Действия",
         sortable: false,
         renderCell: (params) => (
-            <Box sx={{display: "flex", gap: "8px"}}>
-                <IconButton
-
-                    color="primary"
-                    onClick={() => {
-                        handleEditBtnClick({
-                            id:params.id,
-                            row:params.row
-                        })
-                    }}
-                >
-                    <EditIcon/>
-                </IconButton>
-                <IconButton
-                    color="error"
-                    onClick={() => handleDeleteBtnClick(params)}
-                >
-                    <DeleteOutlineIcon/>
-                </IconButton>
-            </Box>
-        ),
+            <Actions
+                params={params}
+                handleEdit={() => {handleEditBtnClick({id:params.id,row:params.row})}}
+                handleDelete={() => handleDeleteBtnClick(params)}
+            />)
     });
     
 
