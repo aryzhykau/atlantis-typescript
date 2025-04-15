@@ -1,22 +1,29 @@
 import {Box, CircularProgress, Divider, Typography} from "@mui/material";
-import {ITrainingGet} from "../models/training.ts";
+import {ITrainingClientGet, ITrainingGet} from "../models/training.ts";
 import { Theme } from '@mui/material/styles';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
-import {useGetTrainerQuery} from "../../../store/apis/trainersApi.ts";
+
 import dayjs from "dayjs";
-import {useGetTrainingTypeQuery} from "../../../store/apis/trainingTypesApi.ts";
+
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import CakeRoundedIcon from '@mui/icons-material/CakeRounded';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import PhoneEnabledIcon from '@mui/icons-material/PhoneEnabled';
+import {ITrainingTypeGet} from "../../trainingTypes/models/trainingType.ts";
+import {ITrainerGet} from "../../trainers/models/trainer.ts";
 
 
-const TrainingCard = ({training}:{training: ITrainingGet}) => {
+interface ITrainingCardProps  {
+    training: ITrainingGet,
+    trainingType: ITrainingTypeGet | undefined
+    trainer: ITrainerGet | undefined
+}
 
-    const {data: trainer, isLoading: isTrainerLoading, isSuccess: isTrainerSuccess} = useGetTrainerQuery(training.trainer_id);
-    const {data: trainingType, isLoading: isTrainingTypeLoading, isSuccess: isTrainingTypeSuccess} = useGetTrainingTypeQuery(training.training_type_id, {refetchOnMountOrArgChange: true} );
+const TrainingCard = ({training, trainingType, trainer}: ITrainingCardProps) => {
+
+
     const trainingTime = dayjs(training.training_datetime).format("HH:mm");
     const cardStyle = {
         backgroundColor: (theme: Theme) => theme.palette.background.default,
@@ -32,8 +39,8 @@ const TrainingCard = ({training}:{training: ITrainingGet}) => {
 
 
     return <Box sx={cardStyle}>
-        {(isTrainerLoading || isTrainingTypeLoading) && <CircularProgress/>}
-        {isTrainerSuccess && isTrainingTypeSuccess && (
+        {(!trainer && !trainingType) && <CircularProgress/>}
+        {(trainer && trainingType) && (
 
                 <>
                 <Accordion>
@@ -67,7 +74,7 @@ const TrainingCard = ({training}:{training: ITrainingGet}) => {
                         }}
                     >
                         <Box display={"flex"} flexDirection={"column"} justifyContent={"flex-start"}>
-                        {training.clients.map((client, index)=> {
+                        {training.clients.map((client: ITrainingClientGet, index: number)=> {
                             return (
                                 <>
                                     <Box display={"flex"} gap={1} justifyContent={"flex-start"} alignItems={"center"}>

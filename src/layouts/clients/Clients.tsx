@@ -113,6 +113,7 @@ export function ClientsLayout() {
                 onChange={async (event) => {
                     const isActive = event.target.checked;
                     try {
+                        displaySnackbar("Обновляем клиента", "info");
                         await updateClient({
                             clientId: Number(params.id),
                             clientData: {...params.row, active: isActive},

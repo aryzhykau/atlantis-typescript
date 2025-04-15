@@ -17,6 +17,7 @@ export interface ITraining {
 export interface ITrainingGet {
     id: number
     trainer_id: number
+    created_at: Dayjs | string | null | undefined
     training_type_id: number
     training_datetime: string
     clients: ITrainingClientGet[]

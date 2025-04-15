@@ -29,6 +29,7 @@ export function MobileClientsLayout() {
                                       client: IClientGet) => {
         const isActive = event.target.checked;
         try {
+            displaySnackbar("Обновляем клиента", "info");
             await updateClient({
                 clientId: client.id,
                 clientData: {

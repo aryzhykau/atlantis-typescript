@@ -14,9 +14,11 @@ const CountedPanel = ({headerLines, data}: ICountedPanelProps) => {
         display={"flex"}
         flexDirection={"column"}
         alignItems={"center"}
+        justifyContent={"space-between"}
         sx = {{backgroundColor: theme => theme.palette.background.paper}}
         borderRadius={2}
-        width={"150px"}
+        minWidth={"150px"}
+        width={"auto"}
         height={"150px"}
         p={"16px"}
     >

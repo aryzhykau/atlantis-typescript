@@ -6,8 +6,10 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import CalendarDayColumn from "../../features/calendar/components/CalendarDayColumn.tsx";
 import Fab from '@mui/material/Fab';
 import TrainingForm from "../../features/calendar/components/TrainingForm.tsx";
-import {useState} from "react";
+import {useMemo, useState} from "react";
 import {useTrainings} from "../../features/calendar/hooks/useTrainings.ts";
+import {useTrainingTypes} from "../../features/trainingTypes/hooks/useTrainingTypes.ts";
+import {useTrainers} from "../../features/trainers/hooks/trainerManagementHooks.ts";
 
 
 
@@ -23,7 +25,12 @@ const Calendar = () => {
     } = useCalendar();
 
     const [trainerId, ] = useState<number | undefined>(undefined);
-    const {groupedTrainingsByDate} = useTrainings(trainerId, selectedStartOfWeek.format(), selectedEndOfWeek.format());
+    const formattedStartOfWeek = useMemo(() => selectedStartOfWeek.format(), [selectedStartOfWeek]);
+    const formattedEndOfWeek = useMemo(() => selectedEndOfWeek.format(), [selectedEndOfWeek]);
+    const {trainingTypes} = useTrainingTypes();
+    const {trainers} = useTrainers();
+
+    const {groupedTrainingsByDate} = useTrainings(trainerId, formattedStartOfWeek, formattedEndOfWeek);
 
     const [modalOpen, setModalOpen] = useState(false);
 
@@ -88,7 +95,7 @@ const Calendar = () => {
                     // console.log(trainingsForDay)
 
                     return (
-                        <CalendarDayColumn key={day.day_name} day={day} trainings={trainingsForDay} />
+                        <CalendarDayColumn key={day.day_name} day={day} trainings={trainingsForDay} trainingTypes={trainingTypes} trainers={trainers}/>
                     );
                 })}
 

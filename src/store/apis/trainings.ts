@@ -20,6 +20,7 @@ export const TrainingsApi = baseApi.injectEndpoints({
                 const newResp = response.map((training) => {
                     const formattedTraining = {
                         ...training,
+                        created_at: dayjs(training.created_at).tz(dayjs.tz.guess()).format(),
                         training_datetime: dayjs(training.training_datetime).tz(dayjs.tz.guess()).format(),
                         clients: training.clients.map(client => {
                             const formattedClient = {
