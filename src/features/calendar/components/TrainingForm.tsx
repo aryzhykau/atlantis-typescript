@@ -216,6 +216,9 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
                                                         style={{ width: 300 }}
                                                         onChange={(_: React.SyntheticEvent, value: IClientGet | null) => {
                                                             setFieldValue(`clients.[${index}].client_id`, value ? value.id : '').then();
+                                                            if(value?.has_trial){
+                                                                setFieldValue(`clients.[${index}].trial_training`, true).then();
+                                                            }
                                                         }}
 
                                                         renderInput={(params: AutocompleteRenderInputParams) => (
