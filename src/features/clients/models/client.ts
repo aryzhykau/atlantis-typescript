@@ -16,7 +16,8 @@ export interface IClient {
 export interface IClientGet extends IClient {
     id: number;
     active_subscription: IClientActiveSubscription | null;
-    invoices: any;
+    has_trial: boolean;
+    balance: number;
     created_at: string;
     google_authenticated: boolean;
 }

@@ -1,5 +1,6 @@
 import {GridColDef} from "@mui/x-data-grid";
 import SubscriptionsCell from "../components/SubscriptionsCell.tsx";
+import ClientBalanceCell from "../components/ClientBalanceCell.tsx";
 const fieldWidth = 150;
 
 
@@ -20,6 +21,8 @@ const dateFormater = ( value: never ) => {
 
     return `${day}.${month}.${year}`;
 }
+
+
 
 export const clientColums: GridColDef[] = [
     {
@@ -61,7 +64,19 @@ export const clientColums: GridColDef[] = [
         sortable: false,
         renderCell: (params) => <SubscriptionsCell params={params}></SubscriptionsCell>
     },
-
+    {
+        field: "has_trial",
+        headerName: "Пробное занятие",
+        width: 100,
+        type: "boolean"
+    },
+    {
+        field: "balance",
+        headerName: "Баланс",
+        width: 100,
+        display: "flex",
+        renderCell: (params) => <ClientBalanceCell balance={params.row.balance}/>
+    },
     {
         field: "created_at",
         headerName: "Добавлен",

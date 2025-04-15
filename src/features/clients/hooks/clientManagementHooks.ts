@@ -13,7 +13,7 @@ export const useClients = () => {
         isError: isErrorClients,
         error: clientsError,
         refetch: refetchClients,
-    } = useGetClientsQuery();
+    } = useGetClientsQuery(undefined, {refetchOnMountOrArgChange: true});
     const [displayClients, setDisplayClients] = useState<IClientGet[]>([]);
 
     useEffect(() => {setDisplayClients(clients)}, [clients])

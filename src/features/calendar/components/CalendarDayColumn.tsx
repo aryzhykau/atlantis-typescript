@@ -48,7 +48,7 @@ const CalendarDayColumn: React.FC<ICalendarDayColumnProps> = ({day, trainings, t
                 sx={{
                     width: "100%",
                     maxHeight: "700px",
-                    overflowY: "scroll",
+                    overflowY: "auto",
                 }}
             >
 

@@ -56,16 +56,13 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
             Yup.object().shape({
                 client_id: Yup.number().required('Клиент обязателен').test(
                     'requireSubscription',
-                    'Тренировка требует подписки, уберите данного клиента'
+                    'Тренировка требует подписки, либо наличия пробного занятия, уберите данного клиента'
                     , (value: number) => {
                         if (!value) return true;
-                        if(clients.find(client => client.id === value)?.active_subscription === null && subscriptionRequired) {
-                            return false
-                        }
-                        return true;
+                        return !(clients.find(client => client.id === value)?.active_subscription === null && !clients.find(client => client.id === value)?.has_trial && subscriptionRequired);
                     }
                 ),
-                trial_training: Yup.boolean(),
+                trial_training: Yup.boolean()
             })
 
         ).required().min(1, 'Вы должны добавить хотя бы одного клиента').test(
@@ -212,7 +209,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
                                                     <Field
                                                         name={`clients.[${index}].client_id`}
                                                         component={Autocomplete}
-                                                        options={subscriptionRequired ? clients.filter(client => client.active_subscription !== null) : clients}
+                                                        options={subscriptionRequired ? clients.filter(client => (client.active_subscription !== null || client.has_trial)) : clients}
                                                         value={clients.find((client) => client.id === values.clients[index]?.client_id) || null}
 
                                                         getOptionLabel={(option: IClientGet) => option.first_name + " " + option.last_name}
@@ -242,13 +239,13 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
 
 
                                                    <Box width={"50%"} display={"flex"} justifyContent={"space-between"}>
-                                                        <Field
+                                                       {clients.find(client => client.id === values.clients[index].client_id)?.has_trial ? <Field
                                                             component={CheckboxWithLabel}
                                                             Label={{label: "Пробное занятие?"}}
                                                             type="checkbox"
                                                             name={`clients.[${index}].trial_training`}
 
-                                                        />
+                                                        />: <></>}
 
                                                         {/* Кнопка для удаления клиента */}
                                                         <IconButton
