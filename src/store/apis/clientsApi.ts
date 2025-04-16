@@ -1,4 +1,4 @@
-import {IClient, IClientGet, IClientSubscriptionCreate} from "../../features/clients/models/client.ts";
+import {IClient, IClientGet, IClientSubscriptionCreate, IClientUser, IClientUserGet} from "../../features/clients/models/client.ts";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -10,41 +10,48 @@ dayjs.extend(timezone);
 
 export const clientsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        getClients: builder.query<IClientGet[], void>({
+        getClients: builder.query<IClientUserGet[], void>({
             query: () => ({
                 url: '/clients',
                 method: 'GET',
-                providesTags: ['Client'],  // отправляешь токен Google на сервер
+                providesTags: ['Client'],  
             }),
 
-            transformResponse: (response: IClientGet[]) => {
+            transformResponse: (response: IClientUserGet[]) => {
                 console.log(response);
-                const newResp = response.map((client) => {
-                    const formattedClient = {
-                        ...client,
-                        birth_date: dayjs(client.birth_date).tz(dayjs.tz.guess()).format(),
+                const newResp = response.map((clientUser) => {
+                    const formattedClientUser = {
+                        ...clientUser,
+                        birth_date: dayjs(clientUser.birth_date).tz(dayjs.tz.guess()).format(),
+                        clients: clientUser.clients.map((client)=> {
+                            const  formattedClient = {
+                                ...client, 
+                                birth_date: dayjs(clientUser.birth_date).tz(dayjs.tz.guess()).format(),
+                            } 
+                            return formattedClient;
+                        })
                     };
 
-                    if (client.active_subscription) {
-                        formattedClient.active_subscription = {
-                            ...client.active_subscription,
-                            start_date: dayjs(client.active_subscription.start_date)
-                                .tz(dayjs.tz.guess())
-                                .format(),
-                            end_date: dayjs(client.active_subscription.end_date)
-                                .tz(dayjs.tz.guess())
-                                .format(),
-                        };
-                    }
+                    // if (client.active_subscription) {
+                    //     formattedClient.active_subscription = {
+                    //         ...client.active_subscription,
+                    //         start_date: dayjs(client.active_subscription.start_date)
+                    //             .tz(dayjs.tz.guess())
+                    //             .format(),
+                    //         end_date: dayjs(client.active_subscription.end_date)
+                    //             .tz(dayjs.tz.guess())
+                    //             .format(),
+                    //     };
+                    // }
 
-                    return formattedClient;
+                    return formattedClientUser;
                 });
                 console.log(newResp);
                 return newResp;
             }
 
         }),
-        createClient: builder.mutation<IClient, {clientData: IClient}>({
+        createClient: builder.mutation<IClient, {clientData: IClientUser}>({
             query: ({clientData}) =>  ({
                 url: '/clients',
                 method: 'POST',
@@ -72,14 +79,14 @@ export const clientsApi = baseApi.injectEndpoints({
 
         }),
 
-        deleteClient: builder.mutation<void, { clientId: number}>({
-            query: ({clientId}) => ({
-                url: `/clients/${clientId}`,
-                method: 'DELETE',
-            }),
-        }),
+        // deleteClient: builder.mutation<void, { clientId: number}>({
+        //     query: ({clientId}) => ({
+        //         url: `/clients/${clientId}`,
+        //         method: 'DELETE',
+        //     }),
+        // }),
         
     }),
 });
 
-export const { useCreateClientMutation, useGetClientsQuery, useDeleteClientMutation, useUpdateClientMutation, useAddClientSubscriptionMutation } = clientsApi;
+export const { useCreateClientMutation, useGetClientsQuery, useUpdateClientMutation, useAddClientSubscriptionMutation } = clientsApi;
