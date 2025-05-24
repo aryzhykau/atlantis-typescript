@@ -159,11 +159,13 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                     minHeight: '60px',
                     backgroundColor: theme.palette.background.paper, // Фон для слотов как у Paper
                     // borderRadius: theme.shape.borderRadius / 2, // Убираем скругление
-                    p: 0.5,
-                    position: 'relative',
+                    p: 0.5, // Внутренний отступ для full карточки
+                    position: 'relative', // Для позиционирования stacked карточек
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'stretch',
+                    // alignItems: 'stretch', // Убираем, чтобы stacked карточки не растягивались
+                    justifyContent: 'flex-start', // Начинаем с верхнего края
+                    gap: '2px', // Небольшой отступ между full карточками, если их несколько (маловероятно, но пусть будет)
                     cursor: 'pointer',
                     transition: theme.transitions.create(['background-color', 'box-shadow'], {
                       duration: theme.transitions.duration.short,
@@ -175,9 +177,50 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                   }}
                   onClick={() => handleSlotClick(day, time, slotEvents)}
                 >
-                  {slotEvents.map((eventItem) => (
-                    <TrainingCard key={eventItem.id} event={eventItem} />
-                  ))}
+                  {/* Логика отображения карточек для стопки */}
+                  {slotEvents.length === 1 && (
+                    <TrainingCard key={slotEvents[0].id} event={slotEvents[0]} variant="full" />
+                  )}
+                  {slotEvents.length > 1 && (
+                    <>
+                      {slotEvents.slice(0, 3).map((eventItem, index) => (
+                        <Box 
+                          key={eventItem.id} 
+                          sx={{
+                            position: 'absolute',
+                            top: `${index * 4}px`, // Смещение для эффекта каскада
+                            left: `${index * 4}px`,
+                            right: `${index * 4}px`, // Чтобы ширина немного уменьшалась
+                            // width: `calc(100% - ${index * 8}px)`, // Альтернативный способ уменьшения ширины
+                            zIndex: slotEvents.length - index, // Верхние карточки имеют больший zIndex
+                            padding: '0px', // Убедимся, что у обертки нет паддингов
+                          }}
+                        >
+                          <TrainingCard 
+                            event={eventItem} 
+                            variant={index === 0 ? 'full' : 'stacked_preview'} 
+                          />
+                        </Box>
+                      ))}
+                      {slotEvents.length > 3 && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            bottom: '2px',
+                            right: '4px',
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            color: 'white',
+                            fontSize: '0.6rem',
+                            padding: '1px 3px',
+                            borderRadius: '2px',
+                            zIndex: 10, // Поверх всех карточек
+                          }}
+                        >
+                          +{slotEvents.length - 3}
+                        </Box>
+                      )}
+                    </>
+                  )}
                 </Grid>
               );
             })}
