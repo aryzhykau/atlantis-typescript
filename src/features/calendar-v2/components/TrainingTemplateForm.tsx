@@ -21,7 +21,7 @@ import { TrainingStudentTemplateCreate } from '../models/trainingStudentTemplate
 import { useGetTrainingTypesQuery } from '../../../store/apis/trainingTypesApi';
 import { useGetTrainersQuery } from '../../../store/apis/trainersApi';
 import { useGetStudentsQuery } from '../../../store/apis/studentsApi';
-import { ITrainingType } from '../../trainingTypes/models/trainingType';
+import { ITrainingType } from '../../training-types/models/trainingType';
 import { ITrainerResponse } from '../../trainers/models/trainer';
 import { IStudent } from '../../students/models/student';
 

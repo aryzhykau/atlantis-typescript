@@ -4,7 +4,7 @@ import * as Yup from 'yup';
 import {TextField} from 'formik-mui';
 import {Checkbox, FormControlLabel, Button, Box, Typography, ClickAwayListener, IconButton, CircularProgress, Portal, Popper} from '@mui/material';
 import {ColorResult, ChromePicker} from "react-color";
-import { ITrainingType, ITrainingTypeCreate, ITrainingTypeUpdate } from '../models/trainingType';
+import { ITrainingType, ITrainingTypeCreate, ITrainingTypeUpdate } from '../../training-types/models/trainingType.ts';
 import {useCreateTrainingTypeMutation, useUpdateTrainingTypeMutation} from '../../../store/apis/trainingTypesApi.ts';
 import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
 import CloseIcon from '@mui/icons-material/Close';

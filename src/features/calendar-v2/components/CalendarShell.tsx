@@ -20,12 +20,12 @@ interface CalendarShellProps {
 }
 
 // Функция для определения, является ли событие TrainingTemplate
-function isTrainingTemplate(event: CalendarEvent): event is TrainingTemplate {
+export function isTrainingTemplate(event: CalendarEvent): event is TrainingTemplate {
   return 'day_number' in event && typeof event.day_number === 'number';
 }
 
 // Функция для определения, является ли событие RealTraining
-function isRealTraining(event: CalendarEvent): event is RealTraining {
+export function isRealTraining(event: CalendarEvent): event is RealTraining {
   return 'training_date' in event && typeof event.training_date === 'string';
 }
 

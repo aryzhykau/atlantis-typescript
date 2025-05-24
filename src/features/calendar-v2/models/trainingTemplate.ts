@@ -32,7 +32,7 @@ export interface TrainingTemplate {
   training_type_id: number;
   training_type: TrainingTypeBasicInfo;
   responsible_trainer_id: number;
-  trainer: TrainerBasicInfo;
+  responsible_trainer: TrainerBasicInfo;
   assigned_students: TrainingStudentTemplate[]; // Детали студентов, привязанных к шаблону
 }
 
