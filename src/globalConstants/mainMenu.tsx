@@ -6,6 +6,7 @@ import PoolIcon from '@mui/icons-material/Pool';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import SchoolIcon from '@mui/icons-material/School';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import {ClientsLayout} from "../layouts/clients/Clients.tsx";
 import { TrainersListPage } from "../features/trainers/components/TrainersListPage.tsx";
 import {DashboardLayout} from "../layouts/Dashboard.tsx";
@@ -18,6 +19,7 @@ import { ClientPage } from "../features/clients/components/ClientPage/ClientPage
 import InvoicesPayments from "../layouts/invoicesPyaments/InvoicesPayments.tsx";
 import { StudentsListPage } from '../features/students/components/StudentsListPage.tsx';
 import Timetable from "../layouts/timetable/Timetable.tsx";
+import CalendarV2Page from "../features/calendar-v2/components/CalendarV2Page.tsx";
 
 export const MenuItems: IMenuItems[] = [
     {
@@ -75,5 +77,12 @@ export const MenuItems: IMenuItems[] = [
         icon: <PaymentsIcon/>,
         page: <InvoicesPayments/>,
         mobilePage: <></>
+    },
+    {
+        title: "Календарь v2",
+        link: "calendar-v2",
+        icon: <CalendarTodayIcon />,
+        page: <CalendarV2Page />,
+        mobilePage: <CalendarV2Page />
     }
 ];
