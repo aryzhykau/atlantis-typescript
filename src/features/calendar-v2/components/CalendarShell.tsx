@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Box, Typography, Paper, Grid, useTheme } from '@mui/material';
 import dayjs, { Dayjs } from 'dayjs';
 import { CalendarViewMode } from './CalendarV2Page'; // Предполагается, что типы там же
 import { TrainingTemplate } from '../models/trainingTemplate';
 import { RealTraining } from '../models/realTraining';
 import TrainingCard from './TrainingCard'; // Импортируем TrainingCard
+import TrainingTemplateForm from './TrainingTemplateForm'; // Импорт формы
 
 // Определим объединенный тип для тренировок для удобства
 export type CalendarEvent = TrainingTemplate | RealTraining;
@@ -20,12 +21,17 @@ interface CalendarShellProps {
 
 // Функция для определения, является ли событие TrainingTemplate
 function isTrainingTemplate(event: CalendarEvent): event is TrainingTemplate {
-  return 'day_of_week' in event && typeof event.day_of_week === 'number';
+  return 'day_number' in event && typeof event.day_number === 'number';
 }
 
 // Функция для определения, является ли событие RealTraining
 function isRealTraining(event: CalendarEvent): event is RealTraining {
-  return 'start_datetime' in event && typeof event.start_datetime === 'string';
+  return 'training_date' in event && typeof event.training_date === 'string';
+}
+
+interface SelectedSlotInfo {
+  date: Dayjs;
+  time: string;
 }
 
 const CalendarShell: React.FC<CalendarShellProps> = ({
@@ -64,46 +70,58 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
     const slotHour = parseInt(time.split(':')[0]);
     const slotMinute = parseInt(time.split(':')[1]);
 
+    let filteredEvents: CalendarEvent[] = [];
+
     if (viewMode === 'scheduleTemplate') {
-      const currentTemplates = (templatesData || []) as TrainingTemplate[];
-      return currentTemplates.filter(event => {
-        // @ts-ignore // Временно игнорируем ошибку типа
-        const templateDayIso = event.day_of_week + 1;
-        // @ts-ignore // Временно игнорируем ошибку типа
-        const eventStartTime = event.start_time.substring(0, 5);
-        return templateDayIso === day.isoWeekday() && eventStartTime === time;
+      filteredEvents = eventsToDisplay.filter(event => {
+        if (isTrainingTemplate(event)) {
+          // day_number: 1-7 (1 - Пн), day.isoWeekday(): 1-7 (1 - Пн)
+          const eventStartTime = event.start_time.substring(0, 5); // "HH:MM"
+          return event.day_number === day.isoWeekday() && eventStartTime === time;
+        }
+        return false;
       });
     } else if (viewMode === 'actualTrainings') {
-      const currentRealTrainings = (actualData || []) as RealTraining[];
-      return currentRealTrainings.filter(event => {
-        // @ts-ignore // Временно игнорируем ошибку типа
-        const eventStart = dayjs(event.start_datetime);
-        return eventStart.isSame(day, 'day') && 
-               eventStart.hour() === slotHour && 
-               eventStart.minute() === slotMinute;
+      filteredEvents = eventsToDisplay.filter(event => {
+        if (isRealTraining(event)) {
+          const eventStart = dayjs(`${event.training_date}T${event.start_time}`);
+          return eventStart.isSame(day, 'day') &&
+                 eventStart.hour() === slotHour &&
+                 eventStart.minute() === slotMinute;
+        }
+        return false;
       });
     }
-    return [];
+    return filteredEvents;
   };
 
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedSlotInfo, setSelectedSlotInfo] = useState<SelectedSlotInfo | null>(null);
+
   const handleSlotClick = (day: Dayjs, time: string, eventsInSlot: CalendarEvent[]) => {
-    console.log(`Slot clicked: Day - ${day.format('YYYY-MM-DD')}, Time - ${time}`);
-    if (eventsInSlot.length > 0) {
+    if (viewMode === 'scheduleTemplate' && eventsInSlot.length === 0) {
+      setSelectedSlotInfo({ date: day, time });
+      setIsFormOpen(true);
+    } else if (eventsInSlot.length > 0) {
+      console.log(`Slot clicked: Day - ${day.format('YYYY-MM-DD')}, Time - ${time}`);
       console.log('Events in this slot:', eventsInSlot);
       // TODO: Open Popover with TrainingCards
     } else {
-      console.log('This slot is empty.');
-      // TODO: Open Modal for creating new event (depends on viewMode)
+      console.log(`Slot clicked: Day - ${day.format('YYYY-MM-DD')}, Time - ${time}`);
+      console.log('This slot is empty (not in template mode or not empty for template mode).');
+      // TODO: Open Modal for creating new REAL event (depends on viewMode)
     }
+  };
+
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
+    setSelectedSlotInfo(null);
   };
 
   const slotGap = theme.spacing(0.10); // Было 0.5, уменьшаем в два раза
 
   return (
     <Paper elevation={3} sx={{ p: 2, mt: 2, overflow: 'auto' }}>
-      <Typography variant="h6" gutterBottom>
-        Календарь
-      </Typography>
       {/* <Typography>Current Date: {currentDate.format('YYYY-MM-DD')}</Typography>
       <Typography>View Mode: {viewMode}</Typography> */}
       {isLoading && <Typography>Загрузка данных...</Typography>}
@@ -131,7 +149,7 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
               <Typography variant="caption">{time}</Typography>
             </Grid>
             {daysOfWeek.map(day => {
-              const slotEvents: CalendarEvent[] = []; 
+              const slotEvents: CalendarEvent[] = getEventsForSlot(day, time); 
               return (
                 <Grid 
                   item 
@@ -157,15 +175,24 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                   }}
                   onClick={() => handleSlotClick(day, time, slotEvents)}
                 >
-                  {/* {slotEvents.map((eventItem, index) => ( // Пока комментируем
-                    <TrainingCard key={eventItem.id || index} event={eventItem} />
-                  ))} */}
+                  {slotEvents.map((eventItem) => (
+                    <TrainingCard key={eventItem.id} event={eventItem} />
+                  ))}
                 </Grid>
               );
             })}
           </Grid>
         ))}
       </Box>
+
+      {selectedSlotInfo && (
+        <TrainingTemplateForm 
+          open={isFormOpen}
+          onClose={handleCloseForm}
+          selectedDate={selectedSlotInfo.date}
+          selectedTime={selectedSlotInfo.time}
+        />
+      )}
 
       {/* Отображение загруженных данных (временно для отладки) */}
       {viewMode === 'scheduleTemplate' && templatesData && !isLoading && (
