@@ -1,5 +1,6 @@
 import {GridColDef} from "@mui/x-data-grid";
 import TrainingTypeColorCircle from "../components/TrainingTypeColorCircle.tsx";
+import { Chip } from "@mui/material";
 
 const dateFormater = ( value: never ) => {
 
@@ -29,10 +30,21 @@ const priceFormatter = (value: never) => {
 
 
 export const trainingTypeColumns: GridColDef[] = [
-    {field: 'color', headerName: "#", width:30, align: "center", display: "flex", renderCell: params => <TrainingTypeColorCircle circleColor={params.row.color}/>},
-    {field: 'title', headerName: 'Название', flex: 1},
+    {field: 'color', headerName: "#", headerAlign: "center", width:30, align: "center", display: "flex", renderCell: params => <TrainingTypeColorCircle circleColor={params.row.color}/>},
+    {field: 'name', headerName: 'Название', flex: 1},
     {field: 'price', headerName: 'Стоимость', width: 100, valueFormatter: priceFormatter},
-    {field: 'require_subscription', headerName: 'Требуется подписка', type: 'boolean', flex: 1},
-    {field: 'created_at', headerName: 'Создан', width: 80, valueFormatter: dateFormater},
-    {field: 'updated_at', headerName: 'Обновлен', width: 80, valueFormatter: dateFormater},
+    {
+        field: 'is_subscription_only',
+        headerName: 'Только по подписке',
+        type: 'boolean',
+        flex: 1,
+        renderCell: (params) => (
+            <Chip
+                label={params.value ? "Да" : "Нет"}
+                color={params.value ? "primary" : "default"}
+                size="small"
+                variant="outlined"
+            />
+        )
+    },
 ];

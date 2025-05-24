@@ -1,5 +1,5 @@
 import {Box, CircularProgress, Divider, Typography} from "@mui/material";
-import {ITrainingClientGet, ITrainingGet} from "../models/training.ts";
+import { ITrainingGet, ITrainingStudentGet} from "../models/training.ts";
 import { Theme } from '@mui/material/styles';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -11,7 +11,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import CakeRoundedIcon from '@mui/icons-material/CakeRounded';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import PhoneEnabledIcon from '@mui/icons-material/PhoneEnabled';
-import {ITrainingTypeGet} from "../../trainingTypes/models/trainingType.ts";
+import {ITrainingTypeGet} from "../../training-types/models/trainingType.ts";
 import {ITrainerGet} from "../../trainers/models/trainer.ts";
 
 
@@ -61,7 +61,7 @@ const TrainingCard = ({training, trainingType, trainer}: ITrainingCardProps) => 
                             </Box>
                             <Box display={"flex"} alignItems={"flex-start"} justifyContent={"flex-start"} gap={2} my={"2px"}>
                                 <Typography variant={"body2"} color={"textDisabled"}>Клиентов: </Typography>
-                                <Typography variant={"body2"}>{training.clients.length}</Typography>
+                                <Typography variant={"body2"}>{training.students.length}</Typography>
                                 <Typography variant={"body1"} alignSelf={"flex-end"}>{trainingTime}</Typography>
                             </Box>
 
@@ -74,22 +74,22 @@ const TrainingCard = ({training, trainingType, trainer}: ITrainingCardProps) => 
                         }}
                     >
                         <Box display={"flex"} flexDirection={"column"} justifyContent={"flex-start"}>
-                        {training.clients.map((client: ITrainingClientGet, index: number)=> {
+                        {training.students.map((student: ITrainingStudentGet, index: number)=> {
                             return (
                                 <>
                                     <Box display={"flex"} gap={1} justifyContent={"flex-start"} alignItems={"center"}>
-                                        <Typography variant={"body2"}>{client.client.first_name} {client.client.last_name}</Typography>
-                                        {dayjs(training.training_datetime).tz(dayjs.tz.guess()).format("DD-MM") == dayjs(client.client.birth_date).tz(dayjs.tz.guess()).format("DD-MM") && <CakeRoundedIcon fontSize={"small"}/>}
+                                        <Typography variant={"body2"}>{student.student.first_name} {student.student.last_name}</Typography>
+                                        {dayjs(training.training_datetime).tz(dayjs.tz.guess()).format("DD-MM") == dayjs(student.student.birth_date).tz(dayjs.tz.guess()).format("DD-MM") && <CakeRoundedIcon fontSize={"small"}/>}
                                     </Box>
                                     <Box display={"flex"} gap={1}>
                                         <EmailOutlinedIcon fontSize={"small"} sx={{color: (theme: Theme) => theme.palette.text.disabled}}/>
-                                        <Typography variant={"body2"} color={"textDisabled"}>{client.client.email}</Typography>
+                                        <Typography variant={"body2"} color={"textDisabled"}>{student.student.relative.email}</Typography>
                                     </Box>
                                     <Box display={"flex"} gap={1}>
                                         <PhoneEnabledIcon fontSize={"small"} sx={{color: (theme: Theme) => theme.palette.text.disabled}}/>
-                                        <Typography variant={"body2"} color={"textDisabled"}>{client.client.phone}</Typography>
+                                        <Typography variant={"body2"} color={"textDisabled"}>{student.student.relative.phone}</Typography>
                                     </Box>
-                                    {index !== training.clients.length-1 && <Divider sx={{my: "8px"}} />}
+                                    {index !== training.students.length-1 && <Divider sx={{my: "8px"}} />}
                                 </>
                             )
                         })}

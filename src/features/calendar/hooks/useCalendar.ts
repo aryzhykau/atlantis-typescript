@@ -1,20 +1,29 @@
 import { useState } from 'react';
 import dayjs, { Dayjs } from 'dayjs';
-import weekOfYear from 'dayjs/plugin/weekOfYear'; // Плагин для работы с неделями
-import isoWeek from 'dayjs/plugin/isoWeek'; // Плагин для ISO-недель
+import weekOfYear from 'dayjs/plugin/weekOfYear';
+import isoWeek from 'dayjs/plugin/isoWeek';
 import 'dayjs/locale/ru';
 
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeek);
-
 dayjs.locale('ru');
 
 const useCalendar = () => {
     const today = dayjs(); // Текущая дата
-    const [selectedDate, setSelectedDate] = useState<Dayjs>(today); // Выбранный день (по умолчанию - сегодня)
+    const [selectedDate, setSelectedDate] = useState<Dayjs>(today); // Выбранный день (по умолчанию — сегодня)
 
-    // Получить все дни текущей недели, начиная с понедельника
-    const getWeekDays = (currentDate: Dayjs): { day_name: string; isToday: boolean; date: Dayjs }[] => {
+    const weekDays = [
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница",
+        "Суббота",
+        "Воскресенье"
+    ];
+
+    // Полный список дней текущей недели
+    const getWeekDays = (currentDate: Dayjs): { day_name: string; isToday: boolean; date: Dayjs; day_number: number }[] => {
         const startOfWeek = currentDate.startOf('isoWeek'); // Начало текущей недели
 
         return Array.from({ length: 7 }, (_, i) => {
@@ -23,46 +32,45 @@ const useCalendar = () => {
                 day_name: date.format('dddd').toUpperCase(), // Название дня недели
                 isToday: date.isSame(today, 'day'), // Является ли этот день сегодняшним
                 date, // Объект dayjs (для работы с датой)
+                day_number: i, // Номер дня недели (начиная с 0)
             };
         });
     };
 
-    const currentWeekDays = getWeekDays(today); // Все дни текущей недели
-    const selectedWeekDays = getWeekDays(selectedDate); // Все дни недели, выбранной даты
+    // Получить только названия дней для расписания
+    const getWeekDayNames = (): string[] => weekDays;
 
-    // Получить массив месяцев для текущей недели
+    const currentWeekDays = getWeekDays(today); // Дни текущей недели
+    const selectedWeekDays = getWeekDays(selectedDate); // Дни выбранной недели
+
     const getMonthsFromWeek = (weekDays: { date: Dayjs }[]): string[] => {
         return [...new Set(weekDays.map(({ date }) => date.format('MMMM')))];
     };
 
-    const currentMonths = getMonthsFromWeek(currentWeekDays); // Массив месяцев для текущей недели
-    const selectedWeekMonths = getMonthsFromWeek(selectedWeekDays); // Массив месяцев выбранной недели
+    const currentMonths = getMonthsFromWeek(currentWeekDays);
+    const selectedWeekMonths = getMonthsFromWeek(selectedWeekDays);
 
-    // Получить дату начала и конца выбранной недели (понедельник и воскресенье)
-    const getStartAndEndOfWeek = (date: Dayjs): { startOfWeek: Dayjs; endOfWeek: Dayjs } => {
-        const startOfWeek = date.startOf('isoWeek'); // Начало недели (понедельник)
-        const endOfWeek = date.endOf('isoWeek'); // Конец недели (воскресенье)
-        return { startOfWeek, endOfWeek };
-    };
+    // Дата начала и окончания текущей выбранной недели
+    const selectedStartOfWeek = selectedDate.startOf('isoWeek'); // Начало (понедельник) выбранной недели
+    const selectedEndOfWeek = selectedDate.endOf('isoWeek'); // Конец (воскресенье) выбранной недели
 
-    const { startOfWeek: selectedStartOfWeek, endOfWeek: selectedEndOfWeek } =
-        getStartAndEndOfWeek(selectedDate);
-
-    // Функции для переключения недели
-    const goToNextWeek = () => setSelectedDate((prev) => prev.add(1, 'week')); // Следующая неделя
-    const goToPreviousWeek = () => setSelectedDate((prev) => prev.subtract(1, 'week')); // Предыдущая неделя
+    const goToNextWeek = () => setSelectedDate((prev) => prev.add(1, 'week'));
+    const goToPreviousWeek = () => setSelectedDate((prev) => prev.subtract(1, 'week'));
 
     return {
-        today, // Текущая дата (Dayjs)
-        currentWeekDays, // Массив из 7 дней текущей недели
-        currentMonths, // Массив месяцев текущей недели
+        today, // Текущая дата
+        weekDays, // Названия дней недели
+        getWeekDays, // Функция получения структурированных дней недели
+        getWeekDayNames, // Функция получения только названий дней недели
+        currentWeekDays, // Дни текущей недели
+        selectedWeekDays, // Дни выбранной недели
+        currentMonths, // Месяцы текущей недели
+        selectedWeekMonths, // Месяцы выбранной недели
+        selectedStartOfWeek, // Начало выбранной недели
+        selectedEndOfWeek, // Конец выбранной недели
+        goToNextWeek, // Перейти на следующую неделю
+        goToPreviousWeek, // Перейти к предыдущей неделе
         selectedDate, // Текущая выбранная дата
-        selectedWeekDays, // Массив из 7 объектов с информацией о днях выбранной недели
-        selectedWeekMonths, // Массив месяцев выбранной недели
-        selectedStartOfWeek, // Дата начала выбранной недели (понедельник)
-        selectedEndOfWeek, // Дата конца выбранной недели (воскресенье)
-        goToNextWeek, // Перейти на неделю вперед
-        goToPreviousWeek, // Перейти на неделю назад
     };
 };
 

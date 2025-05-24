@@ -8,7 +8,7 @@ import {useEffect, useState} from "react";
 export const useTrainers = () => {
     // Получение списка тренеров
     const {
-        data: trainers = [],
+        data: trainers = {trainers: []},
         isLoading: isLoadingTrainers,
         isError: isErrorTrainers,
         error: trainersError,
@@ -17,7 +17,7 @@ export const useTrainers = () => {
     const [displayTrainers, setDisplayTrainers] = useState<ITrainer[]>([]);
 
     useEffect(() => {
-        setDisplayTrainers(trainers)
+        setDisplayTrainers(trainers.trainers)
     }, [trainers])
     // Мутация создания тренера
     const [createTrainer, {

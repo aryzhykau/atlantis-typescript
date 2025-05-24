@@ -1,6 +1,6 @@
 import {GridColDef} from "@mui/x-data-grid";
-import SubscriptionsCell from "../components/SubscriptionsCell.tsx";
 import ClientBalanceCell from "../components/ClientBalanceCell.tsx";
+import {Box, Link, Tooltip} from "@mui/material";
 const fieldWidth = 150;
 
 
@@ -26,6 +26,30 @@ const dateFormater = ( value: never ) => {
 
 export const clientColums: GridColDef[] = [
     {
+        field: "id",
+        headerName: "ID",
+        width: 100,
+        sortable: false,
+        renderCell: (params) => (
+            <Tooltip title="Нажмите для просмотра клиента">
+                <Link
+                    component="span"
+                    sx={{
+                        cursor: 'pointer',
+                        color: 'primary.main',
+                        fontWeight: 'medium',
+                        textDecoration: 'none',
+                        '&:hover': {
+                            textDecoration: 'underline',
+                        },
+                    }}
+                >
+                    {params.value}
+                </Link>
+            </Tooltip>
+        )
+     },
+    {
         field: "first_name",
         headerName: "Имя",
         width: fieldWidth,
@@ -46,49 +70,43 @@ export const clientColums: GridColDef[] = [
     {
         field: "phone",
         headerName: "Телефон",
-        width: fieldWidth,
+        width: 100,
         sortable: false,
     },
     {
         field: "birth_date",
         headerName: "Дата рождения",
-        width: fieldWidth,
+        width: 100,
         sortable: false,
         valueFormatter: dateFormater
     },
     {
-        field: "subscriptions",
-        headerName: "Абонемент",
-        width:280,
-        display: "flex",
-        sortable: false,
-        renderCell: (params) => <SubscriptionsCell params={params}></SubscriptionsCell>
-    },
-    {
-        field: "has_trial",
-        headerName: "Пробное занятие",
-        width: 100,
-        type: "boolean"
-    },
-    {
         field: "balance",
         headerName: "Баланс",
-        width: 100,
+        width: 70,
         display: "flex",
+        align: "center",
         renderCell: (params) => <ClientBalanceCell balance={params.row.balance}/>
     },
     {
-        field: "created_at",
-        headerName: "Добавлен",
-        width: fieldWidth,
-        sortable: true,
-        valueFormatter: dateFormater,
+        field: "unpaid_sum",
+        headerName: "Задолженность",
+        width: 100,
+        sortable: false,
+        renderCell: (params) => <Box
+            sx={{color: theme => params.row.unpaid_sum > 0 ? theme.palette.error.main : theme.palette.text.primary}}
+        >
+            {params.row.unpaid_sum}€
+        </Box>
     },
     {
-        field: "parent_name",
-        headerName: "Имя родителя",
-        width: fieldWidth,
-        sortable: true,
+        field: "unpaid_count",
+        headerName: "Неоплаченых инвойсов",
+        width: 100,
+        sortable: false,
+        renderCell: (params) => <Box
+            sx={{color: theme => params.row.unpaid_count > 0 ? theme.palette.error.main : theme.palette.text.primary}}
+        >{params.row.unpaid_count}</Box>
     },
     {
         field: "whatsapp",
@@ -96,6 +114,13 @@ export const clientColums: GridColDef[] = [
         width: fieldWidth,
         sortable: false,
     },
+    {
+        field: "created_at",
+        headerName: "Добавлен",
+        width: 100,
+        sortable: true,
+        valueFormatter: dateFormater,
+    }
 
 
 ]

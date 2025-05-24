@@ -1,7 +1,8 @@
 import {Dayjs} from "dayjs";
+import {IClientUserGet} from "../../clients/models/client.ts";
 
-export interface ITrainingClient {
-    client_id: number | null;
+export interface ITrainingStudent {
+    student_id: number | null;
     trial_training?: boolean;
 }
 export interface ITraining {
@@ -9,7 +10,7 @@ export interface ITraining {
     training_date?: Dayjs | string| null | undefined;
     training_time?: Dayjs | string| null | undefined;
     training_type_id: string | null;
-    clients: ITrainingClient[];
+    students: ITrainingStudent[];
 }
 
 
@@ -20,19 +21,20 @@ export interface ITrainingGet {
     created_at: Dayjs | string | null | undefined
     training_type_id: number
     training_datetime: string
-    clients: ITrainingClientGet[]
+    students: ITrainingStudentGet[]
 }
 
-export interface ITrainingClientGet {
+export interface ITrainingStudentGet {
     trial_training: boolean
     invoice_id: number
-    client: ITrainingClientObject
+    student: ITrainingStudentObject
 }
 
-export interface ITrainingClientObject {
+export interface ITrainingStudentObject {
     first_name: string
     last_name: string
     email: string
     phone: string
     birth_date: string
+    relative: IClientUserGet
 }

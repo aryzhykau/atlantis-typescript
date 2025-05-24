@@ -1,4 +1,3 @@
-
 import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
 import {LoginPage} from "./pages/login.tsx";
 import {useAuth} from "./hooks/useAuth.tsx";
@@ -10,6 +9,9 @@ import {IMenuItems} from "./models/mainMenu.ts";
 import {ReactNode} from "react";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import "dayjs/locale/ru";
+import { ClientPage } from "./features/clients/components/ClientPage/ClientPage.tsx";
+import { StudentPage } from './features/students/components/StudentPage.tsx';
+import { TrainerPage } from './features/trainers/components/TrainerPage';
 
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import useMobile from "./hooks/useMobile.tsx";
@@ -33,7 +35,33 @@ function App() {
                               <Route path={"/home"} element={!isAuthenticated ? <Navigate to="/"/> : <HomePage />}>
                                   <Route index element={MenuItems[0].page}/>
                                   {
-                                      MenuItems.map((item: IMenuItems): ReactNode => <Route key={item.link} path={item.link} element={isMobile? item.mobilePage : item.page}/>)
+                                      MenuItems.map((item: IMenuItems): ReactNode => {
+                                          if (item.link === "clients") {
+                                              return (
+                                                  <Route key={item.link} path={item.link}>
+                                                      <Route index element={isMobile ? item.mobilePage : item.page} />
+                                                      <Route path=":clientId" element={<ClientPage />} />
+                                                  </Route>
+                                              );
+                                          }
+                                          if (item.link === "students") {
+                                              return (
+                                                  <Route key={item.link} path={item.link}>
+                                                      <Route index element={isMobile ? item.mobilePage : item.page} />
+                                                      <Route path=":studentId" element={<StudentPage />} />
+                                                  </Route>
+                                              );
+                                          }
+                                          if (item.link === "trainers") {
+                                              return (
+                                                  <Route key={item.link} path={item.link}>
+                                                      <Route index element={isMobile ? item.mobilePage : item.page} />
+                                                      <Route path=":trainerId" element={<TrainerPage />} />
+                                                  </Route>
+                                              );
+                                          }
+                                          return <Route key={item.link} path={item.link} element={isMobile ? item.mobilePage : item.page} />;
+                                      })
                                   }
                               </Route>
                           </Routes>

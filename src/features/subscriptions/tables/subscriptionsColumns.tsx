@@ -1,47 +1,79 @@
-import {GridColDef} from "@mui/x-data-grid";
+import {GridColDef, GridRenderCellParams} from "@mui/x-data-grid";
 import SubscriptionActiveCell from "../components/SubscriptionActiveCell.tsx";
+import { ISubscriptionResponse } from "../models/subscription.ts";
+import { Chip } from "@mui/material";
+import { ITrainingType } from "../../trainingTypes/models/trainingType.ts";
 
-const dateFormater = ( value: never ) => {
-
-    if (value === undefined || value === null) {
-        return "Не указана дата";
+const priceFormatter = (price: number | undefined | null) => {
+    if (price === undefined || price === null || isNaN(price)) {
+        return "-";
     }
-
-    const date = new Date(value);
-
-    if (isNaN(date.getTime())) return "Неверная дата"; // Если дата некорректная
-
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-
-    return `${day}.${month}.${year}`;
+    return `${price.toLocaleString('ru-RU')} €`;
 }
 
-
-const priceFormatter = (value: never) => {
-    if (value === undefined || value === null) {
-        return "Не указана цена"
+const durationFormatter = (validityDays: number | undefined | null) => {
+    if (validityDays === undefined || validityDays === null || isNaN(validityDays)) {
+        return "-";
     }
-    return `${value}€`
+    return `${validityDays} дн.`;
 }
 
-const durationFormater = (value: never) => {
-    if (value === undefined || value === null) {
-        return "Значение отсутсвует"
+const sessionsFormatter = (sessions: number | undefined | null) => {
+    if (sessions === undefined || sessions === null || isNaN(sessions)) {
+        return "-";
     }
-    return `${value} дней`
+    return sessions.toString();
 }
-
-
 
 
 export const subscriptionsColumns: GridColDef[] = [
-    {field: 'title', headerName: 'Название', flex: 1},
-    {field: 'total_sessions', headerName: 'Количество тренировок', flex: 1},
-    {field: 'duration', headerName: 'Время действия', flex: 1, valueFormatter: durationFormater},
-    {field: 'price', headerName: 'Стоимость', width: 100, valueFormatter: priceFormatter},
-    {field: 'active', headerName: 'Активна', type: 'boolean', flex: 1, renderCell: params => <SubscriptionActiveCell params={params}/>},
-    {field: 'created_at', headerName: 'Создана', width: 80, valueFormatter: dateFormater},
-    {field: 'updated_at', headerName: 'Обновлена', width: 80, valueFormatter: dateFormater},
+    {field: 'name', headerName: 'Название', flex: 1.5, minWidth: 150},
+    {
+        field: 'number_of_sessions',
+        headerName: 'Занятий',
+        flex: 0.8,
+        minWidth: 80,
+        type: 'number',
+        align: 'center',
+        headerAlign: 'center',
+        valueFormatter: (value: number) => sessionsFormatter(value)
+    },
+    {
+        field: 'validity_days',
+        headerName: 'Действует (дней)',
+        flex: 1,
+        minWidth: 100,
+        type: 'number',
+        align: 'center',
+        headerAlign: 'center',
+        valueFormatter: (value: number) => durationFormatter(value)
+    },
+    {
+        field: 'price',
+        headerName: 'Стоимость',
+        flex: 1,
+        minWidth: 100,
+        type: 'number',
+        align: 'right',
+        headerAlign: 'right',
+        valueFormatter: (value: number) => priceFormatter(value)
+    },
+    {
+        field: 'is_active',
+        headerName: 'Статус',
+        flex: 0.7,
+        minWidth: 100,
+        align: 'center',
+        headerAlign: 'center',
+        renderCell: (params: GridRenderCellParams<ISubscriptionResponse>) => (
+            <Chip
+                label={params.value ? "Активен" : "Неактивен"}
+                color={params.value ? "success" : "default"}
+                size="small"
+                variant={params.value ? "filled" : "outlined"}
+                sx={{ mr: 1 }}
+            />
+        
+    ),
+    },
 ];

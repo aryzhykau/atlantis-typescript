@@ -1,49 +1,61 @@
-import dayjs, {Dayjs} from "dayjs";
-import {ISubscriptionGet} from "../../subscriptions/models/subscription.ts";
+import {Dayjs} from "dayjs";
+// import {IStudent} from "../../students/models/student.ts"; // Заменяем на IStudentFormShape
+import { IStudentFormShape } from '../components/ClientsForm'; // Импортируем новый тип
 
-export interface IClientUser {
+// Интерфейс, отражающий основные поля данных клиента, возвращаемые API
+export interface IClientCoreData {
     first_name: string;
     last_name: string;
     email: string;
     phone: string;
-    birth_date?: Dayjs | string | null | undefined;
-    whatsapp: string | null;
-    is_client: boolean;
-    clients: IClient[];
+    date_of_birth: string | null; // API возвращает 'YYYY-MM-DD' или null
+    whatsapp_number: string | null; // Изменено с whatsapp, соответствует openapi ClientResponse
 }
 
-export interface IClient {
-    first_name: string;
-    last_name: string;
-    birth_date?: Dayjs | string | null | undefined;
-}
-
-export interface IClientGet extends IClient {
-    is_active: boolean;
-    has_trial: boolean;
-}
-
-export interface IClientUserGet extends IClientUser {
+// Интерфейс для ответа API при запросе данных клиента (GET /clients/{client_id})
+// Должен строго соответствовать схеме ClientResponse из openapi.json
+export interface IClientUserGet extends IClientCoreData {
     id: number;
-    active_subscription: IClientActiveSubscription | null;
-    has_trial: boolean;
-    balance: number;
-    created_at: string;
-    google_authenticated: boolean;
-    is_birthday?: boolean;
-    role: string;
+    role: string; // Соответствует UserRole enum из API (CLIENT, TRAINER, ADMIN)
+    is_authenticated_with_google: boolean; // Изменено с google_authenticated
+    balance: number | null; // Соответствует openapi (number | null)
+    is_active: boolean | null; // Соответствует openapi (boolean | null)
 }
 
+// Интерфейс для значений формы создания/редактирования клиента
 export interface IClientUserFormValues {
     first_name: string;
     last_name: string;
     email: string;
     phone: string;
-    birth_date?: dayjs.Dayjs | string | null;
-    parent_name: string;
-    whatsapp: string;
-    is_client: boolean;
-    clients: IClient[];
+    date_of_birth: Dayjs | string | null; // Для UI FormikDatePicker может использовать Dayjs, при отправке конвертируется в строку
+    whatsapp_number: string; // Используется в форме, может быть пустой строкой, если не указан
+    is_student: boolean; // Поле для формы СОЗДАНИЯ, указывает, является ли сам клиент студентом
+    students: IStudentFormShape[];  // Используем IStudentFormShape[]
+}
+
+// Интерфейс для payload при СОЗДАНИИ клиента (соответствует ClientCreate из openapi.json)
+export interface IClientCreatePayload {
+    first_name: string;
+    last_name: string;
+    date_of_birth: string; // Формат 'YYYY-MM-DD'
+    is_student?: boolean; // По умолчанию false в openapi
+    email: string;
+    phone: string; // Должен соответствовать паттерну API '^\+?[0-9]{10,15}$'
+    whatsapp_number?: string | null; // Должен соответствовать паттерну API, если не null
+    students?: Array<{ first_name: string; last_name: string; date_of_birth: string; }>;
+}
+
+// Интерфейс для payload при ОБНОВЛЕНИИ клиента (соответствует ClientUpdate из openapi.json)
+export interface ClientUpdate {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string; // Должен соответствовать паттерну API
+    whatsapp_number?: string | null; // Должен соответствовать паттерну API, если не null
+    date_of_birth?: string | null; // Формат 'YYYY-MM-DD'
+    is_active?: boolean | null; // Добавлено | null
+    balance?: number | null;    // Добавлено | null
 }
 
 export interface IClientSubscriptionFormValues  {
@@ -52,13 +64,4 @@ export interface IClientSubscriptionFormValues  {
 
 export interface IClientSubscriptionCreate {
     subscription_id: number;
-}
-
-export interface IClientActiveSubscription {
-    id: number;
-    subscription_id: number;
-    subscription: ISubscriptionGet;
-    start_date: Dayjs | string | null | undefined;
-    end_date: Dayjs |  string | null | undefined;
-    sessions_left: number;
 }

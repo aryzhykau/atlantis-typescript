@@ -1,8 +1,9 @@
-import {IClient, IClientGet, IClientSubscriptionCreate, IClientUser, IClientUserGet} from "../../features/clients/models/client.ts";
+import { IClientCreatePayload, IClientUserGet, ClientUpdate} from "../../features/clients/models/client.ts";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import {baseApi} from "./api.ts";
+import { IStudent } from "../../features/students/models/student.ts";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -14,79 +15,82 @@ export const clientsApi = baseApi.injectEndpoints({
             query: () => ({
                 url: '/clients',
                 method: 'GET',
-                providesTags: ['Client'],  
             }),
-
-            transformResponse: (response: IClientUserGet[]) => {
-                console.log(response);
-                const newResp = response.map((clientUser) => {
-                    const formattedClientUser = {
-                        ...clientUser,
-                        birth_date: dayjs(clientUser.birth_date).tz(dayjs.tz.guess()).format(),
-                        clients: clientUser.clients.map((client)=> {
-                            const  formattedClient = {
-                                ...client, 
-                                birth_date: dayjs(clientUser.birth_date).tz(dayjs.tz.guess()).format(),
-                            } 
-                            return formattedClient;
-                        })
-                    };
-
-                    // if (client.active_subscription) {
-                    //     formattedClient.active_subscription = {
-                    //         ...client.active_subscription,
-                    //         start_date: dayjs(client.active_subscription.start_date)
-                    //             .tz(dayjs.tz.guess())
-                    //             .format(),
-                    //         end_date: dayjs(client.active_subscription.end_date)
-                    //             .tz(dayjs.tz.guess())
-                    //             .format(),
-                    //     };
-                    // }
-
-                    return formattedClientUser;
-                });
-                console.log(newResp);
-                return newResp;
-            }
-
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.map(({ id }) => ({ type: 'Client' as const, id })),
+                        { type: 'Client', id: 'LIST' }
+                    ]
+                    : [{ type: 'Client', id: 'LIST' }],
         }),
-        createClient: builder.mutation<IClient, {clientData: IClientUser}>({
-            query: ({clientData}) =>  ({
+        getClient: builder.query<IClientUserGet, number>({
+            query: (clientId) => ({
+                url: `/clients/${clientId}`,
+                method: 'GET',
+            }),
+            providesTags: (result, error, id) => [{ type: 'Client', id }],
+        }),
+        getClientStudents: builder.query<IStudent[], number>({
+            query: (clientId) => ({
+                url: `/clients/${clientId}/students`,
+                method: 'GET',
+            }),
+            providesTags: (result, error, clientId) =>
+                result
+                    ? [
+                        ...result.map(({ id }) => ({ type: 'Students' as const, id: id.toString() + '_client_' + clientId.toString() })),
+                        { type: 'Students', id: 'LIST_FOR_CLIENT_' + clientId },
+                        { type: 'Client', id: clientId }
+                    ]
+                    : [{ type: 'Students', id: 'LIST_FOR_CLIENT_' + clientId }, { type: 'Client', id: clientId }],
+        }),
+        createClient: builder.mutation<IClientUserGet, IClientCreatePayload>({
+            query: (clientData) => ({
                 url: '/clients',
                 method: 'POST',
                 body: clientData,
-            })
+            }),
+            invalidatesTags: [{ type: 'Client', id: 'LIST' }],
         }),
-
-        updateClient: builder.mutation<IClient, { clientId: number; clientData: IClient}>({
-            query: ({clientId, clientData}) => ({
-                url: `/clients/${clientId}`,
-                method: 'PUT',
-                body: {
+        updateClient: builder.mutation<IClientUserGet, { clientId: number; clientData: ClientUpdate}>({
+            query: ({clientId, clientData}) => {
+                const dataToSend: ClientUpdate = {
                     ...clientData,
-                    birth_date: dayjs(clientData.birth_date).tz(dayjs.tz.guess()).format(),
-                },
-            }),
+                    date_of_birth: clientData.date_of_birth ? dayjs(clientData.date_of_birth).format('YYYY-MM-DD') : null,
+                };
+                return {
+                    url: `/clients/${clientId}`,
+                    method: 'PATCH',
+                    body: dataToSend,
+                };
+            },
+            invalidatesTags: (result, error, { clientId }) => [{ type: 'Client', id: clientId }, {type: 'Client', id: 'LIST'}],
         }),
-
-        addClientSubscription: builder.mutation<IClientGet, {clientId: number, data: IClientSubscriptionCreate}>({
-            query: ({clientId, data}) => ({
-                url: `/clients/${clientId}/subscriptions`,
-                method: 'POST',
-                body: data,
+        updateClientStatus: builder.mutation<IClientUserGet, { clientId: number; is_active: boolean}>({
+            query: ({clientId, is_active}) => ({
+                url: `/clients/${clientId}/status`,
+                method: 'PATCH',
+                body: {is_active},
             }),
-
+            invalidatesTags: (result, error, { clientId }) => [{ type: 'Client', id: clientId }, {type: 'Client', id: 'LIST'}],
         }),
-
-        // deleteClient: builder.mutation<void, { clientId: number}>({
-        //     query: ({clientId}) => ({
-        //         url: `/clients/${clientId}`,
-        //         method: 'DELETE',
-        //     }),
-        // }),
-        
+        deleteClient: builder.mutation<void, { clientId: number}>({
+            query: ({clientId}) => ({
+                url: `/clients/${clientId}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: (result, error, {clientId}) => [{type: 'Client', id: clientId}, {type: 'Client', id: 'LIST'}],
+        }),
     }),
 });
 
-export const { useCreateClientMutation, useGetClientsQuery, useUpdateClientMutation, useAddClientSubscriptionMutation } = clientsApi;
+export const { 
+    useCreateClientMutation, 
+    useGetClientsQuery, 
+    useGetClientQuery,
+    useGetClientStudentsQuery, 
+    useUpdateClientMutation, 
+    useDeleteClientMutation, 
+    useUpdateClientStatusMutation
+} = clientsApi;

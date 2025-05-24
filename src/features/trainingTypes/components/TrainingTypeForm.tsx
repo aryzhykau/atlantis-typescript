@@ -1,157 +1,264 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {Formik, Form, Field} from 'formik';
 import * as Yup from 'yup';
 import {TextField} from 'formik-mui';
-import {Checkbox, FormControlLabel, Button, Box, Typography, ClickAwayListener} from '@mui/material';
+import {Checkbox, FormControlLabel, Button, Box, Typography, ClickAwayListener, IconButton, CircularProgress, Portal, Popper} from '@mui/material';
 import {ColorResult, ChromePicker} from "react-color";
-import {ITrainingType} from "../models/trainingType.ts";
-import {useTrainingTypes} from "../hooks/useTrainingTypes.ts";
+import { ITrainingType, ITrainingTypeCreate, ITrainingTypeUpdate } from '../models/trainingType';
+import {useCreateTrainingTypeMutation, useUpdateTrainingTypeMutation} from '../../../store/apis/trainingTypesApi.ts';
 import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
+import CloseIcon from '@mui/icons-material/Close';
 
 
 interface TrainingTypeFormProps {
-    initialValues: ITrainingType;
-    id: number| null;
+    initialValues?: Partial<ITrainingType>;
+    trainingTypeId?: number | null;
     isCreating: boolean;
     onClose: () => void;
 }
 
-
-
 const TrainingTypeSchema = Yup.object({
-    title: Yup.string().required('Title is required'),
+    name: Yup.string().min(2, 'Название должно содержать минимум 2 символа').max(50, 'Название не должно превышать 50 символов').required('Название обязательно'),
     price: Yup.number()
-        .required('Price is required')
-        .min(0, 'Price must be greater than or equal to 0'),
-    require_subscription: Yup.boolean(),
-    color: Yup.string().required('Color is required'),
+        .nullable()
+        .min(0, 'Цена не может быть отрицательной'),
+    is_subscription_only: Yup.boolean().required(),
+    color: Yup.string().matches(/^#[0-9A-Fa-f]{6}$/, 'Цвет должен быть в формате HEX (#RRGGBB)').required('Цвет обязателен'),
+    is_active: Yup.boolean().required(),
 });
 
+const prepareSubmitValues = (values: Partial<ITrainingType>, isCreating: boolean): ITrainingTypeCreate | ITrainingTypeUpdate => {
+    const priceAsNumberOrNull = (values.price === null || values.price === undefined || isNaN(Number(values.price)))
+        ? null
+        : Number(values.price);
 
+    const data: Partial<ITrainingTypeCreate | ITrainingTypeUpdate> = {
+        name: values.name,
+        is_subscription_only: values.is_subscription_only,
+        price: priceAsNumberOrNull,
+        color: values.color,
+        is_active: values.is_active,
+    };
 
-const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues, onClose, isCreating, id}) => {
+    if (isCreating) {
+        return {
+            name: data.name || '',
+            is_subscription_only: data.is_subscription_only === undefined ? false : data.is_subscription_only,
+            color: data.color || '#000000',
+            price: data.price,
+            is_active: data.is_active === undefined ? true : data.is_active,
+        } as ITrainingTypeCreate;
+    }
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.is_subscription_only !== undefined) updateData.is_subscription_only = data.is_subscription_only;
+    if (data.price !== undefined) updateData.price = data.price;
+    if (data.color !== undefined) updateData.color = data.color;
+    if (data.is_active !== undefined) updateData.is_active = data.is_active;
+    return updateData as ITrainingTypeUpdate;
+};
+
+const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, onClose, isCreating, trainingTypeId}) => {
     const [colorPickerVisible, setColorPickerVisible] = useState(false);
-    const [color, setColor] = useState(initialValues.color || "#111111");
-    const {createTrainingType, updateTrainingType, refetchTrainingTypes} = useTrainingTypes();
+    const defaultInitialColor = "#111111";
+    const [selectedColor, setSelectedColor] = useState(initialValues.color || defaultInitialColor);
+
+    const [createTrainingType, {isLoading: isCreatingLoading}] = useCreateTrainingTypeMutation();
+    const [updateTrainingType, {isLoading: isUpdatingLoading}] = useUpdateTrainingTypeMutation();
     const {displaySnackbar} = useSnackbar();
 
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const colorIndicatorRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (initialValues.color) {
+            setSelectedColor(initialValues.color);
+        } else {
+            setSelectedColor(defaultInitialColor);
+        }
+    }, [initialValues.color]);
+
+    const handleColorIndicatorClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(anchorEl ? null : event.currentTarget);
+        setColorPickerVisible((prev) => !prev);
+    };
+
     const handleClickAway = () => {
+        setAnchorEl(null);
         setColorPickerVisible(false);
     }
 
-    const handleSubmit = async  (values: ITrainingType, {resetForm}: {resetForm: () => void}) => {
+    const handleSubmit = async (values: Partial<ITrainingType>, {resetForm}: {resetForm: () => void}) => {
+        const formValuesForSubmit = prepareSubmitValues(values, isCreating);
         try {
             if (isCreating) {
-                await createTrainingType({trainingTypeData: values,}).unwrap();
+                await createTrainingType(formValuesForSubmit as ITrainingTypeCreate).unwrap();
+                displaySnackbar("Вид тренировки успешно создан", "success");
+            } else if (trainingTypeId) {
+                const updatePayload: ITrainingTypeUpdate = {};
+                if (formValuesForSubmit.name !== undefined) updatePayload.name = formValuesForSubmit.name;
+                if (formValuesForSubmit.price !== undefined) updatePayload.price = formValuesForSubmit.price;
+                if (formValuesForSubmit.color !== undefined) updatePayload.color = formValuesForSubmit.color;
+                if (formValuesForSubmit.is_active !== undefined) updatePayload.is_active = formValuesForSubmit.is_active;
+                if (formValuesForSubmit.is_subscription_only !== undefined) updatePayload.is_subscription_only = formValuesForSubmit.is_subscription_only;
+
+                await updateTrainingType({id: trainingTypeId, payload: updatePayload}).unwrap();
+                displaySnackbar("Вид тренировки успешно обновлен", "success");
             }
-            else {
-                if(id) {
-                    await updateTrainingType({trainingTypeId: id, trainingTypeData: values,}).unwrap();
-                }
-            }
-            displaySnackbar("Вид тренировки успешно сохранен", "success");
-            refetchTrainingTypes();
             resetForm();
             onClose();
-        }
-        catch (e: unknown) {
-            console.log(e)
+            handleClickAway();
+        } catch (error: any) {
+            console.error("Ошибка сохранения вида тренировки:", error);
+            const errorDetail = error?.data?.detail || 'Ошибка при сохранении вида тренировки';
+            displaySnackbar(String(errorDetail), 'error');
         }
     };
 
+    const formInitialValues = {
+        name: initialValues.name || '',
+        price: initialValues.price === undefined || initialValues.price === null ? null : initialValues.price,
+        is_subscription_only: initialValues.is_subscription_only === undefined ? false : initialValues.is_subscription_only,
+        color: initialValues.color || selectedColor,
+        is_active: initialValues.is_active === undefined ? true : initialValues.is_active,
+    };
+
+    const openPopper = Boolean(anchorEl) && colorPickerVisible;
+
     return (
         <Formik
-            initialValues={initialValues}
+            initialValues={formInitialValues as any}
             validationSchema={TrainingTypeSchema}
             onSubmit={handleSubmit}
+            enableReinitialize
         >
-            {({ isSubmitting, setFieldValue}) => (
+            {({isSubmitting, setFieldValue, values, errors, touched}) => (
                 <Form>
-                    <Box display="flex" flexDirection="column" gap={3} padding={3} borderRadius={2}
-                         bgcolor="background.paper">
-                        <Typography variant="h6" component="h2" gutterBottom>
+                    <IconButton
+                        onClick={() => {
+                            onClose();
+                            handleClickAway();
+                        }}
+                        sx={{position: "absolute", top: 8, right: 8, zIndex: 9999}}
+                    >
+                        <CloseIcon/>
+                    </IconButton>
+                    <Box display="flex" flexDirection="column" gap={2} padding={3} borderRadius={1} sx={{position: 'relative', minWidth: 400, p: 3}}>
+                        <Typography variant="h6" component="h2" gutterBottom sx={{textAlign: 'center', mb: 2}}>
                             {isCreating ? "Добавление вида тренировки": "Изменение вида тренировки"}
                         </Typography>
                         <Field
-                            name="title"
+                            name="name"
                             label="Название"
                             component={TextField}
                             variant="outlined"
                             fullWidth
+                            error={touched.name && Boolean(errors.name)}
+                            helperText={touched.name && errors.name}
                         />
                         <Field
                             name="price"
-                            label="Стоимость тренировки"
+                            label="Стоимость (оставьте пустым для бесплатной)"
                             component={TextField}
                             type="number"
                             variant="outlined"
                             fullWidth
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            error={touched.price && Boolean(errors.price)}
+                            helperText={touched.price && errors.price}
                         />
                         <FormControlLabel
                             control={
                                 <Field
-                                    name="require_subscription"
+                                    name="is_subscription_only"
                                     type="checkbox"
                                     as={Checkbox}
+                                    checked={values.is_subscription_only}
                                     color="primary"
                                 />
                             }
                             label="Доступна только по подписке"
                         />
-                        <Box display={"flex"} alignItems={"center"} gap={3}>
-                            <Typography variant="body1" gutterBottom>
-                                Выберите цвет:
+                        <FormControlLabel
+                            control={
+                                <Field
+                                    name="is_active"
+                                    type="checkbox"
+                                    as={Checkbox}
+                                    checked={values.is_active}
+                                    color="primary"
+                                />
+                            }
+                            label="Активен"
+                        />
+                        <Box display={"flex"} alignItems={"center"} gap={1} sx={{ mt: 1 }}>
+                            <Typography variant="body1" sx={{minWidth: '120px'}}>
+                                Цвет отметки:
                             </Typography>
-                            <Box display="flex" alignItems="center" gap={2}>
-                                {/* Отображение круга для выбора цвета */}
-                                <Box position={"relative"}>
+                            <Box display="flex" alignItems="center" gap={2} sx={{position: "relative"}}>
                                 <Box
-                                    onClick={() => setColorPickerVisible((prev) => !prev)}// Переключение видимости ColorPicker
+                                    ref={colorIndicatorRef}
+                                    onClick={handleColorIndicatorClick}
                                     sx={{
                                         width: 36,
                                         height: 36,
-                                        backgroundColor: color,
+                                        backgroundColor: selectedColor,
                                         borderRadius: '50%',
-                                        border: '2px solid #ccc',
+                                        border: '1px solid #bdbdbd',
                                         cursor: 'pointer',
+                                        transition: 'box-shadow 0.2s ease-in-out',
+                                        '&:hover': {
+                                            boxShadow: '0 0 6px rgba(0,0,0,0.3)',
+                                        }
                                     }}
                                 />
-                                {colorPickerVisible && (
-                                    <ClickAwayListener onClickAway={handleClickAway}>
-                                        <Box
-                                            sx={{
-                                                position: 'absolute',
-                                                zIndex: 10,
-                                                left: "50px",
-                                                top: "-8px",
-
-                                                backgroundColor: '#fff',
-                                                borderRadius: "15px",
-                                                overflow: 'hidden',
-                                            }}
+                                {openPopper && (
+                                    <Portal>
+                                        <Popper
+                                            open={openPopper}
+                                            anchorEl={anchorEl}
+                                            placement="bottom-start"
+                                            modifiers={[
+                                                {
+                                                    name: 'offset',
+                                                    options: {
+                                                        offset: [0, 8],
+                                                    },
+                                                },
+                                            ]}
+                                            sx={{ zIndex: 1300 }}
                                         >
-                                            <ChromePicker
-                                                color={color}
-                                                onChange={(newColor: ColorResult) => {
-                                                    setColor(newColor.hex)// Передаём новую функцию для Formik
-                                                    setFieldValue('color', newColor.hex);
-                                                }}
-                                            />
-                                        </Box>
-                                    </ClickAwayListener>
-
+                                            <ClickAwayListener onClickAway={handleClickAway}>
+                                                <ChromePicker
+                                                    color={selectedColor}
+                                                    onChange={(newColor: ColorResult) => {
+                                                        setSelectedColor(newColor.hex);
+                                                        setFieldValue('color', newColor.hex);
+                                                    }}
+                                                    disableAlpha={true}
+                                                    styles={{default: {picker: {boxShadow: '0 4px 12px rgba(0,0,0,0.15)', borderRadius: '8px', background: '#fff'}}}}
+                                                />
+                                            </ClickAwayListener>
+                                        </Popper>
+                                    </Portal>
                                 )}
-                                </Box>
                             </Box>
                         </Box>
+                        {touched.color && errors.color && (
+                            <Typography color="error" variant="caption">{errors.color as string}</Typography>
+                        )}
                         <Button
                             type="submit"
                             variant="contained"
                             color="primary"
                             size="large"
-                            disabled={isSubmitting}
+                            disabled={isCreatingLoading || isUpdatingLoading || isSubmitting}
+                            startIcon={(isCreatingLoading || isUpdatingLoading) ? <CircularProgress size={20} color="inherit"/> : null}
+                            sx={{mt: 2}}
                         >
-                            {isCreating ? "Добавить" : "Изменить"} вид тренировки
+                            {isCreating ? "Добавить" : "Изменить"}
                         </Button>
                     </Box>
                 </Form>

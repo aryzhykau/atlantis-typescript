@@ -1,62 +1,65 @@
 import * as yup from "yup";
-import {useClients} from "../hooks/clientManagementHooks.ts";
+
 import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
 import {Field, Form, Formik} from "formik";
 import {Box, Button,  Divider, Typography} from "@mui/material";
 
 
 import {Select,} from "formik-mui";
-import {IClientGet, IClientSubscriptionFormValues} from "../models/client.ts";
-import {IClientFormField} from "../models/fields.ts";
+
+
 import {useSubscriptions} from "../../subscriptions/hooks/useSubscriptions.ts";
 import MenuItem from "@mui/material/MenuItem";
+import {useAddStudentSubscriptionMutation, useGetStudentsQuery} from "../../../store/apis/studentsApi.ts";
+import {IStudentGet, IStudentSubscriptionFormValues} from "../models/student.ts";
+import {useEffect} from "react";
+import { ISubscriptionToStudent } from "../../subscriptions/models/subscription.ts";
 
 
 
 
-const defaultValues : IClientSubscriptionFormValues = {
+const defaultValues : IStudentSubscriptionFormValues = {
     subscription_id: 0,
 
 };
 
 
 interface ClientsFormProps {
-    client: IClientGet;
+    student: IStudentGet;
     onClose: () => void;
 }
 
-export function ClientSubscriptionForm({client, onClose }: ClientsFormProps) {
+export function StudentSubscriptionForm({student, onClose }: ClientsFormProps) {
+    useEffect(()=> {
+        console.log(student)
+    },[])
 
 
 
-    const { addClientSubscription, refetchClients} = useClients()
+    const {addSubscriptionToStudent, isAddSubscriptionToStudentLoading, isAddSubscriptionToStudentError, isAddSubscriptionToStudentSuccess, addSubscriptionToStudentData, addSubscriptionToStudentError} = useSubscriptions();
+    const {refetch} = useGetStudentsQuery();
     const {displaySnackbar} = useSnackbar();
     const { subscriptions } = useSubscriptions();
 
 
-
-    const clientFields : IClientFormField[] = [
-        { name: "subscription_id", label: "Абонемент", validation: yup.number().required("Выберите абонемент") },
-    ];
-
-
-    const validationSchema = yup.object(
-        clientFields.reduce<Record<string, yup.AnySchema>>((acc, field) => {
-            if (field.validation) {
-                acc[field.name] = field.validation;
-            }
-            return acc;
-        }, {})
-    );
+    const validationSchema = yup.object({
+        subscription_id: yup.number().required("Выберите абонемент")
+    });
 
 
     const handleSubmit = async (values: typeof defaultValues, {resetForm}: {resetForm: () => void}) => {
         try {
-            console.log(client.id)
-            if (client.id === null) throw new Error()
-            await addClientSubscription({clientId: client.id, data: values}).unwrap();
-            displaySnackbar(`Абонемент добавлен клиенту ${client.first_name} ${client.last_name}`, "success");
-            refetchClients();
+            console.log(student.id)
+            console.log(values.subscription_id)
+            if (student.id === null) throw new Error()
+            const data: ISubscriptionToStudent = {
+                student_id: student.id,
+                subscription_id: values.subscription_id,
+                is_auto_renew: true
+            }
+            await addSubscriptionToStudent({data}).unwrap();
+            displaySnackbar(`Абонемент добавлен ученику ${student.first_name} ${student.last_name}`, "success");
+            refetch();
             resetForm();
             onClose();
         } catch (error: unknown) {
@@ -98,7 +101,7 @@ export function ClientSubscriptionForm({client, onClose }: ClientsFormProps) {
                             borderRadius={2}
                         >
                             {/* Заголовок */}
-                            <Typography variant="h4" textAlign="center">Выбор абонемента для клиента {client.first_name} {client.last_name}</Typography>
+                            <Typography variant="h4" textAlign="center">Выбор абонемента для клиента {student.first_name} {student.last_name}</Typography>
                             <Divider sx = {{my: "16px"}}/>
                             <Field
                                 component={Select}
@@ -110,7 +113,7 @@ export function ClientSubscriptionForm({client, onClose }: ClientsFormProps) {
                                 label="Абонемент"
                             >
                                 {subscriptions.map(subscription => {
-                                    return <MenuItem key={subscription.id} value={subscription.id}>{subscription.title}</MenuItem>
+                                    return <MenuItem key={subscription.id} value={subscription.id}>{subscription.name}</MenuItem>
                                 })}
                             </Field>
 

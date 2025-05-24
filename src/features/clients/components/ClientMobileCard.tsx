@@ -15,7 +15,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import PhoneIcon from "@mui/icons-material/Phone";
 import EmailIcon from "@mui/icons-material/Email";
 import dayjs from "dayjs";
-import { IClientGet } from "../models/client.ts";
+import { IClientGet } from "../../clients/models/client.ts";
 
 export function ClientMobileCard({
                                      client,

@@ -1,154 +1,145 @@
-import {Box, Modal, Typography} from "@mui/material";
-import {DataGrid, GridRenderCellParams} from "@mui/x-data-grid";
+import {Box, Dialog, DialogContent, Typography, Switch, Chip, CircularProgress, Button} from "@mui/material";
+import {DataGrid, GridRenderCellParams, GridColDef} from "@mui/x-data-grid";
 import TrainingTypeForm from "./TrainingTypeForm.tsx";
 import {useState} from "react";
-import {useTrainingTypes} from "../hooks/useTrainingTypes.ts";
 import {trainingTypeColumns} from "../tables/trainingTypeColumns.tsx";
-import {ITrainingType, ITrainingTypeGet} from "../models/trainingType.ts";
-import Actions from "../../../components/datagrid/Actions.tsx";
+import {ITrainingType, ITrainingTypeUpdate} from "../models/trainingType.ts";
 import CreateEntityButton from "../../../components/buttons/CreateEntityButton.tsx";
-import {TrainingTypeDeleteModal} from "./TrainingTypeDeleteModal.tsx";
 import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
+import {useGetTrainingTypesQuery, useUpdateTrainingTypeMutation} from "../../../store/apis/trainingTypesApi.ts";
 
 
-const style = {
-    position: "absolute",
-    width: "35%",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    bgcolor: "background.paper",
-    p: 4,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-};
-
-const trainingTypeInitialValues = {title: "", price: 0, color: "#FFFFFF", require_subscription: false}
+const trainingTypeInitialValues: Partial<ITrainingType> = {name: "", price: null, color: "#FFFFFF", is_subscription_only: false, is_active: true};
 
 export function TrainingTypesDataView() {
     const [modalOpen, setModalOpen] = useState<boolean>(false);
-    const {trainingTypes, isLoading, deleteTrainingType, refetchTrainingTypes} = useTrainingTypes();
-    const [isDeleting, setIsDeleting] = useState<boolean>(false);
+    const {data: trainingTypesResponse, isLoading: isLoadingTrainingTypes, refetch: refetchTrainingTypes} = useGetTrainingTypesQuery({});
+    const trainingTypes: ITrainingType[] = trainingTypesResponse || [];
+    
+    const [updateTrainingType, {isLoading: isUpdatingStatus}] = useUpdateTrainingTypeMutation();
+    
     const [isCreating, setIsCreating] = useState<boolean>(true);
-    const [trainingTypeId, setTrainingTypeId] = useState<number>(0);
+    const [currentTrainingTypeForForm, setCurrentTrainingTypeForForm] = useState<Partial<ITrainingType> | null>(null);
+    const [currentTrainingTypeForStatusSwitch, setCurrentTrainingTypeForStatusSwitch] = useState<ITrainingType | null>(null);
     const {displaySnackbar} = useSnackbar();
-    const [formInitValues, setFormInitValues] = useState<ITrainingType>(trainingTypeInitialValues)
 
     const handleCreateButtonClick = () => {
-        setFormInitValues(trainingTypeInitialValues)
-        setIsCreating(true)
-        setModalOpen((prev) => !prev)
-    }
-
-    const handleEdit = (row: ITrainingTypeGet) => {
-        setFormInitValues({
-            price: row.price,
-            title: row.title,
-            color: row.color,
-            require_subscription: row.require_subscription,
-        })
-        setTrainingTypeId(row.id);
-        console.log('Edit:', row);
-        setIsCreating(false);
-        setModalOpen((prev) => !prev)
-        // Add your logic for editing here
-    };
-
-    const handleDelete = (id: number) => {
-        console.log('Delete ID:', id);
-        setIsDeleting(true);
-        setTrainingTypeId(id);
+        setCurrentTrainingTypeForForm(trainingTypeInitialValues);
+        setIsCreating(true);
         setModalOpen(true);
+    }
 
-        // Add your logic for deletion here
+    const handleEdit = (trainingType: ITrainingType) => {
+        setCurrentTrainingTypeForForm(trainingType);
+        setIsCreating(false);
+        setModalOpen(true);
     };
-    const handleCancel = () => {
-        setIsDeleting(false);
-        setModalOpen(false);
-    }
-    const handleDeleteConfirm = async () => {
-        try {
-            await deleteTrainingType({trainingTypeId}).unwrap();
-            await refetchTrainingTypes();
-            setIsDeleting(false);
-            setModalOpen(false);
-            displaySnackbar("Yes", "success")
-
-
-        }
-        catch (e: unknown) {
-            console.log(e)
-            displaySnackbar("No", "error")
-
-        }
-
-    }
 
     const onFormClose = () => {
-        setModalOpen(false)
+        setModalOpen(false);
+        setCurrentTrainingTypeForForm(null);
     }
 
-    const extendedTrainingTypeColumns = trainingTypeColumns.map((column) => column);
-    extendedTrainingTypeColumns.push(
+    const handleStatusChange = async (trainingTypeId: number, isActive: boolean) => {
+        try {
+            const payload: ITrainingTypeUpdate = {is_active: isActive};
+            await updateTrainingType({id: trainingTypeId, payload}).unwrap();
+            displaySnackbar("Статус вида тренировки успешно изменен", "success");
+        } catch (error: any) {
+            console.error("Ошибка изменения статуса:", error);
+            const errorDetail = error?.data?.detail || 'Ошибка при изменении статуса';
+            displaySnackbar(String(errorDetail), 'error');
+        } finally {
+            setCurrentTrainingTypeForStatusSwitch(null);
+        }
+    };
+
+    const columns: GridColDef<ITrainingType>[] = [
+        ...trainingTypeColumns,
         {
-            field: 'actions',
-            headerName: 'Действия',
-            width: 100,
+            field: 'is_active',
+            headerName: 'Статус',
+            width: 150,
             sortable: false,
-            renderCell: (params: GridRenderCellParams) => (
-                <Actions params={params} handleDelete={handleDelete} handleEdit={handleEdit} />
+            filterable: false,
+            disableColumnMenu: true,
+            renderCell: (params: GridRenderCellParams<ITrainingType>) => (
+                    <Chip
+                        label={params.value ? "Активен" : "Неактивен"}
+                        color={params.value ? "success" : "default"}
+                        size="small"
+                        variant={params.value ? "filled" : "outlined"}
+                        sx={{ mr: 1 }}
+                    />
+                
             ),
         },
-    )
+        {
+            field: 'editAction',
+            headerName: 'Изменить',
+            width: 100,
+            align: 'center',
+            headerAlign: 'center',
+            sortable: false,
+            filterable: false,
+            disableColumnMenu: true,
+            renderCell: (params: GridRenderCellParams<ITrainingType>) => (
+                <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleEdit(params.row)}
+                >
+                    Edit
+                </Button>
+            ),
+        }
+    ];
 
     return (
-        <>
-            <Box width={"49%"}>
-                <Box display={"flex"} justifyContent={"flex-start"} alignItems={"center"} flexDirection={"column"}>
-
-                    <Box mb={6} display={"flex"} justifyContent={"space-between"} alignItems={"center"} sx={{ width: '100%' }}>
-                        <Typography variant={"h5"}>Виды тренировок</Typography>
-                        <CreateEntityButton onClick={handleCreateButtonClick}>
-                            Добавить вид тренировки
-                        </CreateEntityButton>
-                    </Box>
-                    <DataGrid
-                        rows={trainingTypes}
-                        columns={extendedTrainingTypeColumns}
-                        loading={isLoading}
-
-                        pageSizeOptions={[10]}
-                        initialState={{
-                            pagination: {
-                                paginationModel: {
-                                    pageSize: 10,
-                                },
-                            },
-                        }}
-                        disableRowSelectionOnClick
-                        sx={{
-
-                            width: '100%',
-                            '& .MuiDataGrid-row:hover': {
-                                backgroundColor: (theme) => theme.palette.background.paper,
-                            },
-                        }}
-                        getRowId={(row) => row.id}
-                    />
+        <Box width="49%" display="flex" flexDirection="column">
+            <Box display={"flex"} justifyContent={"flex-start"} flexDirection={"column"} sx={{ width: '100%' }}>
+                <Box mb={2} display={"flex"} justifyContent={"space-between"} alignItems={"center"} sx={{ width: '100%' }}>
+                    <Typography variant={"h5"}>Виды тренировок</Typography>
+                    <CreateEntityButton onClick={handleCreateButtonClick}>
+                        Добавить вид тренировки
+                    </CreateEntityButton>
                 </Box>
+                <DataGrid<ITrainingType>
+                    rows={trainingTypes}
+                    columns={columns}
+                    loading={isLoadingTrainingTypes || isUpdatingStatus}
+                    pageSizeOptions={[10, 25, 50]}
+                    initialState={{
+                        pagination: {
+                            paginationModel: {
+                                pageSize: 10,
+                            },
+                        },
+                    }}
+                    disableRowSelectionOnClick
+                    autoHeight
+                    sx={{
+                        width: '100%',
+                        borderRadius: 1,
+                        '& .MuiDataGrid-row:hover': {
+                            backgroundColor: (theme) => theme.palette.background.paper,
+                        },
+                    }}
+                    getRowId={(row) => row.id}
+                />
             </Box>
-            <Modal
-                open={modalOpen}
-                onClose={() => handleCancel()}
-                aria-labelledby="modal-title"
-                aria-describedby="modal-description"
-            >
-                <Box sx={style}>
-                    {isDeleting ? (<TrainingTypeDeleteModal onCancel={handleCancel} onConfirm={handleDeleteConfirm}/>) :
-                        (<TrainingTypeForm id={trainingTypeId} initialValues={formInitValues} onClose={onFormClose} isCreating={isCreating} />)}
-                </Box>
-            </Modal>
-    </>
+            <Dialog open={modalOpen} onClose={onFormClose} maxWidth="sm" fullWidth PaperProps={{ sx: { m: { xs: 1, sm: 2 }, borderRadius: 2 } }}>
+                <DialogContent sx={{ p: 0, '&:first-of-type': { pt: 0 } }}>
+                    {currentTrainingTypeForForm && (
+                         <TrainingTypeForm
+                            trainingTypeId={currentTrainingTypeForForm.id}
+                            initialValues={currentTrainingTypeForForm}
+                            onClose={onFormClose}
+                            isCreating={isCreating}
+                         />
+                    )}
+                </DialogContent>
+            </Dialog>
+        </Box>
     )
 }

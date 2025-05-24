@@ -2,7 +2,7 @@ import {GridRenderCellParams} from "@mui/x-data-grid";
 import {useState} from "react";
 import {Box, IconButton, Modal, Typography} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import {ClientSubscriptionForm} from "./ClientSubscriptionForm.tsx";
+import {StudentSubscriptionForm} from "./StudentSubscriptionForm.tsx";
 import dayjs from "dayjs";
 
 
@@ -41,7 +41,7 @@ const SubscriptionsCell = ({params} : {params: GridRenderCellParams}) => {
         </Box>
             <Modal open={modalOpen} onClose={handleModalClose}>
                 <Box sx={style}>
-                    <ClientSubscriptionForm client={params.row} onClose={handleModalClose} ></ClientSubscriptionForm>
+                    <StudentSubscriptionForm student={params.row} onClose={handleModalClose} ></StudentSubscriptionForm>
                 </Box>
             </Modal>
         </>

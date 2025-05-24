@@ -18,23 +18,20 @@ export const TrainingsApi = baseApi.injectEndpoints({
             transformResponse: (response: ITrainingGet[]) => {
                 console.log(response);
                 const newResp = response.map((training) => {
-                    const formattedTraining = {
+                    return {
                         ...training,
                         created_at: dayjs(training.created_at).tz(dayjs.tz.guess()).format(),
                         training_datetime: dayjs(training.training_datetime).tz(dayjs.tz.guess()).format(),
-                        clients: training.clients.map(client => {
-                            const formattedClient = {
-                                ...client,
-                                client: {
-                                    ...client.client,
-                                    birth_date: dayjs(client.client.birth_date).tz(dayjs.tz.guess()).format()
+                        students: training.students.map(student => {
+                            return {
+                                ...student,
+                                student: {
+                                    ...student.student,
+                                    birth_date: dayjs(student.student.birth_date).tz(dayjs.tz.guess()).format()
                                 }
                             }
-                            return formattedClient
                         })
                     };
-
-                    return formattedTraining;
                 });
                 console.log(newResp);
                 return newResp;

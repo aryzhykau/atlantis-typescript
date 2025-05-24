@@ -6,18 +6,18 @@ import {Button, Box, Typography, Divider, IconButton} from '@mui/material';
 import TextField from '@mui/material/TextField';
 import RemoveCircleOutlinedIcon from '@mui/icons-material/RemoveCircleOutlined';
 import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
-import {ITraining, ITrainingClient} from "../models/training.ts";
+import {ITraining, ITrainingStudent} from "../models/training.ts";
 import {useTrainers} from "../../trainers/hooks/trainerManagementHooks.ts";
-import {useTrainingTypes} from "../../trainingTypes/hooks/useTrainingTypes.ts";
+import {useTrainingTypes} from "../../training-types/hooks/useTrainingTypes.ts";
 import {DesktopDatePicker, DesktopTimePicker} from "formik-mui-x-date-pickers";
 import AddIcon from "@mui/icons-material/Add";
 import MenuItem from "@mui/material/MenuItem";
-import {useClients} from "../../clients/hooks/clientManagementHooks.ts";
-import {IClientGet} from "../../clients/models/client.ts";
 import {useTrainings} from "../hooks/useTrainings.ts";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import {useGetStudentsQuery} from "../../../store/apis/studentsApi.ts";
+import {IStudentGet} from "../../students/models/student.ts";
 
 
 
@@ -41,10 +41,10 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
 
     // const {createTraining, refetchTrainings} = useTrainings();
     const {displaySnackbar} = useSnackbar();
-    // const {clients} = useClients();
+    // const {students} = useClients();
     const {trainers} = useTrainers();
     const {trainingTypes} = useTrainingTypes();
-    const {clients} = useClients();
+    const {data: students} = useGetStudentsQuery();
     const [subscriptionRequired, setSubscriptionRequired] = useState(false);
     const {createTraining, refetchTrainings} = useTrainings(trainerId, startWeek, endWeek);
 
@@ -52,14 +52,15 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
         trainer_id: Yup.string().required('Тренер для тренировки не выбран'),
         training_date: Yup.date().required('Date is required'),
         training_time: Yup.date().required('Time is required'),
-        clients: Yup.array().of(
+        students: Yup.array().of(
             Yup.object().shape({
-                client_id: Yup.number().required('Клиент обязателен').test(
+                student_id: Yup.number().required('Клиент обязателен').test(
                     'requireSubscription',
                     'Тренировка требует подписки, либо наличия пробного занятия, уберите данного клиента'
                     , (value: number) => {
                         if (!value) return true;
-                        return !(clients.find(client => client.id === value)?.active_subscription === null && !clients.find(client => client.id === value)?.has_trial && subscriptionRequired);
+                        if (!students) return true;
+                        return !(students.find(student => student.id === value)?.active_subscription === null && !students.find(student => student.id === value)?.has_trial && subscriptionRequired);
                     }
                 ),
                 trial_training: Yup.boolean()
@@ -68,9 +69,9 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
         ).required().min(1, 'Вы должны добавить хотя бы одного клиента').test(
             'unique',
             'Клиенты не должны повторяться',
-            (value: ITrainingClient[]): boolean => {
+            (value: ITrainingStudent[]): boolean => {
                 if (!value) return true;
-                const combinedKeys : string[] = value.map((client) => `${client.client_id}-${client.trial_training}`);
+                const combinedKeys : string[] = value.map((student) => `${student.student_id}-${student.trial_training}`);
                 const uniqueKeys = new Set(combinedKeys);
                 return combinedKeys.length === uniqueKeys.size
             }),
@@ -82,6 +83,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
         try {
             console.log(values)
             const newValues = {...values, training_date: dayjs(values.training_date).tz(dayjs.tz.guess()).format()}
+            console.log(newValues)
             await createTraining({trainingData: newValues,}).unwrap();
             displaySnackbar("Тренировка создана успешно", "success");
             refetchTrainings()
@@ -179,7 +181,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
                             <Divider/>
                             <Box display={"flex"} flexDirection={"column"}>
                                 <FieldArray
-                                    name="clients"
+                                    name="students"
                                     render={(arrayHelpers) => (
                                         <Box display="flex" flexDirection="column" gap={2}>
                                             <Box display="flex" alignItems="center" gap={2} flexDirection="row">
@@ -187,8 +189,8 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
                                                 <IconButton
                                                     color="primary"
                                                     onClick={() => {
-                                                        arrayHelpers.push<ITrainingClient>({
-                                                         client_id: null,
+                                                        arrayHelpers.push<ITrainingStudent>({
+                                                         student_id: null,
                                                          trial_training: false,
                                                         })
                                                     }
@@ -198,7 +200,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
                                                 </IconButton>
                                             </Box>
                                             {/* Цикл для отображения каждого клиента */}
-                                            {arrayHelpers.form.values.clients?.map((_: ITrainingClient, index: number) => (
+                                            {arrayHelpers.form.values.students?.map((_: ITrainingStudent, index: number) => (
                                                 <Box
                                                     key={index}
                                                     display="flex"
@@ -207,31 +209,31 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
 
                                                 >
                                                     <Field
-                                                        name={`clients.[${index}].client_id`}
+                                                        name={`students.[${index}].student_id`}
                                                         component={Autocomplete}
-                                                        options={subscriptionRequired ? clients.filter(client => (client.active_subscription !== null || client.has_trial)) : clients}
-                                                        value={clients.find((client) => client.id === values.clients[index]?.client_id) || null}
+                                                        options={subscriptionRequired ? students?.filter(student => (student.active_subscription !== null || student.has_trial)) : students}
+                                                        value={students?.find((student) => student.id === values.students[index]?.student_id) || null}
 
-                                                        getOptionLabel={(option: IClientGet) => option.first_name + " " + option.last_name}
+                                                        getOptionLabel={(option: IStudentGet) => option.first_name + " " + option.last_name}
                                                         style={{ width: 300 }}
-                                                        onChange={(_: React.SyntheticEvent, value: IClientGet | null) => {
-                                                            setFieldValue(`clients.[${index}].client_id`, value ? value.id : '').then();
+                                                        onChange={(_: React.SyntheticEvent, value: IStudentGet | null) => {
+                                                            setFieldValue(`students.[${index}].student_id`, value ? value.id : '').then();
                                                             if(value?.has_trial){
-                                                                setFieldValue(`clients.[${index}].trial_training`, true).then();
+                                                                setFieldValue(`students.[${index}].trial_training`, true).then();
                                                             }
                                                         }}
 
                                                         renderInput={(params: AutocompleteRenderInputParams) => (
                                                             <TextField
                                                                 {...params}
-                                                                name={`clients.[${index}].client_id`}
+                                                                name={`students.[${index}].student_id`}
                                                                 error={
-                                                                    getIn(touched, `clients.${index}.client_id`) &&
-                                                                    !!getIn(errors, `clients.${index}.client_id`)
+                                                                    getIn(touched, `students.${index}.student_id`) &&
+                                                                    !!getIn(errors, `students.${index}.student_id`)
                                                                 }
                                                                 helperText={
-                                                                    getIn(touched, `clients.${index}.client_id`) &&
-                                                                    getIn(errors, `clients.${index}.client_id`)
+                                                                    getIn(touched, `students.${index}.student_id`) &&
+                                                                    getIn(errors, `students.${index}.student_id`)
                                                                 }
 
                                                                 label="Выбор клиента"
@@ -242,11 +244,11 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
 
 
                                                    <Box width={"50%"} display={"flex"} justifyContent={"space-between"}>
-                                                       {clients.find(client => client.id === values.clients[index].client_id)?.has_trial ? <Field
+                                                       {students?.find(student => student.id === values.students[index].student_id)?.has_trial ? <Field
                                                             component={CheckboxWithLabel}
                                                             Label={{label: "Пробное занятие?"}}
                                                             type="checkbox"
-                                                            name={`clients.[${index}].trial_training`}
+                                                            name={`students.[${index}].trial_training`}
 
                                                         />: <></>}
 
@@ -260,7 +262,7 @@ const TrainingForm: React.FC<TrainingFormProps> = ({initialValues, onClose, trai
                                                    </Box>
                                                 </Box>
                                             ))}
-                                            {typeof errors.clients === 'string'? <Typography color={"error"} variant={"caption"}>{errors.clients}</Typography> : null }
+                                            {typeof errors.students === 'string'? <Typography color={"error"} variant={"caption"}>{errors.students}</Typography> : null }
                                         </Box>
 
                                     )}

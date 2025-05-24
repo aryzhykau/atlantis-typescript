@@ -1,39 +1,145 @@
-import {ISubscription, ISubscriptionGet} from "../../features/subscriptions/models/subscription.ts";
-import {baseApi} from "./api.ts";
+import {
+    ISubscriptionListResponse,
+    ISubscriptionCreatePayload,
+    ISubscriptionResponse,
+    ISubscriptionUpdatePayload,
+    IStudentSubscriptionCreatePayload,
+    IStudentSubscriptionResponse,
+    IStudentSubscriptionFreezePayload,
+    IStudentSubscriptionAutoRenewalUpdatePayload
+} from "../../features/subscriptions/models/subscription.ts";
+import { baseApi } from "./api.ts";
 
 export const subscriptionsApi = baseApi.injectEndpoints({
-
     endpoints: (builder) => ({
-        getSubscriptions: builder.query<ISubscriptionGet[], void>({
-            query: () => ({
-                url: '/subscriptions',
-                method: 'GET',
-            }),
+        getSubscriptions: builder.query<ISubscriptionListResponse, void>({
+            query: () => '/subscriptions',
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.items.map(({ id }) => ({ type: 'Subscription' as const, id })),
+                        { type: 'Subscription', id: 'LIST' },
+                    ]
+                    : [{ type: 'Subscription', id: 'LIST' }],
         }),
-        createSubscription: builder.mutation<ISubscriptionGet, {subscriptionData: ISubscription;}>({
-            query: ({subscriptionData}) =>  ({
+        getSubscriptionById: builder.query<ISubscriptionResponse, number>({
+            query: (id) => `/subscriptions/${id}`,
+            providesTags: (result, error, id) => [{ type: 'Subscription', id }],
+        }),
+        createSubscription: builder.mutation<ISubscriptionResponse, ISubscriptionCreatePayload>({
+            query: (payload) => ({
                 url: '/subscriptions',
                 method: 'POST',
-                body: subscriptionData,
-            })
-        }),
-
-        updateSubscription: builder.mutation<ISubscriptionGet, { subscriptionId: number; subscriptionData: ISubscription;}>({
-            query: ({subscriptionId, subscriptionData}) => ({
-                url: `/subscriptions/${subscriptionId}`,
-                method: 'PUT',
-                body: subscriptionData,
+                body: payload,
             }),
+            invalidatesTags: [{ type: 'Subscription', id: 'LIST' }],
         }),
-
-        deleteSubscription: builder.mutation<void, { subscriptionId: number;}>({
-            query: ({subscriptionId}) => ({
+        updateSubscription: builder.mutation<ISubscriptionResponse, { id: number; payload: ISubscriptionUpdatePayload }>({
+            query: ({ id, payload }) => ({
+                url: `/subscriptions/${id}`,
+                method: 'PATCH',
+                body: payload,
+            }),
+            invalidatesTags: (result, error, { id }) => [{ type: 'Subscription', id }, { type: 'Subscription', id: 'LIST' }],
+        }),
+        deleteSubscription: builder.mutation<void, { subscriptionId: number }>({
+            query: ({ subscriptionId }) => ({
                 url: `/subscriptions/${subscriptionId}`,
                 method: 'DELETE',
             }),
+            invalidatesTags: (result, error, { subscriptionId }) => [{ type: 'Subscription', id: subscriptionId }, { type: 'Subscription', id: 'LIST' }],
         }),
-
+        getStudentSubscriptions: builder.query<IStudentSubscriptionResponse[], { studentId: number }>({
+            query: ({ studentId }) => `/subscriptions/student/${studentId}`,
+            providesTags: (result, error, { studentId }) => 
+                result
+                    ? [
+                        ...result.map(({ id }) => ({ type: 'StudentSubscriptions' as const, id: id.toString() + '-student-' + studentId.toString() })),
+                        { type: 'StudentSubscriptions', id: 'LIST_FOR_STUDENT_' + studentId },
+                        { type: 'StudentSubscriptions', id: 'LIST' }
+                      ]
+                    : [{ type: 'StudentSubscriptions', id: 'LIST_FOR_STUDENT_' + studentId }, { type: 'StudentSubscriptions', id: 'LIST' }],
+        }),
+        addSubscriptionToStudent: builder.mutation<IStudentSubscriptionResponse, IStudentSubscriptionCreatePayload>({
+            query: (payload) => ({
+                url: '/subscriptions/student',
+                method: 'POST',
+                body: payload,
+            }),
+            invalidatesTags: (result) => 
+                result 
+                    ? [
+                        { type: 'StudentSubscriptions', id: 'LIST_FOR_STUDENT_' + result.student_id }, 
+                        { type: 'StudentSubscriptions', id: 'LIST' },
+                        { type: 'Students', id: result.student_id },
+                        { type: 'Client', id: 'LIST' }
+                      ]
+                    : [],
+        }),
+        freezeStudentSubscription: builder.mutation<IStudentSubscriptionResponse, { studentSubscriptionId: number; payload: IStudentSubscriptionFreezePayload }>({
+            query: ({ studentSubscriptionId, payload }) => ({
+                url: `/subscriptions/student/${studentSubscriptionId}/freeze`,
+                method: 'POST',
+                params: {
+                    freeze_start_date: payload.freeze_start_date,
+                    freeze_duration_days: payload.freeze_duration_days,
+                },
+            }),
+            invalidatesTags: (result, error, { studentSubscriptionId }) => 
+                result 
+                ? [
+                    { type: 'StudentSubscriptions', id: studentSubscriptionId.toString() + '-student-' + result.student_id.toString() },
+                    { type: 'StudentSubscriptions', id: 'LIST_FOR_STUDENT_' + result.student_id },
+                    { type: 'StudentSubscriptions', id: 'LIST' },
+                    { type: 'Students', id: result.student_id },
+                  ]
+                : [],
+        }),
+        unfreezeStudentSubscription: builder.mutation<IStudentSubscriptionResponse, { studentSubscriptionId: number; studentId: number }>({
+            query: ({ studentSubscriptionId }) => ({
+                url: `/subscriptions/student/${studentSubscriptionId}/unfreeze`,
+                method: 'POST',
+            }),
+            invalidatesTags: (result, error, { studentSubscriptionId, studentId }) => 
+                result
+                ? [
+                    { type: 'StudentSubscriptions', id: studentSubscriptionId.toString() + '-student-' + studentId.toString() },
+                    { type: 'StudentSubscriptions', id: 'LIST_FOR_STUDENT_' + studentId },
+                    { type: 'StudentSubscriptions', id: 'LIST' },
+                    { type: 'Students', id: studentId },
+                  ]
+                : [],
+        }),
+        updateStudentSubscriptionAutoRenewal: builder.mutation<IStudentSubscriptionResponse, { studentSubscriptionId: number; payload: IStudentSubscriptionAutoRenewalUpdatePayload }>({
+            query: ({ studentSubscriptionId, payload }) => ({
+                url: `/subscriptions/student/${studentSubscriptionId}/auto-renewal`,
+                method: 'PATCH',
+                body: payload,
+            }),
+            invalidatesTags: (result, error, { studentSubscriptionId }) => 
+                result 
+                ? [
+                    { type: 'StudentSubscriptions', id: studentSubscriptionId.toString() + '-student-' + result.student_id.toString() },
+                    { type: 'StudentSubscriptions', id: 'LIST_FOR_STUDENT_' + result.student_id },
+                    { type: 'StudentSubscriptions', id: 'LIST' },
+                  ]
+                : [],
+        }),
     }),
 });
 
-export const { useCreateSubscriptionMutation, useGetSubscriptionsQuery, useUpdateSubscriptionMutation, useDeleteSubscriptionMutation } = subscriptionsApi;
+export const {
+    useGetSubscriptionsQuery,
+    useLazyGetSubscriptionsQuery,
+    useGetSubscriptionByIdQuery,
+    useLazyGetSubscriptionByIdQuery,
+    useCreateSubscriptionMutation,
+    useUpdateSubscriptionMutation,
+    useDeleteSubscriptionMutation,
+    useGetStudentSubscriptionsQuery,
+    useLazyGetStudentSubscriptionsQuery,
+    useAddSubscriptionToStudentMutation,
+    useFreezeStudentSubscriptionMutation,
+    useUnfreezeStudentSubscriptionMutation,
+    useUpdateStudentSubscriptionAutoRenewalMutation,
+} = subscriptionsApi;
