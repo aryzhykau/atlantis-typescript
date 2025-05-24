@@ -2,6 +2,7 @@ import React from 'react';
 import { Paper, Typography, Box } from '@mui/material';
 import dayjs from 'dayjs'; // Нужен для hexToRgb, если он останется здесь
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
+// import AccessTimeIcon from '@mui/icons-material/AccessTime'; // Убираем иконку времени
 import { CalendarEvent, isRealTraining, isTrainingTemplate } from './CalendarShell'; // Предполагаем, что CalendarEvent останется в CalendarShell или будет вынесен
 // import { TrainingTemplate } from '../models/trainingTemplate'; // Если CalendarEvent не будет импортироваться
 // import { RealTraining } from '../models/realTraining'; // Если CalendarEvent не будет импортироваться
@@ -60,6 +61,8 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ event }) => {
   // TODO: Добавить отображение тренера, времени и другую информацию
   // TODO: Реализовать свернутое состояние для "стопки"
 
+  // const displayTime = event.start_time.substring(0, 5); // HH:MM - Убираем
+
   return (
     <Paper 
       elevation={1} 
@@ -83,20 +86,20 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ event }) => {
       }}
     >
       <Box display="flex" justifyContent="space-between" flexDirection={"column"}>
-      <Typography variant="caption" component="div" sx={{ fontWeight: 'bold', color: 'inherit', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {title}
-      </Typography>
-      <Box sx={{ mt: 0.5 }}>
-        <Typography variant="caption" component="div" sx={{ fontSize: '0.7rem', color: 'inherit', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {trainerName}
+        <Typography variant="caption" component="div" sx={{ fontWeight: 'bold', color: 'inherit', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {title}
         </Typography>
-        {studentCount > 0 && (
-          <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '0.7rem', color: 'inherit', mt: 0.25 }}>
-            <PeopleAltOutlinedIcon sx={{ fontSize: '0.85rem', mr: 0.5, color: 'inherit' }} />
-            {studentCount}
-          </Box>
-        )}
-      </Box>
+        <Box sx={{ mt: 0.5 }}>
+          <Typography variant="caption" component="div" sx={{ fontSize: '0.7rem', color: 'inherit', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {trainerName}
+          </Typography>
+          {studentCount > 0 && (
+            <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '0.7rem', color: 'inherit', mt: 0.25 }}>
+              <PeopleAltOutlinedIcon sx={{ fontSize: '0.85rem', mr: 0.5, color: 'inherit' }} />
+              {studentCount}
+            </Box>
+          )}
+        </Box>
       </Box>
     </Paper>
   );
