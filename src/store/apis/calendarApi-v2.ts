@@ -16,6 +16,9 @@ import {
   RealTrainingCreate,
   RealTrainingUpdate,
   GetRealTrainingsParams,
+  AddStudentToRealTrainingPayload,
+  UpdateStudentAttendancePayload,
+  RealTrainingStudent,
 } from '../../features/calendar-v2/models/realTraining';
 
 // Определяем типы тегов как строки, соответствующие тем, что в baseApi.tagTypes
@@ -183,6 +186,59 @@ export const calendarApiV2 = baseApi.injectEndpoints({
       ],
     }),
 
+    // Эндпоинт для генерации тренировок на следующую неделю
+    generateNextWeekTrainings: builder.mutation<{ message: string; created_trainings_count: number }, void>({
+      query: () => ({
+        url: 'real-trainings/generate-next-week',
+        method: 'POST',
+      }),
+      invalidatesTags: [{ type: REAL_TRAINING_TAG, id: 'LIST' }],
+    }),
+
+    // Эндпоинты для управления студентами на реальной тренировке
+    addStudentToRealTraining: builder.mutation<RealTraining, { trainingId: number; payload: AddStudentToRealTrainingPayload }>({
+      query: ({ trainingId, payload }) => ({
+        url: `real-trainings/${trainingId}/students`,
+        method: 'POST',
+        body: payload,
+      }),
+      invalidatesTags: (result, error, { trainingId }) => [{ type: REAL_TRAINING_TAG, id: trainingId }],
+    }),
+    removeStudentFromRealTraining: builder.mutation<{ success: boolean }, { trainingId: number; studentId: number; removeFuture?: boolean }>({
+      query: ({ trainingId, studentId, removeFuture }) => ({
+        url: `real-trainings/${trainingId}/students/${studentId}`,
+        method: 'DELETE',
+        params: removeFuture ? { remove_future: true } : {},
+      }),
+      invalidatesTags: (result, error, { trainingId }) => [{ type: REAL_TRAINING_TAG, id: trainingId }],
+    }),
+    updateStudentAttendance: builder.mutation<RealTrainingStudent, { trainingId: number; studentId: number; payload: UpdateStudentAttendancePayload }>({
+      query: ({ trainingId, studentId, payload }) => ({
+        url: `real-trainings/${trainingId}/students/${studentId}/attendance`,
+        method: 'PUT',
+        body: payload,
+      }),
+      invalidatesTags: (result, error, { trainingId }) => [{ type: REAL_TRAINING_TAG, id: trainingId }],
+    }),
+    cancelStudentFromTraining: builder.mutation<{ success: boolean }, { trainingId: number; studentId: number }>({
+      query: ({ trainingId, studentId }) => ({
+        url: `real-trainings/${trainingId}/students/${studentId}/cancel`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, { trainingId }) => [{ type: REAL_TRAINING_TAG, id: trainingId }],
+    }),
+
+    // Эндпоинт для полной отмены реальной тренировки администратором
+    cancelRealTraining: builder.mutation<RealTraining, { trainingId: number; cancellationReason?: string }>({
+      query: ({ trainingId, cancellationReason }) => ({
+        url: `real-trainings/${trainingId}/cancel`,
+        method: 'POST',
+        // API ожидает тело запроса для отмены, даже если оно пустое для POST
+        body: cancellationReason ? { cancellation_reason: cancellationReason } : {},
+      }),
+      invalidatesTags: (result, error, { trainingId }) => [{ type: REAL_TRAINING_TAG, id: trainingId }],
+    }),
+
     // TODO: Добавить остальные эндпоинты для Real Trainings:
     // - generateNextWeek
     // - addStudentToRealTraining
@@ -210,6 +266,12 @@ export const {
   useCreateRealTrainingMutation,
   useUpdateRealTrainingMutation,
   useDeleteRealTrainingMutation,
+  useGenerateNextWeekTrainingsMutation,
+  useAddStudentToRealTrainingMutation,
+  useRemoveStudentFromRealTrainingMutation,
+  useUpdateStudentAttendanceMutation,
+  useCancelStudentFromTrainingMutation,
+  useCancelRealTrainingMutation,
   // TODO: Экспортировать хуки для других эндпоинтов
 } = calendarApiV2;
 
