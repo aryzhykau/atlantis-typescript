@@ -47,11 +47,6 @@ const CalendarControlsHeader: React.FC<CalendarControlsHeaderProps> = ({
   return (
     <Paper elevation={1} sx={{ p: 1, mb: 1 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Box>
-          <Typography variant="h5" component="h1">
-            Календарь v2
-          </Typography>
-        </Box>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={viewMode} onChange={onViewModeChange} aria-label="Режимы календаря">
             <Tab label="Шаблон расписания" value="scheduleTemplate" />

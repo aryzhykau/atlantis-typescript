@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { Box, Typography, Paper, Grid, useTheme } from '@mui/material';
 import dayjs, { Dayjs } from 'dayjs';
 import { CalendarViewMode } from './CalendarV2Page'; // Предполагается, что типы там же
@@ -6,6 +6,7 @@ import { TrainingTemplate } from '../models/trainingTemplate';
 import { RealTraining } from '../models/realTraining';
 import TrainingCard from './TrainingCard'; // Импортируем TrainingCard
 import TrainingTemplateForm from './TrainingTemplateForm'; // Импорт формы
+import TrainingsStackPopover from './TrainingsStackPopover'; // Импортируем Popover
 
 // Определим объединенный тип для тренировок для удобства
 export type CalendarEvent = TrainingTemplate | RealTraining;
@@ -65,8 +66,7 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
     return actualData || [];
   }, [viewMode, templatesData, actualData]);
 
-  // TODO: Исправить типизацию и раскомментировать фильтрацию и отображение событий
-  const getEventsForSlot = (day: Dayjs, time: string): CalendarEvent[] => {
+  const getEventsForSlot = useCallback((day: Dayjs, time: string): CalendarEvent[] => {
     const slotHour = parseInt(time.split(':')[0]);
     const slotMinute = parseInt(time.split(':')[1]);
 
@@ -93,24 +93,58 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
       });
     }
     return filteredEvents;
-  };
+  }, [eventsToDisplay, viewMode]);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedSlotInfo, setSelectedSlotInfo] = useState<SelectedSlotInfo | null>(null);
 
-  const handleSlotClick = (day: Dayjs, time: string, eventsInSlot: CalendarEvent[]) => {
-    if (viewMode === 'scheduleTemplate' && eventsInSlot.length === 0) {
+  // Состояния для Popover
+  const [popoverAnchorEl, setPopoverAnchorEl] = useState<HTMLElement | null>(null);
+  const [popoverEvents, setPopoverEvents] = useState<CalendarEvent[]>([]);
+  const [popoverSelectedDate, setPopoverSelectedDate] = useState<Dayjs | null>(null);
+  const [popoverSelectedTime, setPopoverSelectedTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (popoverSelectedDate && popoverSelectedTime) {
+      const currentSlotEvents = getEventsForSlot(popoverSelectedDate, popoverSelectedTime);
+      if (JSON.stringify(popoverEvents) !== JSON.stringify(currentSlotEvents)) {
+        console.log('[CalendarShell] Base data or selected slot changed. Re-setting popoverEvents for slot:', popoverSelectedDate.format('YYYY-MM-DD'), popoverSelectedTime, currentSlotEvents);
+        setPopoverEvents(currentSlotEvents);
+      }
+    } else {
+      if (popoverEvents.length > 0) {
+        console.log('[CalendarShell] No selected slot for popover. Clearing popoverEvents.');
+        setPopoverEvents([]);
+      }
+    }
+  }, [eventsToDisplay, popoverSelectedDate, popoverSelectedTime, getEventsForSlot, popoverEvents]);
+
+  const handleSlotClick = (event: React.MouseEvent<HTMLElement>, day: Dayjs, time: string, eventsInSlot: CalendarEvent[]) => {
+    console.log('[CalendarShell] handleSlotClick - eventsInSlot:', eventsInSlot);
+    if (eventsInSlot.length > 0) {
+      setPopoverAnchorEl(event.currentTarget);
+      setPopoverSelectedDate(day);
+      setPopoverSelectedTime(time);
+      if (JSON.stringify(popoverEvents) !== JSON.stringify(eventsInSlot) || !popoverAnchorEl) {
+        setPopoverEvents(eventsInSlot);
+      }
+    } else if (viewMode === 'scheduleTemplate' && eventsInSlot.length === 0) {
       setSelectedSlotInfo({ date: day, time });
       setIsFormOpen(true);
-    } else if (eventsInSlot.length > 0) {
-      console.log(`Slot clicked: Day - ${day.format('YYYY-MM-DD')}, Time - ${time}`);
-      console.log('Events in this slot:', eventsInSlot);
-      // TODO: Open Popover with TrainingCards
     } else {
       console.log(`Slot clicked: Day - ${day.format('YYYY-MM-DD')}, Time - ${time}`);
       console.log('This slot is empty (not in template mode or not empty for template mode).');
-      // TODO: Open Modal for creating new REAL event (depends on viewMode)
     }
+  };
+
+  const handleClosePopover = () => {
+    setPopoverAnchorEl(null);
+  };
+
+  const handleOpenFormFromPopover = (date: Dayjs, time: string) => {
+    setSelectedSlotInfo({ date, time });
+    setIsFormOpen(true);
+    handleClosePopover(); // Закрываем поповер после открытия формы
   };
 
   const handleCloseForm = () => {
@@ -121,14 +155,24 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
   const slotGap = theme.spacing(0.10); // Было 0.5, уменьшаем в два раза
 
   return (
-    <Paper elevation={3} sx={{ p: 2, mt: 2, overflow: 'auto' }}>
+    <Paper 
+      elevation={3} 
+      sx={{
+        p: 2, 
+        mt: 2, 
+        overflow: 'auto', // Это уже здесь и включает вертикальную прокрутку, если контент превышает размеры
+        maxHeight: '75vh', // Ограничиваем максимальную высоту, чтобы появилась прокрутка
+        display: 'flex', // Добавляем flex, чтобы дочерний Box мог правильно растягиваться или сжиматься
+        flexDirection: 'column' // Направление flex для Paper
+      }}
+    >
       {/* <Typography>Current Date: {currentDate.format('YYYY-MM-DD')}</Typography>
       <Typography>View Mode: {viewMode}</Typography> */}
       {isLoading && <Typography>Загрузка данных...</Typography>}
       {error && <Typography color="error">Ошибка: {error?.message || JSON.stringify(error)}</Typography>}
       
       {/* Контейнер для всей сетки, включая заголовки дней и временные слоты */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: slotGap }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: slotGap, flexGrow: 1 /* Позволяем этому Box расти */ }}>
         {/* Заголовок с днями недели */}
         <Grid container spacing={0} sx={{ columnGap: slotGap }}>
           <Grid item xs={1} sx={{ textAlign: 'center', p: 1 }}> 
@@ -156,7 +200,7 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                   xs 
                   key={`${day.toString()}-${time}`}
                   sx={{
-                    minHeight: '60px',
+                    minHeight: '80px',
                     backgroundColor: theme.palette.background.paper, // Фон для слотов как у Paper
                     // borderRadius: theme.shape.borderRadius / 2, // Убираем скругление
                     p: 0.5, // Внутренний отступ для full карточки
@@ -171,11 +215,11 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                       duration: theme.transitions.duration.short,
                     }),
                     '&:hover': {
-                      backgroundColor: theme.palette.secondary.light, // Мягкий цвет при наведении
-                      boxShadow: `0 0 0 1px ${theme.palette.secondary.main}`,
+                      backgroundColor: theme.palette.background.default, // Мягкий цвет при наведении
+                      boxShadow: `0 0 0 1px ${theme.palette.primary.main}`,
                     }
                   }}
-                  onClick={() => handleSlotClick(day, time, slotEvents)}
+                  onClick={(e) => handleSlotClick(e, day, time, slotEvents)}
                 >
                   {/* Логика отображения карточек для стопки */}
                   {slotEvents.length === 1 && (
@@ -183,25 +227,34 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                   )}
                   {slotEvents.length > 1 && (
                     <>
-                      {slotEvents.slice(0, 3).map((eventItem, index) => (
-                        <Box 
-                          key={eventItem.id} 
-                          sx={{
-                            position: 'absolute',
-                            top: `${index * 4}px`, // Смещение для эффекта каскада
-                            left: `${index * 4}px`,
-                            right: `${index * 4}px`, // Чтобы ширина немного уменьшалась
-                            // width: `calc(100% - ${index * 8}px)`, // Альтернативный способ уменьшения ширины
-                            zIndex: slotEvents.length - index, // Верхние карточки имеют больший zIndex
-                            padding: '0px', // Убедимся, что у обертки нет паддингов
-                          }}
-                        >
-                          <TrainingCard 
-                            event={eventItem} 
-                            variant={index === 0 ? 'full' : 'stacked_preview'} 
-                          />
-                        </Box>
-                      ))}
+                      {slotEvents.slice(0, 3).map((eventItem, index) => {
+                        const isFirstCardInStack = index === 0;
+                        const cardVariant = isFirstCardInStack ? 'full' : 'stacked_preview';
+                        // Высота для Box-обертки карточки
+                        const boxWrapperHeight = '60px'; // Уменьшаем высоту первой карточки, чтобы дать место выглядывающим
+
+                        return (
+                          <Box 
+                            key={eventItem.id} 
+                            sx={{
+                              position: 'absolute',
+                              top: `${index * 8}px`, // Увеличиваем смещение для лучшей видимости нижних карточек
+                              left: 0,
+                              right: 0,
+                              height: boxWrapperHeight, 
+                              zIndex: slotEvents.length - index, 
+                              padding: '0px',
+                              overflow: 'hidden', 
+                              borderRadius: 1, // Применяем borderRadius = 1, как вы указали
+                            }}
+                          >
+                            <TrainingCard 
+                              event={eventItem} 
+                              variant={cardVariant} 
+                            />
+                          </Box>
+                        );
+                      })}
                       {slotEvents.length > 3 && (
                         <Box
                           sx={{
@@ -236,6 +289,20 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
           selectedTime={selectedSlotInfo.time}
         />
       )}
+
+      <TrainingsStackPopover 
+        anchorEl={popoverAnchorEl}
+        open={Boolean(popoverAnchorEl)} // Popover открыт, если есть anchorEl
+        onClose={handleClosePopover}
+        events={popoverEvents}
+        selectedDate={popoverSelectedDate}
+        selectedTime={popoverSelectedTime}
+        viewMode={viewMode}
+        onAddTrainingClick={popoverSelectedDate && popoverSelectedTime 
+          ? () => handleOpenFormFromPopover(popoverSelectedDate, popoverSelectedTime) 
+          : undefined
+        }
+      />
 
       {/* Отображение загруженных данных (временно для отладки) */}
       {viewMode === 'scheduleTemplate' && templatesData && !isLoading && (

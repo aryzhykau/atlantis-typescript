@@ -2,10 +2,25 @@
  * Базовая информация о студенте (для встроенного отображения).
  * Уточнить на основе полной схемы Student из openapi.json, если необходимо больше полей.
  */
+
+// Добавляем базовый интерфейс для клиента (родителя)
+export interface ClientBasicInfo {
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  email?: string; // Email тоже может быть полезен
+  // Можно добавить id клиента, если потребуется
+}
+
 export interface StudentBasicInfo {
   id: number;
-  name: string; // Предположительно ФИО или Имя + Фамилия
-  // Можно добавить другие поля, если они нужны (например, фото, статус)
+  first_name?: string;
+  last_name?: string;
+  date_of_birth?: string; // YYYY-MM-DD
+  is_active?: boolean;
+  client?: ClientBasicInfo; // Добавляем опциональное поле клиента
+  // active_subscription_id?: number; // Эти поля могут быть излишни для базовой информации в календаре
+  // deactivation_date?: string | null;
 }
 
 /**
