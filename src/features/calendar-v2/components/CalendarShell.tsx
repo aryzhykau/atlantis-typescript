@@ -103,7 +103,8 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
 
   // Состояния для детального модального окна
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedEventForModal, setSelectedEventForModal] = useState<CalendarEvent | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+  const [selectedEventType, setSelectedEventType] = useState<'template' | 'real' | null>(null);
   
   // Состояние для отслеживания hover на слотах
   const [hoveredSlot, setHoveredSlot] = useState<string | null>(null);
@@ -117,13 +118,15 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
   };
 
   const handleOpenDetailModal = (eventData: CalendarEvent) => {
-    setSelectedEventForModal(eventData);
+    setSelectedEventId(eventData.id);
+    setSelectedEventType(isTrainingTemplate(eventData) ? 'template' : 'real');
     setIsDetailModalOpen(true);
   };
 
   const handleCloseDetailModal = () => {
     setIsDetailModalOpen(false);
-    setSelectedEventForModal(null);
+    setSelectedEventId(null);
+    setSelectedEventType(null);
   };
 
   const handleCloseForm = () => {
@@ -550,7 +553,8 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
       <TrainingDetailModal 
         open={isDetailModalOpen}
         onClose={handleCloseDetailModal}
-        event={selectedEventForModal}
+        eventId={selectedEventId}
+        eventType={selectedEventType}
       />
 
       {/* Отображение загруженных данных (временно для отладки) */}

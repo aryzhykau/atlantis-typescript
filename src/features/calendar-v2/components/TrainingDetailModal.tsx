@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -17,6 +17,12 @@ import {
   Button,
   alpha,
   CircularProgress,
+  TextField,
+  Autocomplete,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close';
@@ -25,35 +31,142 @@ import PersonIcon from '@mui/icons-material/Person'; // Для тренера
 import EventNoteIcon from '@mui/icons-material/EventNote'; // Для даты/времени/статуса
 import PhoneIcon from '@mui/icons-material/Phone'; // Иконка для телефона
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove'; // Новая иконка
+import PersonAddIcon from '@mui/icons-material/PersonAdd'; // Иконка для добавления студентов
 import { CalendarEvent, isRealTraining, isTrainingTemplate } from './CalendarShell'; // Нужны type guards
 import dayjs from 'dayjs';
-import { useDeleteTrainingStudentTemplateMutation } from '../../../store/apis/calendarApi-v2';
+import { useDeleteTrainingStudentTemplateMutation, useCreateTrainingStudentTemplateMutation, useGetTrainingTemplateByIdQuery, useGetRealTrainingByIdQuery } from '../../../store/apis/calendarApi-v2';
 import { calendarApiV2 } from '../../../store/apis/calendarApi-v2';
+import { useGetStudentsQuery } from '../../../store/apis/studentsApi';
+import { TrainingStudentTemplateCreate } from '../models/trainingStudentTemplate';
 
 interface TrainingDetailModalProps {
   open: boolean;
   onClose: () => void;
-  event: CalendarEvent | null;
+  eventId: number | null;
+  eventType: 'template' | 'real' | null;
 }
 
-const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose, event }) => {
+const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose, eventId, eventType }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
 
   const [deleteTrainingStudentTemplate, { isLoading: isDeletingStudent, error: deleteStudentError }] = 
     useDeleteTrainingStudentTemplateMutation();
+  const [createTrainingStudentTemplate, { error: addStudentError }] = useCreateTrainingStudentTemplateMutation();
+  const { data: allStudents } = useGetStudentsQuery();
+  
+  // Загружаем свежие данные в зависимости от типа события
+  const { data: templateData, isLoading: isLoadingTemplate } = useGetTrainingTemplateByIdQuery(
+    eventId || 0, 
+    { 
+      skip: !eventId || eventType !== 'template',
+    }
+  );
+  
+  const { data: realTrainingData, isLoading: isLoadingReal } = useGetRealTrainingByIdQuery(
+    eventId || 0, 
+    { 
+      skip: !eventId || eventType !== 'real',
+    }
+  );
+  
+  // Определяем текущее событие
+  const event: CalendarEvent | null = eventType === 'template' ? (templateData || null) : (realTrainingData || null);
+  
+  // Показываем загрузку если данные загружаются
+  const isLoading = isLoadingTemplate || isLoadingReal;
+
+
 
   // Состояние для отслеживания ID студента, который удаляется
-  const [studentBeingDeleted, setStudentBeingDeleted] = React.useState<number | null>(null);
+  const [studentBeingDeleted, setStudentBeingDeleted] = useState<number | null>(null);
+  
+  // Состояние для формы добавления студента
+  const [isAddStudentFormOpen, setIsAddStudentFormOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [startDate, setStartDate] = useState(dayjs().format('YYYY-MM-DD'));
 
   useEffect(() => {
     if (event && isTrainingTemplate(event)) {
       console.log('[TrainingDetailModal] Event updated, assigned_students:', JSON.parse(JSON.stringify(event.assigned_students)));
     }
-  }, [event]); // Зависимость от event
+  }, [event, templateData, realTrainingData]); // Зависимость от свежих данных
+
+  // Функция для добавления студента
+  const handleAddStudent = async () => {
+    if (!event || !isTrainingTemplate(event) || !selectedStudent) return;
+    
+    try {
+      const studentTemplateData: TrainingStudentTemplateCreate = {
+        training_template_id: event.id,
+        student_id: selectedStudent.id,
+        start_date: startDate,
+      };
+      
+      await createTrainingStudentTemplate(studentTemplateData).unwrap();
+      
+      // Инвалидируем кэш для обновления данных
+      dispatch(
+        calendarApiV2.util.invalidateTags([
+          { type: 'TrainingTemplateV2', id: event.id },
+          { type: 'TrainingTemplateV2', id: 'LIST' },
+          { type: 'TrainingStudentTemplateV2', id: 'LIST' },
+        ])
+      );
+      
+      // Сбрасываем форму и закрываем её
+      setSelectedStudent(null);
+      setStartDate(dayjs().format('YYYY-MM-DD'));
+      setIsAddStudentFormOpen(false);
+    } catch (err) {
+      console.error('[TrainingDetailModal] Failed to add student to template:', err);
+    }
+  };
+
+  // Получаем студентов которые уже есть в шаблоне
+  const assignedStudentIds = event && isTrainingTemplate(event) && event.assigned_students 
+    ? event.assigned_students.map(s => s.student.id) 
+    : [];
+  
+  // Фильтруем студентов чтобы не показывать уже добавленных
+  const availableStudents = allStudents?.filter(student => 
+    !assignedStudentIds.includes(student.id)
+  ) || [];
+
+  if (!eventId || !eventType) {
+    return null;
+  }
+
+  if (isLoading) {
+    return (
+      <Dialog 
+        open={open} 
+        onClose={onClose} 
+        maxWidth="sm" 
+        fullWidth
+      >
+        <DialogContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <CircularProgress />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   if (!event) {
-    return null;
+    return (
+      <Dialog 
+        open={open} 
+        onClose={onClose} 
+        maxWidth="sm" 
+        fullWidth
+      >
+        <DialogContent sx={{ py: 4 }}>
+          <Typography variant="h6" align="center">
+            Событие не найдено
+          </Typography>
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   const borderColor = event.training_type?.color || theme.palette.divider;
@@ -246,11 +359,102 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
           </Box>
         )}
 
-        <Box sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <GroupIcon sx={{ mr: 1, color: theme.palette.secondary.main }} />
             <Typography variant="subtitle1" sx={{fontWeight: 'medium'}}>Ученики ({isTrainingTemplate(event) ? event.assigned_students?.length || 0 : event.students?.length || 0}):</Typography>
+          </Box>
+          {isTrainingTemplate(event) && (
+            <IconButton 
+              size="small"
+              onClick={() => setIsAddStudentFormOpen(true)}
+              disabled={isDeletingStudent}
+              sx={{ 
+                color: theme.palette.primary.main,
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                }
+              }}
+            >
+              <PersonAddIcon fontSize="small" />
+            </IconButton>
+          )}
         </Box>
         {renderStudentList()}
+
+        {/* Форма добавления студента */}
+        {isAddStudentFormOpen && isTrainingTemplate(event) && (
+          <Box sx={{ mt: 2, p: 2, border: `1px solid ${alpha(borderColor, 0.3)}`, borderRadius: 2, backgroundColor: alpha(borderColor, 0.05) }}>
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 'medium' }}>
+              Добавить студента в шаблон
+            </Typography>
+            
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Autocomplete
+                value={selectedStudent}
+                onChange={(_, newValue) => setSelectedStudent(newValue)}
+                options={availableStudents}
+                getOptionLabel={(student) => `${student.first_name} ${student.last_name}`}
+                renderInput={(params) => (
+                  <TextField 
+                    {...params} 
+                    label="Выберите студента" 
+                    size="small"
+                    fullWidth
+                  />
+                )}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                noOptionsText="Нет доступных студентов"
+              />
+              
+              <TextField
+                label="Дата начала"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                size="small"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+              
+              {addStudentError && (
+                <Typography color="error" variant="caption">
+                  {/* @ts-ignore */}
+                  Ошибка добавления студента: {addStudentError?.data?.detail || addStudentError?.error || 'Неизвестная ошибка'}
+                </Typography>
+              )}
+              
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => {
+                    setIsAddStudentFormOpen(false);
+                    setSelectedStudent(null);
+                    setStartDate(dayjs().format('YYYY-MM-DD'));
+                  }}
+                >
+                  Отмена
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleAddStudent}
+                  disabled={!selectedStudent}
+                  sx={{
+                    backgroundColor: borderColor,
+                    '&:hover': {
+                      backgroundColor: alpha(borderColor, 0.8),
+                    }
+                  }}
+                >
+                  Добавить
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        )}
 
         {/* TODO: Добавить другую релевантную информацию: 
             - для шаблона: training_type_id, responsible_trainer_id
