@@ -7,6 +7,7 @@ import { TrainingTemplate } from '../models/trainingTemplate';
 import { RealTraining } from '../models/realTraining';
 import TrainingTemplateForm from './TrainingTemplateForm'; // Импорт формы
 import TrainingDetailModal from './TrainingDetailModal'; // Импортируем детальное модальное окно
+import { calculateCapacity, formatCapacityText, shouldShowCapacityBadge } from '../utils/capacityUtils';
 
 // Определим объединенный тип для тренировок для удобства
 export type CalendarEvent = TrainingTemplate | RealTraining;
@@ -139,6 +140,7 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
     const typeColor = event.training_type?.color || theme.palette.primary.main;
     let trainerName = 'Без тренера';
     let studentCount = 0;
+    const maxParticipants = event.training_type?.max_participants || null;
 
     // Получаем информацию о тренере
     if (isTrainingTemplate(event) && event.responsible_trainer) {
@@ -154,6 +156,11 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
       studentCount = event.students.length;
     }
 
+    // Рассчитываем информацию о загруженности
+    const capacityInfo = calculateCapacity(studentCount, maxParticipants);
+    const capacityText = formatCapacityText(capacityInfo);
+    const showCapacityBadge = shouldShowCapacityBadge(capacityInfo);
+
     const tooltipContent = (
       <Box sx={{ textAlign: 'center' }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
@@ -162,9 +169,19 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
         <Typography variant="body2" sx={{ mb: 0.25 }}>
           👨 {trainerName}
         </Typography>
-        <Typography variant="body2">
-          👥 Студентов: {studentCount}
+        <Typography variant="body2" sx={{ mb: 0.25 }}>
+          👥 Студентов: {capacityText}
         </Typography>
+        {maxParticipants && maxParticipants < 999 && (
+          <Typography variant="body2" sx={{ 
+            color: capacityInfo.isFull ? '#ffcdd2' : '#e8f5e8',
+            fontSize: '0.75rem'
+          }}>
+            {capacityInfo.isFull ? '⚠️ Группа переполнена' : 
+             capacityInfo.percentage >= 90 ? '⚠️ Почти заполнена' :
+             capacityInfo.percentage >= 70 ? '⚡ Заполняется' : '✅ Есть свободные места'}
+          </Typography>
+        )}
       </Box>
     );
 
@@ -184,52 +201,86 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
           sx={{
             backgroundColor: alpha(typeColor, 0.1),
             border: `2px solid ${typeColor}`,
-            borderRadius: 2,
-            px: 1,
-            py: 0.5,
+            borderRadius: 1, // Более квадратные в обычном состоянии
+            px: 0.75,
+            py: 0.25,
             cursor: 'pointer',
-            transition: theme.transitions.create(['transform', 'box-shadow'], {
+            maxWidth: isMobile ? '80px' : (isTablet ? '100px' : '120px'), // Ограничиваем ширину
+            width: 'fit-content', // Подгоняем под контент
+            transition: theme.transitions.create(['transform', 'background-color', 'border-radius', 'border-color'], {
               duration: theme.transitions.duration.short,
+              easing: theme.transitions.easing.easeOut,
             }),
-            '&:hover': {
-              transform: 'translateY(-1px)',
-              boxShadow: `0 2px 8px ${alpha(typeColor, 0.3)}`,
-              backgroundColor: alpha(typeColor, 0.15),
-            },
+                          '&:hover': {
+                transform: 'translateY(-2px) scale(1.02)',
+                background: `linear-gradient(135deg, ${alpha(typeColor, 0.8)}, ${alpha(typeColor, 0.6)})`, // Красивый градиент!
+                borderColor: typeColor, // Полностью яркий цвет границы без прозрачности!
+                borderRadius: 4, // Более круглые при наведении!
+                '& .MuiTypography-root': {
+                  color: theme.palette.getContrastText(alpha(typeColor, 0.7)), // Подходящий контрастный цвет!
+                  fontWeight: 700,
+                },
+              },
           }}
-        >
-          <Typography
-            variant="caption"
-            sx={{
-              fontSize: isMobile ? '0.65rem' : '0.7rem',
-              fontWeight: 600,
-              color: typeColor,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: 'block',
-              lineHeight: 1.2,
-            }}
-          >
-            {event.training_type?.name || 'Тренировка'}
-          </Typography>
-          {!isMobile && (
+                  >
             <Typography
               variant="caption"
               sx={{
-                fontSize: '0.6rem',
-                color: alpha(typeColor, 0.8),
+                fontSize: isMobile ? '0.6rem' : '0.65rem',
+                fontWeight: 600,
+                color: typeColor,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 display: 'block',
+                lineHeight: 1.2,
+                transition: 'all 0.2s ease',
               }}
             >
-              {trainerName}
+              {event.training_type?.name || 'Тренировка'}
             </Typography>
-          )}
-        </Box>
-      </Tooltip>
+            {!isMobile && (
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                width: '100%'
+              }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.6rem',
+                    color: alpha(typeColor, 0.8),
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    flex: 1,
+                  }}
+                >
+                  {trainerName}
+                </Typography>
+                {showCapacityBadge && (
+                  <Box
+                    sx={{
+                      backgroundColor: capacityInfo.color,
+                      color: 'white',
+                      fontSize: '0.5rem',
+                      fontWeight: 600,
+                      borderRadius: '6px',
+                      px: 0.5,
+                      py: 0.125,
+                      minWidth: '16px',
+                      textAlign: 'center',
+                      ml: 0.5,
+                    }}
+                  >
+                    {capacityText}
+                  </Box>
+                )}
+              </Box>
+            )}
+          </Box>
+        </Tooltip>
     );
   };
 
@@ -239,7 +290,7 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
       return {
         gridTemplateColumns: '60px repeat(7, minmax(80px, 1fr))',
         fontSize: '0.7rem',
-        slotHeight: '70px',
+        slotHeight: '80px',
         cardPadding: '2px',
       };
     } else if (isTablet) {

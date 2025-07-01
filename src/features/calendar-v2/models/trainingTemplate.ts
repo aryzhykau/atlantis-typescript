@@ -8,6 +8,7 @@ export interface TrainingTypeBasicInfo {
   id: number;
   name: string;
   color: string; // Цвет обязателен для календаря
+  max_participants: number | null; // Для показа загруженности
 }
 
 /**
