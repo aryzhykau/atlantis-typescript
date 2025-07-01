@@ -29,13 +29,23 @@ const REAL_TRAINING_TAG: 'RealTrainingV2' = 'RealTrainingV2';
 export const calendarApiV2 = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // --- Training Templates Endpoints ---
-    getTrainingTemplates: builder.query<TrainingTemplate[], void>({
-      query: () => 'training_templates/',
-      providesTags: (result) =>
+    getTrainingTemplates: builder.query<TrainingTemplate[], { dayNumber?: number } | void>({
+      query: (params) => {
+        const searchParams = new URLSearchParams();
+        if (params?.dayNumber !== undefined) {
+          searchParams.append('day_number', params.dayNumber.toString());
+        }
+        return `training_templates/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+      },
+      providesTags: (result, error, params) =>
         result
           ? [
               ...result.map(({ id }) => ({ type: TRAINING_TEMPLATE_TAG, id } as const)),
               { type: TRAINING_TEMPLATE_TAG, id: 'LIST' },
+              // Добавляем тег для фильтрованного списка
+              params?.dayNumber !== undefined 
+                ? { type: TRAINING_TEMPLATE_TAG, id: `LIST_DAY_${params.dayNumber}` }
+                : { type: TRAINING_TEMPLATE_TAG, id: 'LIST_ALL' },
             ]
           : [{ type: TRAINING_TEMPLATE_TAG, id: 'LIST' }],
     }),

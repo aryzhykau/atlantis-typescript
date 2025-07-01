@@ -5,6 +5,7 @@ export interface ITrainingType {
     price: number | null;
     color: string; // HEX format, e.g., #RRGGBB
     is_active: boolean;
+    max_participants: number | null;
 }
 
 export interface ITrainingTypeCreate {
@@ -13,6 +14,7 @@ export interface ITrainingTypeCreate {
     price?: number | null; // Optional in create if backend defaults or handles null
     color: string; // HEX format
     is_active?: boolean; // Optional, defaults to true on backend
+    max_participants?: number | null;
 }
 
 export interface ITrainingTypeUpdate {
@@ -21,6 +23,7 @@ export interface ITrainingTypeUpdate {
     price?: number | null;
     color?: string; // HEX format
     is_active?: boolean;
+    max_participants?: number | null;
 }
 
 // It might also be useful to have a list response type if the API wraps it

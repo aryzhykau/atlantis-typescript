@@ -33,6 +33,7 @@ export const trainingTypeColumns: GridColDef[] = [
     {field: 'color', headerName: "#", headerAlign: "center", width:30, align: "center", display: "flex", renderCell: params => <TrainingTypeColorCircle circleColor={params.row.color}/>},
     {field: 'name', headerName: 'Название', flex: 1},
     {field: 'price', headerName: 'Стоимость', width: 100, valueFormatter: priceFormatter},
+    {field: 'max_participants', headerName: 'Макс. учеников', width: 100},
     {
         field: 'is_subscription_only',
         headerName: 'Только по подписке',

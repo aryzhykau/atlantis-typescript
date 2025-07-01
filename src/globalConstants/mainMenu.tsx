@@ -20,6 +20,7 @@ import InvoicesPayments from "../layouts/invoicesPyaments/InvoicesPayments.tsx";
 import { StudentsListPage } from '../features/students/components/StudentsListPage.tsx';
 import Timetable from "../layouts/timetable/Timetable.tsx";
 import CalendarV2Page from "../features/calendar-v2/components/CalendarV2Page.tsx";
+import MobileCalendarV2Page from "../features/calendar-v2/components/MobileCalendarV2Page.tsx";
 
 export const MenuItems: IMenuItems[] = [
     {
@@ -83,6 +84,6 @@ export const MenuItems: IMenuItems[] = [
         link: "calendar-v2",
         icon: <CalendarTodayIcon />,
         page: <CalendarV2Page />,
-        mobilePage: <CalendarV2Page />
+        mobilePage: <MobileCalendarV2Page />
     }
 ];

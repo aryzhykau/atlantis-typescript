@@ -9,7 +9,7 @@ import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
 import {useGetTrainingTypesQuery, useUpdateTrainingTypeMutation} from "../../../store/apis/trainingTypesApi.ts";
 
 
-const trainingTypeInitialValues: Partial<ITrainingType> = {name: "", price: null, color: "#FFFFFF", is_subscription_only: false, is_active: true};
+const trainingTypeInitialValues: Partial<ITrainingType> = {name: "", price: null, max_participants: 4, color: "#FFFFFF", is_subscription_only: false, is_active: true};
 
 export function TrainingTypesDataView() {
     const [modalOpen, setModalOpen] = useState<boolean>(false);

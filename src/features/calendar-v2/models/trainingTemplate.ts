@@ -7,7 +7,7 @@ import { TrainingStudentTemplate } from './trainingStudentTemplate'; // Буде
 export interface TrainingTypeBasicInfo {
   id: number;
   name: string;
-  color?: string; // Предполагаем, что цвет также важен для календаря
+  color: string; // Цвет обязателен для календаря
 }
 
 /**

@@ -22,6 +22,9 @@ const TrainingTypeSchema = Yup.object({
     price: Yup.number()
         .nullable()
         .min(0, 'Цена не может быть отрицательной'),
+    max_participants: Yup.number()
+        .nullable()
+        .min(1, 'Максимальное количество учеников не может быть меньше 1'),
     is_subscription_only: Yup.boolean().required(),
     color: Yup.string().matches(/^#[0-9A-Fa-f]{6}$/, 'Цвет должен быть в формате HEX (#RRGGBB)').required('Цвет обязателен'),
     is_active: Yup.boolean().required(),
@@ -36,6 +39,7 @@ const prepareSubmitValues = (values: Partial<ITrainingType>, isCreating: boolean
         name: values.name,
         is_subscription_only: values.is_subscription_only,
         price: priceAsNumberOrNull,
+        max_participants: values.max_participants,
         color: values.color,
         is_active: values.is_active,
     };
@@ -47,6 +51,7 @@ const prepareSubmitValues = (values: Partial<ITrainingType>, isCreating: boolean
             color: data.color || '#000000',
             price: data.price,
             is_active: data.is_active === undefined ? true : data.is_active,
+            max_participants: data.max_participants,
         } as ITrainingTypeCreate;
     }
     const updateData: any = {};
@@ -55,6 +60,7 @@ const prepareSubmitValues = (values: Partial<ITrainingType>, isCreating: boolean
     if (data.price !== undefined) updateData.price = data.price;
     if (data.color !== undefined) updateData.color = data.color;
     if (data.is_active !== undefined) updateData.is_active = data.is_active;
+    if (data.max_participants !== undefined) updateData.max_participants = data.max_participants;
     return updateData as ITrainingTypeUpdate;
 };
 
@@ -89,18 +95,21 @@ const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, 
     }
 
     const handleSubmit = async (values: Partial<ITrainingType>, {resetForm}: {resetForm: () => void}) => {
+        console.log(values)
         const formValuesForSubmit = prepareSubmitValues(values, isCreating);
         try {
             if (isCreating) {
                 await createTrainingType(formValuesForSubmit as ITrainingTypeCreate).unwrap();
                 displaySnackbar("Вид тренировки успешно создан", "success");
             } else if (trainingTypeId) {
+                console.log(formValuesForSubmit)
                 const updatePayload: ITrainingTypeUpdate = {};
                 if (formValuesForSubmit.name !== undefined) updatePayload.name = formValuesForSubmit.name;
                 if (formValuesForSubmit.price !== undefined) updatePayload.price = formValuesForSubmit.price;
                 if (formValuesForSubmit.color !== undefined) updatePayload.color = formValuesForSubmit.color;
                 if (formValuesForSubmit.is_active !== undefined) updatePayload.is_active = formValuesForSubmit.is_active;
                 if (formValuesForSubmit.is_subscription_only !== undefined) updatePayload.is_subscription_only = formValuesForSubmit.is_subscription_only;
+                if (formValuesForSubmit.max_participants !== undefined) updatePayload.max_participants = formValuesForSubmit.max_participants;
 
                 await updateTrainingType({id: trainingTypeId, payload: updatePayload}).unwrap();
                 displaySnackbar("Вид тренировки успешно обновлен", "success");
@@ -119,6 +128,7 @@ const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, 
         name: initialValues.name || '',
         price: initialValues.price === undefined || initialValues.price === null ? null : initialValues.price,
         is_subscription_only: initialValues.is_subscription_only === undefined ? false : initialValues.is_subscription_only,
+        max_participants: initialValues.max_participants === undefined || initialValues.max_participants === null ? null : initialValues.max_participants,
         color: initialValues.color || selectedColor,
         is_active: initialValues.is_active === undefined ? true : initialValues.is_active,
     };
@@ -127,7 +137,7 @@ const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, 
 
     return (
         <Formik
-            initialValues={formInitialValues as any}
+            initialValues={formInitialValues as ITrainingType}
             validationSchema={TrainingTypeSchema}
             onSubmit={handleSubmit}
             enableReinitialize
@@ -168,6 +178,19 @@ const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, 
                             }}
                             error={touched.price && Boolean(errors.price)}
                             helperText={touched.price && errors.price}
+                        />
+                        <Field
+                            name="max_participants"
+                            label="Максимум участников"
+                            component={TextField}
+                            type="number"
+                            variant="outlined"
+                            fullWidth
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            error={touched.max_participants && Boolean(errors.max_participants)}
+                            helperText={touched.max_participants && errors.max_participants}
                         />
                         <FormControlLabel
                             control={
