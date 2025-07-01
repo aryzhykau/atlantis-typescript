@@ -1,12 +1,12 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import { Box, Typography, Paper, Grid, useTheme } from '@mui/material';
+import { Box, Typography, Paper, useTheme, useMediaQuery, Tooltip } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import dayjs, { Dayjs } from 'dayjs';
 import { CalendarViewMode } from './CalendarV2Page'; // Предполагается, что типы там же
 import { TrainingTemplate } from '../models/trainingTemplate';
 import { RealTraining } from '../models/realTraining';
-import TrainingCard from './TrainingCard'; // Импортируем TrainingCard
 import TrainingTemplateForm from './TrainingTemplateForm'; // Импорт формы
-import TrainingsStackPopover from './TrainingsStackPopover'; // Импортируем Popover
+import TrainingDetailModal from './TrainingDetailModal'; // Импортируем детальное модальное окно
 
 // Определим объединенный тип для тренировок для удобства
 export type CalendarEvent = TrainingTemplate | RealTraining;
@@ -44,6 +44,9 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
   error,
 }) => {
   const theme = useTheme(); // Получаем доступ к теме
+  const isMobile = useMediaQuery(theme.breakpoints.down('md')); // Определяем мобильный экран
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg')); // Планшет
+  
   const daysOfWeek = useMemo(() => {
     const startOfWeek = currentDate.startOf('isoWeek');
     return Array.from({ length: 7 }).map((_, i) => startOfWeek.add(i, 'day'));
@@ -98,53 +101,26 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedSlotInfo, setSelectedSlotInfo] = useState<SelectedSlotInfo | null>(null);
 
-  // Состояния для Popover
-  const [popoverAnchorEl, setPopoverAnchorEl] = useState<HTMLElement | null>(null);
-  const [popoverEvents, setPopoverEvents] = useState<CalendarEvent[]>([]);
-  const [popoverSelectedDate, setPopoverSelectedDate] = useState<Dayjs | null>(null);
-  const [popoverSelectedTime, setPopoverSelectedTime] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (popoverSelectedDate && popoverSelectedTime) {
-      const currentSlotEvents = getEventsForSlot(popoverSelectedDate, popoverSelectedTime);
-      if (JSON.stringify(popoverEvents) !== JSON.stringify(currentSlotEvents)) {
-        console.log('[CalendarShell] Base data or selected slot changed. Re-setting popoverEvents for slot:', popoverSelectedDate.format('YYYY-MM-DD'), popoverSelectedTime, currentSlotEvents);
-        setPopoverEvents(currentSlotEvents);
-      }
-    } else {
-      if (popoverEvents.length > 0) {
-        console.log('[CalendarShell] No selected slot for popover. Clearing popoverEvents.');
-        setPopoverEvents([]);
-      }
-    }
-  }, [eventsToDisplay, popoverSelectedDate, popoverSelectedTime, getEventsForSlot, popoverEvents]);
+  // Состояния для детального модального окна
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedEventForModal, setSelectedEventForModal] = useState<CalendarEvent | null>(null);
 
   const handleSlotClick = (event: React.MouseEvent<HTMLElement>, day: Dayjs, time: string, eventsInSlot: CalendarEvent[]) => {
-    console.log('[CalendarShell] handleSlotClick - eventsInSlot:', eventsInSlot);
-    if (eventsInSlot.length > 0) {
-      setPopoverAnchorEl(event.currentTarget);
-      setPopoverSelectedDate(day);
-      setPopoverSelectedTime(time);
-      if (JSON.stringify(popoverEvents) !== JSON.stringify(eventsInSlot) || !popoverAnchorEl) {
-        setPopoverEvents(eventsInSlot);
-      }
-    } else if (viewMode === 'scheduleTemplate' && eventsInSlot.length === 0) {
+    // Если слот пустой и мы в режиме шаблонов - открываем форму создания
+    if (eventsInSlot.length === 0 && viewMode === 'scheduleTemplate') {
       setSelectedSlotInfo({ date: day, time });
       setIsFormOpen(true);
-    } else {
-      console.log(`Slot clicked: Day - ${day.format('YYYY-MM-DD')}, Time - ${time}`);
-      console.log('This slot is empty (not in template mode or not empty for template mode).');
     }
   };
 
-  const handleClosePopover = () => {
-    setPopoverAnchorEl(null);
+  const handleOpenDetailModal = (eventData: CalendarEvent) => {
+    setSelectedEventForModal(eventData);
+    setIsDetailModalOpen(true);
   };
 
-  const handleOpenFormFromPopover = (date: Dayjs, time: string) => {
-    setSelectedSlotInfo({ date, time });
-    setIsFormOpen(true);
-    handleClosePopover(); // Закрываем поповер после открытия формы
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedEventForModal(null);
   };
 
   const handleCloseForm = () => {
@@ -152,135 +128,353 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
     setSelectedSlotInfo(null);
   };
 
-  const slotGap = theme.spacing(0.10); // Было 0.5, уменьшаем в два раза
+  // Компонент для рендеринга чипа тренировки
+  const TrainingChip: React.FC<{ event: CalendarEvent; index: number }> = ({ event, index }) => {
+    const typeColor = event.training_type?.color || theme.palette.primary.main;
+    let trainerName = 'Без тренера';
+    let studentCount = 0;
+
+    // Получаем информацию о тренере
+    if (isTrainingTemplate(event) && event.responsible_trainer) {
+      trainerName = `${event.responsible_trainer.first_name || ''} ${event.responsible_trainer.last_name ? event.responsible_trainer.last_name.charAt(0) + '.' : ''}`.trim();
+    } else if (isRealTraining(event) && event.trainer) {
+      trainerName = `${event.trainer.first_name || ''} ${event.trainer.last_name ? event.trainer.last_name.charAt(0) + '.' : ''}`.trim();
+    }
+
+    // Получаем количество студентов
+    if (isTrainingTemplate(event) && event.assigned_students) {
+      studentCount = event.assigned_students.length;
+    } else if (isRealTraining(event) && event.students) {
+      studentCount = event.students.length;
+    }
+
+    const tooltipContent = (
+      <Box sx={{ textAlign: 'center' }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+          {event.training_type?.name || 'Тренировка'}
+        </Typography>
+        <Typography variant="body2" sx={{ mb: 0.25 }}>
+          👨 {trainerName}
+        </Typography>
+        <Typography variant="body2">
+          👥 Студентов: {studentCount}
+        </Typography>
+      </Box>
+    );
+
+    return (
+      <Tooltip 
+        title={tooltipContent} 
+        arrow 
+        placement="top"
+        enterDelay={300}
+        leaveDelay={100}
+      >
+        <Box
+          onClick={(e) => {
+            e.stopPropagation();
+            handleOpenDetailModal(event);
+          }}
+          sx={{
+            backgroundColor: alpha(typeColor, 0.1),
+            border: `2px solid ${typeColor}`,
+            borderRadius: 2,
+            px: 1,
+            py: 0.5,
+            cursor: 'pointer',
+            transition: theme.transitions.create(['transform', 'box-shadow'], {
+              duration: theme.transitions.duration.short,
+            }),
+            '&:hover': {
+              transform: 'translateY(-1px)',
+              boxShadow: `0 2px 8px ${alpha(typeColor, 0.3)}`,
+              backgroundColor: alpha(typeColor, 0.15),
+            },
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              fontSize: isMobile ? '0.65rem' : '0.7rem',
+              fontWeight: 600,
+              color: typeColor,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: 'block',
+              lineHeight: 1.2,
+            }}
+          >
+            {event.training_type?.name || 'Тренировка'}
+          </Typography>
+          {!isMobile && (
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: '0.6rem',
+                color: alpha(typeColor, 0.8),
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: 'block',
+              }}
+            >
+              {trainerName}
+            </Typography>
+          )}
+        </Box>
+      </Tooltip>
+    );
+  };
+
+  // Адаптивные размеры для разных экранов
+  const getResponsiveStyles = () => {
+    if (isMobile) {
+      return {
+        gridTemplateColumns: '60px repeat(7, minmax(80px, 1fr))',
+        fontSize: '0.7rem',
+        slotHeight: '70px',
+        cardPadding: '2px',
+      };
+    } else if (isTablet) {
+      return {
+        gridTemplateColumns: '80px repeat(7, minmax(100px, 1fr))',
+        fontSize: '0.8rem',
+        slotHeight: '100px', // Увеличил с 80px
+        cardPadding: '4px',
+      };
+    } else {
+      return {
+        gridTemplateColumns: '100px repeat(7, minmax(140px, 1fr))', // Увеличил минимальную ширину с 120px
+        fontSize: '0.9rem',
+        slotHeight: '110px', // Увеличил с 90px
+        cardPadding: '6px',
+      };
+    }
+  };
+
+  const responsiveStyles = getResponsiveStyles();
 
   return (
     <Paper 
       elevation={3} 
       sx={{
-        p: 2, 
+        p: isMobile ? 1 : 2, 
         mt: 2, 
-        overflow: 'auto', // Это уже здесь и включает вертикальную прокрутку, если контент превышает размеры
-        maxHeight: '75vh', // Ограничиваем максимальную высоту, чтобы появилась прокрутка
-        display: 'flex', // Добавляем flex, чтобы дочерний Box мог правильно растягиваться или сжиматься
-        flexDirection: 'column' // Направление flex для Paper
+        overflow: 'auto',
+        maxHeight: '75vh',
+        display: 'flex',
+        flexDirection: 'column'
       }}
     >
-      {/* <Typography>Current Date: {currentDate.format('YYYY-MM-DD')}</Typography>
-      <Typography>View Mode: {viewMode}</Typography> */}
       {isLoading && <Typography>Загрузка данных...</Typography>}
       {error && <Typography color="error">Ошибка: {error?.message || JSON.stringify(error)}</Typography>}
       
-      {/* Контейнер для всей сетки, включая заголовки дней и временные слоты */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: slotGap, flexGrow: 1 /* Позволяем этому Box расти */ }}>
-        {/* Заголовок с днями недели */}
-        <Grid container spacing={0} sx={{ columnGap: slotGap }}>
-          <Grid item xs={1} sx={{ textAlign: 'center', p: 1 }}> 
-            <Typography variant="caption">Время</Typography>
-          </Grid>
+      {/* Основной контейнер календаря */}
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: theme.spacing(0.5),
+        flexGrow: 1,
+        overflow: 'hidden'
+      }}>
+        {/* Заголовки дней недели */}
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: responsiveStyles.gridTemplateColumns,
+          gap: theme.spacing(0.5),
+          alignItems: 'center'
+        }}>
+          <Box sx={{ 
+            textAlign: 'center', 
+            p: 1,
+            minHeight: '60px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Typography variant="caption" sx={{ fontSize: responsiveStyles.fontSize }}>
+              Время
+            </Typography>
+          </Box>
           {daysOfWeek.map(day => (
-            <Grid item xs key={day.toString()} sx={{ textAlign: 'center', p: 1, backgroundColor: theme.palette.background.paper /* Было grey[200] */ }}>
-              <Typography variant="subtitle2">{day.format('dd').toUpperCase()}</Typography>
-              <Typography variant="h6">{day.format('D')}</Typography>
-            </Grid>
+            <Box 
+              key={day.toString()} 
+              sx={{ 
+                textAlign: 'center', 
+                p: 1, 
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: 1,
+                minHeight: '60px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ fontSize: responsiveStyles.fontSize }}>
+                {day.format('dd').toUpperCase()}
+              </Typography>
+              <Typography variant="h6" sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }}>
+                {day.format('D')}
+              </Typography>
+            </Box>
           ))}
-        </Grid>
+        </Box>
 
-        {/* Основная сетка: временные слоты и ячейки для каждого дня */}
-        {timeSlots.map(time => (
-          <Grid container spacing={0} key={time} sx={{ columnGap: slotGap, alignItems: 'stretch' }}>
-            <Grid item xs={1} sx={{ p: 1, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-              <Typography variant="caption">{time}</Typography>
-            </Grid>
-            {daysOfWeek.map(day => {
-              const slotEvents: CalendarEvent[] = getEventsForSlot(day, time); 
-              return (
-                <Grid 
-                  item 
-                  xs 
-                  key={`${day.toString()}-${time}`}
-                  sx={{
-                    minHeight: '80px',
-                    backgroundColor: theme.palette.background.paper, // Фон для слотов как у Paper
-                    // borderRadius: theme.shape.borderRadius / 2, // Убираем скругление
-                    p: 0.5, // Внутренний отступ для full карточки
-                    position: 'relative', // Для позиционирования stacked карточек
-                    display: 'flex',
-                    flexDirection: 'column',
-                    // alignItems: 'stretch', // Убираем, чтобы stacked карточки не растягивались
-                    justifyContent: 'flex-start', // Начинаем с верхнего края
-                    gap: '2px', // Небольшой отступ между full карточками, если их несколько (маловероятно, но пусть будет)
-                    cursor: 'pointer',
-                    transition: theme.transitions.create(['background-color', 'box-shadow'], {
-                      duration: theme.transitions.duration.short,
-                    }),
-                    '&:hover': {
-                      backgroundColor: theme.palette.background.default, // Мягкий цвет при наведении
-                      boxShadow: `0 0 0 1px ${theme.palette.primary.main}`,
-                    }
-                  }}
-                  onClick={(e) => handleSlotClick(e, day, time, slotEvents)}
-                >
-                  {/* Логика отображения карточек для стопки */}
-                  {slotEvents.length === 1 && (
-                    <TrainingCard key={slotEvents[0].id} event={slotEvents[0]} variant="full" />
-                  )}
-                  {slotEvents.length > 1 && (
-                    <>
-                      {slotEvents.slice(0, 3).map((eventItem, index) => {
-                        const isFirstCardInStack = index === 0;
-                        const cardVariant = isFirstCardInStack ? 'full' : 'stacked_preview';
-                        // Высота для Box-обертки карточки
-                        const boxWrapperHeight = '60px'; // Уменьшаем высоту первой карточки, чтобы дать место выглядывающим
+        {/* Основная сетка временных слотов */}
+        <Box sx={{ 
+          overflow: 'auto',
+          flexGrow: 1
+        }}>
+          {timeSlots.map(time => (
+            <Box 
+              key={time} 
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: responsiveStyles.gridTemplateColumns,
+                gap: theme.spacing(0.5),
+                alignItems: 'stretch',
+                mb: 0.5
+              }}
+            >
+              {/* Колонка времени */}
+              <Box sx={{ 
+                textAlign: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: responsiveStyles.slotHeight
+              }}>
+                <Typography variant="caption" sx={{ fontSize: responsiveStyles.fontSize }}>
+                  {time}
+                </Typography>
+              </Box>
+              
+              {/* Слоты для каждого дня */}
+              {daysOfWeek.map(day => {
+                const slotEvents: CalendarEvent[] = getEventsForSlot(day, time);
+                const maxChips = isMobile ? 2 : (isTablet ? 3 : 4);
+                const visibleEvents = slotEvents.slice(0, maxChips);
+                const hiddenEventsCount = slotEvents.length - maxChips;
 
-                        return (
-                          <Box 
-                            key={eventItem.id} 
-                            sx={{
-                              position: 'absolute',
-                              top: `${index * 8}px`, // Увеличиваем смещение для лучшей видимости нижних карточек
-                              left: 0,
-                              right: 0,
-                              height: boxWrapperHeight, 
-                              zIndex: slotEvents.length - index, 
-                              padding: '0px',
-                              overflow: 'hidden', 
-                              borderRadius: 1, // Применяем borderRadius = 1, как вы указали
-                            }}
+                return (
+                  <Box
+                    key={`${day.toString()}-${time}`}
+                    sx={{
+                      minHeight: responsiveStyles.slotHeight,
+                      backgroundColor: theme.palette.background.paper,
+                      borderRadius: 1,
+                      p: responsiveStyles.cardPadding,
+                      position: 'relative',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'flex-start',
+                      cursor: slotEvents.length === 0 ? 'pointer' : 'default',
+                      transition: theme.transitions.create(['background-color', 'box-shadow', 'transform'], {
+                        duration: theme.transitions.duration.standard,
+                        easing: theme.transitions.easing.easeInOut,
+                      }),
+                      overflow: 'visible', // Разрешаем тултипам показываться за границами
+                      '&:hover': slotEvents.length === 0 ? {
+                        backgroundColor: theme.palette.background.default,
+                        boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
+                        transform: 'scale(1.01)',
+                      } : {},
+                    }}
+                    onClick={(e) => handleSlotClick(e, day, time, slotEvents)}
+                  >
+                    {/* Отображение чипов тренировок */}
+                    {slotEvents.length > 0 && (
+                      <Box sx={{ 
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.5,
+                        height: '100%',
+                        overflow: 'visible',
+                      }}>
+                        {visibleEvents.map((eventItem, index) => (
+                          <TrainingChip key={eventItem.id} event={eventItem} index={index} />
+                        ))}
+                        
+                        {hiddenEventsCount > 0 && (
+                          <Tooltip 
+                            title={`Ещё ${hiddenEventsCount} тренировок. Кликните чтобы увидеть все.`}
+                            arrow 
+                            placement="top"
                           >
-                            <TrainingCard 
-                              event={eventItem} 
-                              variant={cardVariant} 
-                            />
-                          </Box>
-                        );
-                      })}
-                      {slotEvents.length > 3 && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            bottom: '2px',
-                            right: '4px',
-                            backgroundColor: 'rgba(0,0,0,0.5)',
-                            color: 'white',
-                            fontSize: '0.6rem',
-                            padding: '1px 3px',
-                            borderRadius: '2px',
-                            zIndex: 10, // Поверх всех карточек
+                            <Box
+                              sx={{
+                                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                                border: `2px dashed ${alpha(theme.palette.primary.main, 0.5)}`,
+                                borderRadius: 2,
+                                px: 1,
+                                py: 0.5,
+                                cursor: 'pointer',
+                                textAlign: 'center',
+                                transition: theme.transitions.create(['transform', 'background-color'], {
+                                  duration: theme.transitions.duration.short,
+                                }),
+                                '&:hover': {
+                                  transform: 'translateY(-1px)',
+                                  backgroundColor: alpha(theme.palette.primary.main, 0.15),
+                                },
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  fontSize: '0.7rem',
+                                  fontWeight: 600,
+                                  color: theme.palette.primary.main,
+                                }}
+                              >
+                                ещё +{hiddenEventsCount}
+                              </Typography>
+                            </Box>
+                          </Tooltip>
+                        )}
+                      </Box>
+                    )}
+
+                    {/* Подсказка для пустых слотов */}
+                    {slotEvents.length === 0 && viewMode === 'scheduleTemplate' && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          opacity: 0,
+                          transition: theme.transitions.create('opacity', {
+                            duration: theme.transitions.duration.short,
+                          }),
+                          '.css-1wnsr1i-MuiBox-root:hover &': {
+                            opacity: 0.6,
+                          },
+                        }}
+                      >
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            fontSize: '0.7rem',
+                            color: theme.palette.text.secondary,
+                            textAlign: 'center',
                           }}
                         >
-                          +{slotEvents.length - 3}
-                        </Box>
-                      )}
-                    </>
-                  )}
-                </Grid>
-              );
-            })}
-          </Grid>
-        ))}
+                          + Создать
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
+          ))}
+        </Box>
       </Box>
 
+      {/* Форма создания шаблона */}
       {selectedSlotInfo && (
         <TrainingTemplateForm 
           open={isFormOpen}
@@ -290,29 +484,22 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
         />
       )}
 
-      <TrainingsStackPopover 
-        anchorEl={popoverAnchorEl}
-        open={Boolean(popoverAnchorEl)} // Popover открыт, если есть anchorEl
-        onClose={handleClosePopover}
-        events={popoverEvents}
-        selectedDate={popoverSelectedDate}
-        selectedTime={popoverSelectedTime}
-        viewMode={viewMode}
-        onAddTrainingClick={popoverSelectedDate && popoverSelectedTime 
-          ? () => handleOpenFormFromPopover(popoverSelectedDate, popoverSelectedTime) 
-          : undefined
-        }
+      {/* Детальное модальное окно */}
+      <TrainingDetailModal 
+        open={isDetailModalOpen}
+        onClose={handleCloseDetailModal}
+        event={selectedEventForModal}
       />
 
       {/* Отображение загруженных данных (временно для отладки) */}
       {viewMode === 'scheduleTemplate' && templatesData && !isLoading && (
-        <Box mt={2} sx={{display:'none'}}> {/* Скрываем, т.к. будут на сетке */}
+        <Box mt={2} sx={{display:'none'}}>
           <Typography variant="subtitle1">Template Data:</Typography>
           <Typography>Загружено {templatesData.length} шаблонов.</Typography>
         </Box>
       )}
       {viewMode === 'actualTrainings' && actualData && !isLoading && (
-        <Box mt={2} sx={{display:'none'}}> {/* Скрываем, т.к. будут на сетке */}
+        <Box mt={2} sx={{display:'none'}}>
           <Typography variant="subtitle1">Actual Trainings Data:</Typography>
           <Typography>Загружено {actualData.length} актуальных тренировок.</Typography>
         </Box>
