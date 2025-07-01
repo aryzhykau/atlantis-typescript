@@ -254,14 +254,14 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
             sx={{ 
               p: 2,
               borderRadius: 2,
-              background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.8)} 0%, ${alpha(borderColor, 0.02)} 100%)`,
-              border: `1px solid ${alpha(borderColor, 0.1)}`,
+              backgroundColor: theme.palette.background.paper,
+              border: `1px solid ${alpha(borderColor, 0.2)}`,
               position: 'relative',
               transition: 'all 0.2s ease',
               '&:hover': {
                 transform: 'translateY(-2px)',
-                boxShadow: `0 8px 25px ${alpha(theme.palette.common.black, 0.1)}`,
-                borderColor: alpha(borderColor, 0.3),
+                boxShadow: `0 8px 25px ${alpha(theme.palette.common.black, 0.15)}`,
+                borderColor: alpha(borderColor, 0.5),
               }
             }}
           >
@@ -381,10 +381,15 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
       PaperProps={{
         sx: {
           borderRadius: 3,
-          background: `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha(borderColor, 0.03)} 100%)`,
-          boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.15)}`,
-          border: `1px solid ${alpha(borderColor, 0.2)}`,
+          backgroundColor: theme.palette.background.paper,
+          boxShadow: `0 25px 80px ${alpha(theme.palette.common.black, 0.3)}`,
+          border: `1px solid ${alpha(borderColor, 0.3)}`,
           overflow: 'hidden',
+        }
+      }}
+      BackdropProps={{
+        sx: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)', // Сильное затемнение фона
         }
       }}
     >
@@ -403,7 +408,7 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
             left: 0,
             right: 0,
             bottom: 0,
-            background: `radial-gradient(circle at 20% 80%, ${alpha('white', 0.1)} 0%, transparent 50%)`,
+            background: `radial-gradient(circle at 20% 80%, ${alpha('#ffffff', 0.1)} 0%, transparent 50%)`,
           }
         }}
       >
@@ -425,10 +430,10 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
             disabled={isDeletingStudent}
             sx={{
               color: 'white',
-              backgroundColor: alpha('white', 0.1),
+              backgroundColor: alpha('#ffffff', 0.1),
               backdropFilter: 'blur(10px)',
               '&:hover': {
-                backgroundColor: alpha('white', 0.2),
+                backgroundColor: alpha('#ffffff', 0.2),
                 transform: 'scale(1.1)',
               },
               transition: 'all 0.2s ease',
@@ -438,16 +443,16 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
           </IconButton>
         </Box>
       </DialogTitle>
-      <DialogContent sx={{ p: 3, backgroundColor: alpha(theme.palette.background.default, 0.3) }}>
+      <DialogContent sx={{ p: 3, backgroundColor: theme.palette.background.default }}>
         {/* Карточка с информацией о тренере */}
         <Box 
           sx={{ 
             mb: 3,
             p: 2.5,
             borderRadius: 2,
-            background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(borderColor, 0.05)} 100%)`,
-            border: `1px solid ${alpha(borderColor, 0.15)}`,
-            boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.08)}`,
+            backgroundColor: theme.palette.background.paper,
+            border: `2px solid ${alpha(borderColor, 0.3)}`,
+            boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.15)}`,
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -502,9 +507,9 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
           sx={{ 
             mb: 3,
             borderRadius: 2,
-            background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(borderColor, 0.05)} 100%)`,
-            border: `1px solid ${alpha(borderColor, 0.15)}`,
-            boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.08)}`,
+            backgroundColor: theme.palette.background.paper,
+            border: `2px solid ${alpha(borderColor, 0.3)}`,
+            boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.15)}`,
             overflow: 'hidden',
           }}
         >
@@ -515,8 +520,8 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
               alignItems: 'center', 
               justifyContent: 'space-between',
               p: 2.5,
-              background: `linear-gradient(135deg, ${alpha(borderColor, 0.08)} 0%, ${alpha(borderColor, 0.03)} 100%)`,
-              borderBottom: `1px solid ${alpha(borderColor, 0.15)}`,
+              backgroundColor: alpha(borderColor, 0.1),
+              borderBottom: `2px solid ${alpha(borderColor, 0.3)}`,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -575,9 +580,9 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
             sx={{ 
               mb: 3,
               borderRadius: 2,
-              background: `linear-gradient(135deg, ${alpha(borderColor, 0.05)} 0%, ${alpha(borderColor, 0.02)} 100%)`,
-              border: `2px solid ${alpha(borderColor, 0.2)}`,
-              boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.12)}`,
+              backgroundColor: theme.palette.background.paper,
+              border: `2px solid ${alpha(borderColor, 0.4)}`,
+              boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.2)}`,
               overflow: 'hidden',
             }}
           >
@@ -742,8 +747,8 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
       <Box 
         sx={{ 
           p: 3,
-          background: `linear-gradient(135deg, ${alpha(theme.palette.background.default, 0.8)} 0%, ${alpha(borderColor, 0.02)} 100%)`,
-          borderTop: `1px solid ${alpha(borderColor, 0.15)}`,
+          backgroundColor: theme.palette.background.default,
+          borderTop: `2px solid ${alpha(borderColor, 0.3)}`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
