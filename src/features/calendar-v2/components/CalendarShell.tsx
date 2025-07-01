@@ -401,6 +401,7 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                         gap: 0.5,
                         height: '100%',
                         overflow: 'visible',
+                        paddingRight: viewMode === 'scheduleTemplate' ? '28px' : '0px', // Место для кнопки "+"
                       }}>
                         {visibleEvents.map((eventItem, index) => (
                           <TrainingChip key={eventItem.id} event={eventItem} index={index} />
@@ -488,8 +489,8 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                                 position: 'absolute',
                                 top: 4,
                                 right: 4,
-                                width: 20,
-                                height: 20,
+                                width: 18,
+                                height: 18,
                                 borderRadius: '50%',
                                 backgroundColor: alpha(theme.palette.primary.main, 0.9),
                                 color: 'white',
@@ -515,7 +516,7 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                               <Typography 
                                 variant="caption" 
                                 sx={{ 
-                                  fontSize: '14px',
+                                  fontSize: '12px',
                                   fontWeight: 600,
                                   lineHeight: 1,
                                 }}
