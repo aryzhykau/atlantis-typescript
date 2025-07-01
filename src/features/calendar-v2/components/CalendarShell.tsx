@@ -104,10 +104,13 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
   // Состояния для детального модального окна
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedEventForModal, setSelectedEventForModal] = useState<CalendarEvent | null>(null);
+  
+  // Состояние для отслеживания hover на слотах
+  const [hoveredSlot, setHoveredSlot] = useState<string | null>(null);
 
   const handleSlotClick = (event: React.MouseEvent<HTMLElement>, day: Dayjs, time: string, eventsInSlot: CalendarEvent[]) => {
-    // Если слот пустой и мы в режиме шаблонов - открываем форму создания
-    if (eventsInSlot.length === 0 && viewMode === 'scheduleTemplate') {
+    // В режиме шаблонов всегда разрешаем создание новых тренировок (независимо от количества существующих)
+    if (viewMode === 'scheduleTemplate') {
       setSelectedSlotInfo({ date: day, time });
       setIsFormOpen(true);
     }
@@ -357,10 +360,14 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                 const maxChips = isMobile ? 2 : (isTablet ? 3 : 4);
                 const visibleEvents = slotEvents.slice(0, maxChips);
                 const hiddenEventsCount = slotEvents.length - maxChips;
+                const slotKey = `${day.format('YYYY-MM-DD')}-${time}`;
+                const isHovered = hoveredSlot === slotKey;
 
                 return (
                   <Box
-                    key={`${day.toString()}-${time}`}
+                    key={slotKey}
+                    onMouseEnter={() => setHoveredSlot(slotKey)}
+                    onMouseLeave={() => setHoveredSlot(null)}
                     sx={{
                       minHeight: responsiveStyles.slotHeight,
                       backgroundColor: theme.palette.background.paper,
@@ -370,15 +377,17 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'flex-start',
-                      cursor: slotEvents.length === 0 ? 'pointer' : 'default',
+                      cursor: viewMode === 'scheduleTemplate' ? 'pointer' : 'default',
                       transition: theme.transitions.create(['background-color', 'box-shadow', 'transform'], {
                         duration: theme.transitions.duration.standard,
                         easing: theme.transitions.easing.easeInOut,
                       }),
                       overflow: 'visible', // Разрешаем тултипам показываться за границами
-                      '&:hover': slotEvents.length === 0 ? {
-                        backgroundColor: theme.palette.background.default,
-                        boxShadow: `0 0 0 2px ${theme.palette.primary.main}`,
+                      '&:hover': viewMode === 'scheduleTemplate' ? {
+                        backgroundColor: slotEvents.length === 0 
+                          ? theme.palette.background.default 
+                          : alpha(theme.palette.primary.main, 0.02),
+                        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
                         transform: 'scale(1.01)',
                       } : {},
                     }}
@@ -437,34 +446,86 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                       </Box>
                     )}
 
-                    {/* Подсказка для пустых слотов */}
-                    {slotEvents.length === 0 && viewMode === 'scheduleTemplate' && (
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          opacity: 0,
-                          transition: theme.transitions.create('opacity', {
-                            duration: theme.transitions.duration.short,
-                          }),
-                          '.css-1wnsr1i-MuiBox-root:hover &': {
-                            opacity: 0.6,
-                          },
-                        }}
-                      >
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
-                            fontSize: '0.7rem',
-                            color: theme.palette.text.secondary,
-                            textAlign: 'center',
-                          }}
-                        >
-                          + Создать
-                        </Typography>
-                      </Box>
+                    {/* Подсказки и кнопки добавления */}
+                    {viewMode === 'scheduleTemplate' && (
+                      <>
+                                                {/* Подсказка для пустых слотов */}
+                        {slotEvents.length === 0 && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%)',
+                              opacity: isHovered ? 0.6 : 0,
+                              transition: theme.transitions.create('opacity', {
+                                duration: theme.transitions.duration.short,
+                              }),
+                            }}
+                          >
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                fontSize: '0.7rem',
+                                color: theme.palette.text.secondary,
+                                textAlign: 'center',
+                              }}
+                            >
+                              + Создать
+                            </Typography>
+                          </Box>
+                        )}
+
+                        {/* Кнопка "+" для занятых слотов */}
+                        {slotEvents.length > 0 && (
+                          <Tooltip 
+                            title="Добавить ещё одну тренировку в этот слот" 
+                            arrow 
+                            placement="top"
+                          >
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: 4,
+                                right: 4,
+                                width: 20,
+                                height: 20,
+                                borderRadius: '50%',
+                                backgroundColor: alpha(theme.palette.primary.main, 0.9),
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                opacity: isHovered ? 1 : 0,
+                                transition: theme.transitions.create(['opacity', 'transform'], {
+                                  duration: theme.transitions.duration.short,
+                                }),
+                                cursor: 'pointer',
+                                zIndex: 10,
+                                '&:hover': {
+                                  backgroundColor: theme.palette.primary.main,
+                                  transform: 'scale(1.2)',
+                                },
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation(); // Предотвращаем двойной вызов handleSlotClick
+                                handleSlotClick(e, day, time, slotEvents);
+                              }}
+                            >
+                              <Typography 
+                                variant="caption" 
+                                sx={{ 
+                                  fontSize: '14px',
+                                  fontWeight: 600,
+                                  lineHeight: 1,
+                                }}
+                              >
+                                +
+                              </Typography>
+                            </Box>
+                          </Tooltip>
+                        )}
+                      </>
                     )}
                   </Box>
                 );
