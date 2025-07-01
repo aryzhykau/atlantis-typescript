@@ -202,7 +202,24 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
     }
 
     if (studentsToDisplay.length === 0) {
-      return <Typography variant="body2" color="text.secondary">Нет записанных учеников.</Typography>;
+      return (
+        <Box 
+          sx={{ 
+            textAlign: 'center', 
+            py: 4,
+            px: 2,
+            color: alpha(theme.palette.text.primary, 0.6),
+          }}
+        >
+          <GroupIcon sx={{ fontSize: '3rem', mb: 1, opacity: 0.3 }} />
+          <Typography variant="h6" sx={{ mb: 1, fontWeight: 500 }}>
+            Нет записанных учеников
+          </Typography>
+          <Typography variant="body2">
+            {isTrainingTemplate(event) ? 'Добавьте студентов в этот шаблон' : 'На эту тренировку никто не записан'}
+          </Typography>
+        </Box>
+      );
     }
 
     const handleRemoveStudentClick = async (trainingStudentTemplateId: number) => {
@@ -230,275 +247,574 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
     };
 
     return (
-      <List dense>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {studentsToDisplay.map((s_item) => (
-          <ListItem 
-            key={s_item.id} 
-            disableGutters 
+          <Box 
+            key={s_item.id}
             sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'flex-start', 
-              mb: 0.5, 
-              width: '100%'
+              p: 2,
+              borderRadius: 2,
+              background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.8)} 0%, ${alpha(borderColor, 0.02)} 100%)`,
+              border: `1px solid ${alpha(borderColor, 0.1)}`,
+              position: 'relative',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: `0 8px 25px ${alpha(theme.palette.common.black, 0.1)}`,
+                borderColor: alpha(borderColor, 0.3),
+              }
             }}
-            secondaryAction={
-              isTrainingTemplate(event) ? (
-                <IconButton 
-                  edge="end" 
-                  aria-label="remove student from template" 
-                  onClick={() => handleRemoveStudentClick(s_item.id)}
-                  size="small"
-                  disabled={isDeletingStudent} 
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <Box 
                   sx={{ 
-                    color: borderColor,
-                    '&:hover': {
-                      backgroundColor: alpha(borderColor, 0.08)
-                    }
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    background: `linear-gradient(135deg, ${borderColor} 0%, ${alpha(borderColor, 0.7)} 100%)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mr: 2,
                   }}
                 >
-                  {isDeletingStudent && studentBeingDeleted === s_item.id ? <CircularProgress size={20} color="inherit" /> : <PersonRemoveIcon fontSize="small" />}
-                </IconButton>
-              ) : null
-            }
-          >
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
-              <ListItemText 
-                primary={`${s_item.studentInfo.first_name || ''} ${s_item.studentInfo.last_name || ''}`.trim()} 
-                secondary={isRealTraining(event) && s_item.status_of_presence ? `Статус: ${s_item.status_of_presence}` : null}
-                sx={{mb: 0, pr: 1 }}
-              />
-              {s_item.studentInfo.client && (
-                <Typography variant="caption" color="text.secondary" component="div" sx={{pl:0, display: 'flex', alignItems: 'center'}}>
-                  Родитель: {`${s_item.studentInfo.client.first_name || ''} ${s_item.studentInfo.client.last_name || ''}`.trim()}
-                  {s_item.studentInfo.client.phone && (
-                    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', ml: 0.5 }}>
-                      (
-                      <PhoneIcon sx={{ fontSize: '0.8rem', mr: 0.3, ml: 0.3, color: 'inherit' }} />
-                      <Link href={`tel:${s_item.studentInfo.client.phone}`} sx={{color: 'inherit'}}>
-                        {s_item.studentInfo.client.phone}
-                      </Link>
-                      )
+                  <PersonIcon sx={{ color: 'white', fontSize: '1.2rem' }} />
+                </Box>
+                
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                    {`${s_item.studentInfo.first_name || ''} ${s_item.studentInfo.last_name || ''}`.trim()}
+                  </Typography>
+                  
+                  {s_item.studentInfo.client && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                      <Typography variant="body2" sx={{ color: alpha(theme.palette.text.primary, 0.7), mr: 1 }}>
+                        Родитель: {`${s_item.studentInfo.client.first_name || ''} ${s_item.studentInfo.client.last_name || ''}`.trim()}
+                      </Typography>
+                      {s_item.studentInfo.client.phone && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
+                          <PhoneIcon sx={{ fontSize: '0.9rem', mr: 0.5, color: alpha(theme.palette.text.primary, 0.5) }} />
+                          <Link 
+                            href={`tel:${s_item.studentInfo.client.phone}`} 
+                            sx={{ 
+                              color: theme.palette.primary.main,
+                              textDecoration: 'none',
+                              fontWeight: 500,
+                              '&:hover': { textDecoration: 'underline' }
+                            }}
+                          >
+                            {s_item.studentInfo.client.phone}
+                          </Link>
+                        </Box>
+                      )}
                     </Box>
                   )}
-                </Typography>
+                  
+                  {isRealTraining(event) && s_item.status_of_presence && (
+                    <Chip 
+                      label={`Статус: ${s_item.status_of_presence}`}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: alpha(theme.palette.success.main, 0.1),
+                        color: theme.palette.success.main,
+                        fontWeight: 500,
+                      }}
+                    />
+                  )}
+                </Box>
+              </Box>
+              
+              {isTrainingTemplate(event) && (
+                <IconButton 
+                  onClick={() => handleRemoveStudentClick(s_item.id)}
+                  disabled={isDeletingStudent} 
+                  sx={{ 
+                    backgroundColor: alpha(theme.palette.error.main, 0.1),
+                    color: theme.palette.error.main,
+                    width: 36,
+                    height: 36,
+                    '&:hover': {
+                      backgroundColor: alpha(theme.palette.error.main, 0.2),
+                      transform: 'scale(1.1)',
+                    },
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {isDeletingStudent && studentBeingDeleted === s_item.id ? 
+                    <CircularProgress size={20} color="inherit" /> : 
+                    <PersonRemoveIcon fontSize="small" />
+                  }
+                </IconButton>
               )}
             </Box>
-          </ListItem>
+          </Box>
         ))}
+        
         {deleteStudentError && (
-          <ListItem>
-            <Typography color="error" variant="caption">
+          <Box 
+            sx={{ 
+              p: 2,
+              borderRadius: 2,
+              backgroundColor: alpha(theme.palette.error.main, 0.1),
+              border: `1px solid ${alpha(theme.palette.error.main, 0.3)}`,
+            }}
+          >
+            <Typography color="error" variant="body2" sx={{ fontWeight: 500 }}>
               {/* @ts-ignore */} 
               Ошибка удаления ученика: {deleteStudentError?.data?.detail || deleteStudentError?.error || 'Неизвестная ошибка'}
             </Typography>
-          </ListItem>
+          </Box>
         )}
-      </List>
+      </Box>
     );
   };
 
-  const getEventTitle = () => {
-    let title = event.training_type?.name || 'Детали тренировки';
-    if (isRealTraining(event)) {
-      title += ` - ${dayjs(event.training_date).format('D MMMM YYYY')} в ${event.start_time.substring(0,5)}`;
-    } else if (isTrainingTemplate(event)) {
-      const dayOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][event.day_number - 1];
-      title += ` - Шаблон (${dayOfWeek}, ${event.start_time.substring(0,5)})`;
-    }
-    return title;
-  }
+
 
   return (
     <Dialog 
       open={open} 
       onClose={onClose} 
-      maxWidth="sm" 
+      maxWidth="md" 
       fullWidth 
       PaperProps={{
         sx: {
-          border: `1px solid ${borderColor}`,
+          borderRadius: 3,
+          background: `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha(borderColor, 0.03)} 100%)`,
+          boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.15)}`,
+          border: `1px solid ${alpha(borderColor, 0.2)}`,
+          overflow: 'hidden',
         }
       }}
     >
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb:1 }}>
-        {getEventTitle()}
-        <IconButton 
-          onClick={onClose} 
-          edge="end"
-          disabled={isDeletingStudent} // Дизейблим кнопку закрытия во время удаления студента
-          sx={{
-            color: borderColor,
-            '&:hover': {
-              backgroundColor: alpha(borderColor, 0.08)
-            }
+      <DialogTitle 
+        sx={{ 
+          background: `linear-gradient(135deg, ${borderColor} 0%, ${alpha(borderColor, 0.8)} 100%)`,
+          color: 'white',
+          py: 3,
+          px: 3,
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `radial-gradient(circle at 20% 80%, ${alpha('white', 0.1)} 0%, transparent 50%)`,
+          }
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5, textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+              {event.training_type?.name || 'Тренировка'}
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.9rem' }}>
+              {isTrainingTemplate(event) ? (
+                <>Шаблон • {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][event.day_number - 1]} в {event.start_time.substring(0,5)}</>
+              ) : (
+                <>Тренировка • {dayjs(event.training_date).format('D MMMM YYYY')} в {event.start_time.substring(0,5)}</>
+              )}
+            </Typography>
+          </Box>
+          <IconButton 
+            onClick={onClose} 
+            disabled={isDeletingStudent}
+            sx={{
+              color: 'white',
+              backgroundColor: alpha('white', 0.1),
+              backdropFilter: 'blur(10px)',
+              '&:hover': {
+                backgroundColor: alpha('white', 0.2),
+                transform: 'scale(1.1)',
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent sx={{ p: 3, backgroundColor: alpha(theme.palette.background.default, 0.3) }}>
+        {/* Карточка с информацией о тренере */}
+        <Box 
+          sx={{ 
+            mb: 3,
+            p: 2.5,
+            borderRadius: 2,
+            background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(borderColor, 0.05)} 100%)`,
+            border: `1px solid ${alpha(borderColor, 0.15)}`,
+            boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.08)}`,
           }}
         >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <Divider />
-      <DialogContent sx={{pt: 2}}>
-        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-          <PersonIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
-          <Typography variant="subtitle1" component="span" sx={{fontWeight: 'medium'}}>Тренер:</Typography>
-          <Typography variant="body1" component="span" sx={{ ml: 1}}>
-            {(isTrainingTemplate(event) && event.responsible_trainer) ? 
-              `${event.responsible_trainer.first_name || ''} ${event.responsible_trainer.last_name || ''}`.trim() :
-             (isRealTraining(event) && event.trainer) ? 
-              `${event.trainer.first_name || ''} ${event.trainer.last_name || ''}`.trim() :
-             'Не назначен'}
-          </Typography>
-        </Box>
-
-        {isRealTraining(event) && (
-          <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-            <EventNoteIcon sx={{ mr: 1, color: theme.palette.info.main }} />
-            <Typography variant="subtitle1" component="span" sx={{fontWeight: 'medium'}}>Статус тренировки:</Typography>
-            <Chip label={event.status || 'Не указан'} size="small" sx={{ ml: 1 }} />
-          </Box>
-        )}
-
-        <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <GroupIcon sx={{ mr: 1, color: theme.palette.secondary.main }} />
-            <Typography variant="subtitle1" sx={{fontWeight: 'medium'}}>Ученики ({isTrainingTemplate(event) ? event.assigned_students?.length || 0 : event.students?.length || 0}):</Typography>
-          </Box>
-          {isTrainingTemplate(event) && (
-            <IconButton 
-              size="small"
-              onClick={() => setIsAddStudentFormOpen(true)}
-              disabled={isDeletingStudent}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+            <Box 
               sx={{ 
-                color: theme.palette.primary.main,
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.08)
-                }
+                p: 1.5,
+                borderRadius: 2,
+                background: `linear-gradient(135deg, ${borderColor} 0%, ${alpha(borderColor, 0.8)} 100%)`,
+                mr: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <PersonAddIcon fontSize="small" />
-            </IconButton>
+              <PersonIcon sx={{ color: 'white', fontSize: '1.5rem' }} />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: borderColor, mb: 0.5 }}>
+                Тренер
+              </Typography>
+              <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
+                {(isTrainingTemplate(event) && event.responsible_trainer) ? 
+                  `${event.responsible_trainer.first_name || ''} ${event.responsible_trainer.last_name || ''}`.trim() :
+                 (isRealTraining(event) && event.trainer) ? 
+                  `${event.trainer.first_name || ''} ${event.trainer.last_name || ''}`.trim() :
+                 'Не назначен'}
+              </Typography>
+            </Box>
+          </Box>
+          
+          {isRealTraining(event) && (
+            <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${alpha(borderColor, 0.2)}` }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <EventNoteIcon sx={{ mr: 1, color: theme.palette.info.main }} />
+                <Typography variant="body2" sx={{ fontWeight: 500, mr: 1 }}>Статус:</Typography>
+                <Chip 
+                  label={event.status || 'Не указан'} 
+                  size="small" 
+                  sx={{ 
+                    backgroundColor: alpha(theme.palette.info.main, 0.1),
+                    color: theme.palette.info.main,
+                    fontWeight: 500,
+                  }} 
+                />
+              </Box>
+            </Box>
           )}
         </Box>
-        {renderStudentList()}
+
+        {/* Карточка со студентами */}
+        <Box 
+          sx={{ 
+            mb: 3,
+            borderRadius: 2,
+            background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(borderColor, 0.05)} 100%)`,
+            border: `1px solid ${alpha(borderColor, 0.15)}`,
+            boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.08)}`,
+            overflow: 'hidden',
+          }}
+        >
+          {/* Заголовок секции студентов */}
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              p: 2.5,
+              background: `linear-gradient(135deg, ${alpha(borderColor, 0.08)} 0%, ${alpha(borderColor, 0.03)} 100%)`,
+              borderBottom: `1px solid ${alpha(borderColor, 0.15)}`,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box 
+                sx={{ 
+                  p: 1,
+                  borderRadius: 1.5,
+                  background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${alpha(theme.palette.secondary.main, 0.8)} 100%)`,
+                  mr: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <GroupIcon sx={{ color: 'white', fontSize: '1.2rem' }} />
+              </Box>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: borderColor }}>
+                  Ученики
+                </Typography>
+                <Typography variant="body2" sx={{ color: alpha(theme.palette.text.primary, 0.7) }}>
+                  {isTrainingTemplate(event) ? event.assigned_students?.length || 0 : event.students?.length || 0} записано
+                </Typography>
+              </Box>
+            </Box>
+            {isTrainingTemplate(event) && (
+              <IconButton 
+                onClick={() => setIsAddStudentFormOpen(true)}
+                disabled={isDeletingStudent}
+                sx={{ 
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.8)} 100%)`,
+                  color: 'white',
+                  width: 40,
+                  height: 40,
+                  '&:hover': {
+                    transform: 'scale(1.1)',
+                    boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <PersonAddIcon fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
+          
+          {/* Список студентов */}
+          <Box sx={{ p: 2.5 }}>
+            {renderStudentList()}
+          </Box>
+        </Box>
 
         {/* Форма добавления студента */}
         {isAddStudentFormOpen && isTrainingTemplate(event) && (
-          <Box sx={{ mt: 2, p: 2, border: `1px solid ${alpha(borderColor, 0.3)}`, borderRadius: 2, backgroundColor: alpha(borderColor, 0.05) }}>
-            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 'medium' }}>
-              Добавить студента в шаблон
-            </Typography>
+          <Box 
+            sx={{ 
+              mb: 3,
+              borderRadius: 2,
+              background: `linear-gradient(135deg, ${alpha(borderColor, 0.05)} 0%, ${alpha(borderColor, 0.02)} 100%)`,
+              border: `2px solid ${alpha(borderColor, 0.2)}`,
+              boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.12)}`,
+              overflow: 'hidden',
+            }}
+          >
+            <Box 
+              sx={{ 
+                p: 2.5,
+                background: `linear-gradient(135deg, ${borderColor} 0%, ${alpha(borderColor, 0.8)} 100%)`,
+                color: 'white',
+              }}
+            >
+              <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center' }}>
+                <PersonAddIcon sx={{ mr: 1.5 }} />
+                Добавить студента в шаблон
+              </Typography>
+            </Box>
             
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Autocomplete
-                value={selectedStudent}
-                onChange={(_, newValue) => setSelectedStudent(newValue)}
-                options={availableStudents}
-                getOptionLabel={(student) => `${student.first_name} ${student.last_name}`}
-                renderInput={(params) => (
-                  <TextField 
-                    {...params} 
-                    label="Выберите студента" 
-                    size="small"
-                    fullWidth
-                  />
-                )}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                noOptionsText="Нет доступных студентов"
-              />
-              
-              <TextField
-                label="Дата начала"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                size="small"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-              
-              {addStudentError && (
-                <Typography color="error" variant="caption">
-                  {/* @ts-ignore */}
-                  Ошибка добавления студента: {addStudentError?.data?.detail || addStudentError?.error || 'Неизвестная ошибка'}
-                </Typography>
-              )}
-              
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => {
-                    setIsAddStudentFormOpen(false);
-                    setSelectedStudent(null);
-                    setStartDate(dayjs().format('YYYY-MM-DD'));
+            <Box sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <Autocomplete
+                  value={selectedStudent}
+                  onChange={(_, newValue) => setSelectedStudent(newValue)}
+                  options={availableStudents}
+                  getOptionLabel={(student) => `${student.first_name} ${student.last_name}`}
+                  renderInput={(params) => (
+                    <TextField 
+                      {...params} 
+                      label="Выберите студента" 
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover fieldset': {
+                            borderColor: borderColor,
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: borderColor,
+                          },
+                        },
+                      }}
+                    />
+                  )}
+                  renderOption={(props, option) => (
+                    <li {...props} style={{ padding: 0 }}>
+                      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', '&:hover': { backgroundColor: alpha(borderColor, 0.08) } }}>
+                        <Box 
+                          sx={{ 
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            background: `linear-gradient(135deg, ${borderColor} 0%, ${alpha(borderColor, 0.7)} 100%)`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            mr: 2,
+                          }}
+                        >
+                          <PersonIcon sx={{ color: 'white', fontSize: '1rem' }} />
+                        </Box>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {option.first_name} {option.last_name}
+                        </Typography>
+                      </Box>
+                    </li>
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  noOptionsText="Нет доступных студентов"
+                />
+                
+                <TextField
+                  label="Дата начала"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  fullWidth
+                  InputLabelProps={{
+                    shrink: true,
                   }}
-                >
-                  Отмена
-                </Button>
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={handleAddStudent}
-                  disabled={!selectedStudent}
                   sx={{
-                    backgroundColor: borderColor,
-                    '&:hover': {
-                      backgroundColor: alpha(borderColor, 0.8),
-                    }
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: borderColor,
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: borderColor,
+                      },
+                    },
                   }}
-                >
-                  Добавить
-                </Button>
+                />
+                
+                {addStudentError && (
+                  <Box 
+                    sx={{ 
+                      p: 2,
+                      borderRadius: 2,
+                      backgroundColor: alpha(theme.palette.error.main, 0.1),
+                      border: `1px solid ${alpha(theme.palette.error.main, 0.3)}`,
+                    }}
+                  >
+                    <Typography color="error" variant="body2" sx={{ fontWeight: 500 }}>
+                      {/* @ts-ignore */}
+                      Ошибка добавления студента: {addStudentError?.data?.detail || addStudentError?.error || 'Неизвестная ошибка'}
+                    </Typography>
+                  </Box>
+                )}
+                
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setIsAddStudentFormOpen(false);
+                      setSelectedStudent(null);
+                      setStartDate(dayjs().format('YYYY-MM-DD'));
+                    }}
+                    sx={{
+                      borderColor: alpha(theme.palette.text.primary, 0.3),
+                      color: theme.palette.text.primary,
+                      px: 3,
+                      py: 1,
+                      borderRadius: 2,
+                      '&:hover': {
+                        borderColor: alpha(theme.palette.text.primary, 0.5),
+                        backgroundColor: alpha(theme.palette.text.primary, 0.05),
+                      }
+                    }}
+                  >
+                    Отмена
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={handleAddStudent}
+                    disabled={!selectedStudent}
+                    sx={{
+                      background: `linear-gradient(135deg, ${borderColor} 0%, ${alpha(borderColor, 0.8)} 100%)`,
+                      color: 'white',
+                      px: 3,
+                      py: 1,
+                      borderRadius: 2,
+                      boxShadow: `0 4px 15px ${alpha(borderColor, 0.3)}`,
+                      '&:hover': {
+                        boxShadow: `0 6px 20px ${alpha(borderColor, 0.4)}`,
+                        transform: 'translateY(-1px)',
+                      },
+                      '&:disabled': {
+                        background: alpha(theme.palette.text.primary, 0.3),
+                        color: alpha(theme.palette.text.primary, 0.5),
+                      },
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    Добавить студента
+                  </Button>
+                </Box>
               </Box>
             </Box>
           </Box>
         )}
 
-        {/* TODO: Добавить другую релевантную информацию: 
-            - для шаблона: training_type_id, responsible_trainer_id
-            - для реальной: template_id, cancellation_reason (если есть)
-        */}
       </DialogContent>
-      <Divider />
-      <DialogActions sx={{p:2, justifyContent: 'space-between'}}>
-        <Box>
+      
+      <Box 
+        sx={{ 
+          p: 3,
+          background: `linear-gradient(135deg, ${alpha(theme.palette.background.default, 0.8)} 0%, ${alpha(borderColor, 0.02)} 100%)`,
+          borderTop: `1px solid ${alpha(borderColor, 0.15)}`,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Box sx={{ display: 'flex', gap: 2 }}>
           <Button 
             onClick={() => {console.log('Edit clicked', event)}} 
-            variant="contained" 
-            color="secondary"
-            sx={{mr:1}}
-            disabled={isDeletingStudent} // Дизейблим во время удаления студента
+            variant="contained"
+            disabled={isDeletingStudent}
+            sx={{
+              background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${alpha(theme.palette.secondary.main, 0.8)} 100%)`,
+              color: 'white',
+              px: 3,
+              py: 1.2,
+              borderRadius: 2,
+              boxShadow: `0 4px 15px ${alpha(theme.palette.secondary.main, 0.3)}`,
+              '&:hover': {
+                boxShadow: `0 6px 20px ${alpha(theme.palette.secondary.main, 0.4)}`,
+                transform: 'translateY(-1px)',
+              },
+              transition: 'all 0.2s ease',
+            }}
           >
             Редактировать
           </Button>
           <Button 
             onClick={() => {console.log('Delete clicked', event)}} 
-            variant="contained" 
-            color="error"
-            disabled={isDeletingStudent} // Дизейблим во время удаления студента
+            variant="contained"
+            disabled={isDeletingStudent}
+            sx={{
+              background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${alpha(theme.palette.error.main, 0.8)} 100%)`,
+              color: 'white',
+              px: 3,
+              py: 1.2,
+              borderRadius: 2,
+              boxShadow: `0 4px 15px ${alpha(theme.palette.error.main, 0.3)}`,
+              '&:hover': {
+                boxShadow: `0 6px 20px ${alpha(theme.palette.error.main, 0.4)}`,
+                transform: 'translateY(-1px)',
+              },
+              transition: 'all 0.2s ease',
+            }}
           >
             Удалить
           </Button>
         </Box>
+        
         <Button 
           onClick={onClose} 
-          variant="outlined" 
+          variant="outlined"
+          disabled={isDeletingStudent}
           sx={{ 
-            color: borderColor, 
-            borderColor: borderColor,
+            borderColor: alpha(borderColor, 0.4),
+            color: borderColor,
+            px: 4,
+            py: 1.2,
+            borderRadius: 2,
+            fontWeight: 600,
             '&:hover': {
               borderColor: borderColor, 
-              backgroundColor: alpha(borderColor, 0.08) 
-            }
+              backgroundColor: alpha(borderColor, 0.08),
+              transform: 'translateY(-1px)',
+            },
+            transition: 'all 0.2s ease',
           }}
           autoFocus
-          disabled={isDeletingStudent} // Дизейблим во время удаления студента
         >
-            Закрыть
+          Закрыть
         </Button>
-      </DialogActions>
+      </Box>
     </Dialog>
   );
 };
