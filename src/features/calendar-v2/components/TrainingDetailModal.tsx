@@ -32,12 +32,14 @@ import EventNoteIcon from '@mui/icons-material/EventNote'; // Для даты/в
 import PhoneIcon from '@mui/icons-material/Phone'; // Иконка для телефона
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove'; // Новая иконка
 import PersonAddIcon from '@mui/icons-material/PersonAdd'; // Иконка для добавления студентов
+import WarningIcon from '@mui/icons-material/Warning'; // Иконка для диалога удаления
 import { CalendarEvent, isRealTraining, isTrainingTemplate } from './CalendarShell'; // Нужны type guards
 import dayjs from 'dayjs';
-import { useDeleteTrainingStudentTemplateMutation, useCreateTrainingStudentTemplateMutation, useGetTrainingTemplateByIdQuery, useGetRealTrainingByIdQuery } from '../../../store/apis/calendarApi-v2';
+import { useDeleteTrainingStudentTemplateMutation, useCreateTrainingStudentTemplateMutation, useGetTrainingTemplateByIdQuery, useGetRealTrainingByIdQuery, useDeleteTrainingTemplateMutation, useDeleteRealTrainingMutation } from '../../../store/apis/calendarApi-v2';
 import { calendarApiV2 } from '../../../store/apis/calendarApi-v2';
 import { useGetStudentsQuery } from '../../../store/apis/studentsApi';
 import { TrainingStudentTemplateCreate } from '../models/trainingStudentTemplate';
+import { useSnackbar } from '../../../hooks/useSnackBar';
 
 interface TrainingDetailModalProps {
   open: boolean;
@@ -49,10 +51,17 @@ interface TrainingDetailModalProps {
 const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose, eventId, eventType }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
+  const { displaySnackbar } = useSnackbar();
 
+  // Мутации для удаления студентов
   const [deleteTrainingStudentTemplate, { isLoading: isDeletingStudent, error: deleteStudentError }] = 
     useDeleteTrainingStudentTemplateMutation();
   const [createTrainingStudentTemplate, { error: addStudentError }] = useCreateTrainingStudentTemplateMutation();
+  
+  // Мутации для удаления тренировок
+  const [deleteTrainingTemplate, { isLoading: isDeletingTemplate }] = useDeleteTrainingTemplateMutation();
+  const [deleteRealTraining, { isLoading: isDeletingReal }] = useDeleteRealTrainingMutation();
+  
   const { data: allStudents } = useGetStudentsQuery();
   
   // Загружаем свежие данные в зависимости от типа события
@@ -76,8 +85,6 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
   // Показываем загрузку если данные загружаются
   const isLoading = isLoadingTemplate || isLoadingReal;
 
-
-
   // Состояние для отслеживания ID студента, который удаляется
   const [studentBeingDeleted, setStudentBeingDeleted] = useState<number | null>(null);
   
@@ -86,11 +93,48 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [startDate, setStartDate] = useState(dayjs().format('YYYY-MM-DD'));
 
+  // Состояние для диалога подтверждения удаления
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+
+  // Определяем состояние загрузки удаления
+  const isDeletingTraining = isDeletingTemplate || isDeletingReal;
+
   useEffect(() => {
     if (event && isTrainingTemplate(event)) {
       console.log('[TrainingDetailModal] Event updated, assigned_students:', JSON.parse(JSON.stringify(event.assigned_students)));
     }
   }, [event, templateData, realTrainingData]); // Зависимость от свежих данных
+
+  // Функция для обработки удаления тренировки
+  const handleDeleteTraining = async () => {
+    if (!event || !eventId) return;
+    
+    try {
+      if (eventType === 'template') {
+        await deleteTrainingTemplate(eventId).unwrap();
+        displaySnackbar('Шаблон тренировки удален!', 'success');
+      } else if (eventType === 'real') {
+        await deleteRealTraining(eventId).unwrap();
+        displaySnackbar('Тренировка удалена!', 'success');
+      }
+      
+      // Закрываем модал и диалог подтверждения
+      setShowDeleteConfirmation(false);
+      onClose();
+      
+    } catch (err: any) {
+      console.error('[TrainingDetailModal] Failed to delete training:', err);
+      const errorMessage = err?.data?.detail || err?.message || 'Ошибка при удалении тренировки';
+      displaySnackbar(errorMessage, 'error');
+    }
+  };
+
+  // Функция для обработки редактирования тренировки
+  const handleEditTraining = () => {
+    // TODO: Здесь будет логика редактирования
+    console.log('[TrainingDetailModal] Edit training:', event);
+    displaySnackbar('Функция редактирования в разработке!', 'info');
+  };
 
   // Функция для добавления студента
   const handleAddStudent = async () => {
@@ -373,6 +417,7 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
 
 
   return (
+    <>
     <Dialog 
       open={open} 
       onClose={onClose} 
@@ -756,9 +801,9 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
       >
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button 
-            onClick={() => {console.log('Edit clicked', event)}} 
+            onClick={handleEditTraining} 
             variant="contained" 
-            disabled={isDeletingStudent}
+            disabled={isDeletingStudent || isDeletingTraining}
             sx={{
               background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${alpha(theme.palette.secondary.main, 0.8)} 100%)`,
               color: 'white',
@@ -770,15 +815,19 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
                 boxShadow: `0 6px 20px ${alpha(theme.palette.secondary.main, 0.4)}`,
                 transform: 'translateY(-1px)',
               },
+              '&:disabled': {
+                background: alpha(theme.palette.text.primary, 0.3),
+                color: alpha(theme.palette.text.primary, 0.5),
+              },
               transition: 'all 0.2s ease',
             }}
           >
             Редактировать
           </Button>
           <Button 
-            onClick={() => {console.log('Delete clicked', event)}} 
+            onClick={() => setShowDeleteConfirmation(true)} 
             variant="contained" 
-            disabled={isDeletingStudent}
+            disabled={isDeletingStudent || isDeletingTraining}
             sx={{
               background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${alpha(theme.palette.error.main, 0.8)} 100%)`,
               color: 'white',
@@ -790,17 +839,21 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
                 boxShadow: `0 6px 20px ${alpha(theme.palette.error.main, 0.4)}`,
                 transform: 'translateY(-1px)',
               },
+              '&:disabled': {
+                background: alpha(theme.palette.text.primary, 0.3),
+                color: alpha(theme.palette.text.primary, 0.5),
+              },
               transition: 'all 0.2s ease',
             }}
           >
-            Удалить
+            {isDeletingTraining ? <CircularProgress size={20} color="inherit" /> : 'Удалить'}
           </Button>
         </Box>
         
         <Button 
           onClick={onClose} 
           variant="outlined" 
-          disabled={isDeletingStudent}
+          disabled={isDeletingStudent || isDeletingTraining}
           sx={{ 
             borderColor: alpha(borderColor, 0.4),
             color: borderColor, 
@@ -813,6 +866,10 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
               backgroundColor: alpha(borderColor, 0.08),
               transform: 'translateY(-1px)',
             },
+            '&:disabled': {
+              borderColor: alpha(theme.palette.text.primary, 0.3),
+              color: alpha(theme.palette.text.primary, 0.5),
+            },
             transition: 'all 0.2s ease',
           }}
           autoFocus
@@ -821,6 +878,120 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
         </Button>
       </Box>
     </Dialog>
+
+    {/* Диалог подтверждения удаления */}
+    <Dialog
+      open={showDeleteConfirmation}
+      onClose={() => setShowDeleteConfirmation(false)}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 2,
+        backgroundColor: alpha(theme.palette.error.main, 0.05),
+        borderTop: `4px solid ${theme.palette.error.main}`,
+      }}>
+        <WarningIcon sx={{ color: theme.palette.error.main, fontSize: '2rem' }} />
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          Подтверждение удаления
+        </Typography>
+      </DialogTitle>
+      
+      <DialogContent sx={{ pt: 3 }}>
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          Вы уверены, что хотите удалить {eventType === 'template' ? 'шаблон тренировки' : 'тренировку'}?
+        </Typography>
+        
+        {event && (
+          <Box sx={{ 
+            p: 2, 
+            backgroundColor: alpha(theme.palette.error.main, 0.05),
+            borderRadius: 2,
+            border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
+          }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, color: theme.palette.error.dark }}>
+              {event.training_type?.name || 'Тренировка'}
+            </Typography>
+                         <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mt: 0.5 }}>
+               Тренер: {isTrainingTemplate(event) ? 
+                 `${event.responsible_trainer?.first_name || ''} ${event.responsible_trainer?.last_name || ''}`.trim() :
+                 `${event.trainer?.first_name || ''} ${event.trainer?.last_name || ''}`.trim()
+               }
+             </Typography>
+            {isRealTraining(event) && (
+              <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+                Дата: {dayjs(event.training_date).format('DD.MM.YYYY')} в {event.start_time}
+              </Typography>
+            )}
+            {isTrainingTemplate(event) && (
+              <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+                День недели: {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][event.day_number - 1]} в {event.start_time}
+              </Typography>
+            )}
+          </Box>
+        )}
+        
+        <Typography variant="body2" sx={{ mt: 2, color: theme.palette.error.dark, fontWeight: 500 }}>
+          ⚠️ Это действие нельзя отменить!
+        </Typography>
+      </DialogContent>
+      
+      <DialogActions sx={{ p: 3, gap: 2 }}>
+        <Button
+          onClick={() => setShowDeleteConfirmation(false)}
+          variant="outlined"
+          disabled={isDeletingTraining}
+          sx={{
+            borderColor: alpha(theme.palette.text.primary, 0.3),
+            color: theme.palette.text.primary,
+            px: 3,
+            py: 1,
+            borderRadius: 2,
+            '&:hover': {
+              borderColor: alpha(theme.palette.text.primary, 0.5),
+              backgroundColor: alpha(theme.palette.text.primary, 0.05),
+            }
+          }}
+        >
+          Отмена
+        </Button>
+        
+        <Button
+          onClick={handleDeleteTraining}
+          variant="contained"
+          disabled={isDeletingTraining}
+          sx={{
+            background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${alpha(theme.palette.error.main, 0.8)} 100%)`,
+            color: 'white',
+            px: 3,
+            py: 1,
+            borderRadius: 2,
+            boxShadow: `0 4px 15px ${alpha(theme.palette.error.main, 0.3)}`,
+            '&:hover': {
+              boxShadow: `0 6px 20px ${alpha(theme.palette.error.main, 0.4)}`,
+              transform: 'translateY(-1px)',
+            },
+            '&:disabled': {
+              background: alpha(theme.palette.text.primary, 0.3),
+              color: alpha(theme.palette.text.primary, 0.5),
+            },
+            transition: 'all 0.2s ease',
+          }}
+        >
+          {isDeletingTraining ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={16} color="inherit" />
+              Удаление...
+            </Box>
+          ) : (
+            'Удалить'
+          )}
+        </Button>
+      </DialogActions>
+    </Dialog>
+    </>
   );
 };
 
