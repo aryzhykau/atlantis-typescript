@@ -326,10 +326,14 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
           // Затем добавляем студентов отдельными запросами
           if (originalStudents.length > 0) {
             const studentPromises = originalStudents.map(async (studentTemplate) => {
+              // Сохраняем оригинальную start_date - она означает "с какой даты 
+              // студент участвует в данном типе тренировки"
+              const startDate = studentTemplate.start_date;
+              
               const studentData: TrainingStudentTemplateCreate = {
                 training_template_id: createdTemplate.id,
                 student_id: studentTemplate.student.id,
-                start_date: studentTemplate.start_date, // Копируем исходную дату
+                start_date: startDate, // Используем корректную дату
                 is_frozen: studentTemplate.is_frozen,
               };
               return createTrainingStudentTemplate(studentData).unwrap();
