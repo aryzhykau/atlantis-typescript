@@ -15,6 +15,13 @@ import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/ru';
 import CalendarShell from './CalendarShell';
+import CalendarSearchBar, { CalendarFilters } from './CalendarSearchBar';
+import { 
+  filterEvents, 
+  createFilterOptionsFromTemplates, 
+  createFilterOptionsFromRealTrainings,
+  mergeFilterOptions 
+} from '../utils/filterUtils';
 
 dayjs.locale('ru');
 
@@ -83,6 +90,12 @@ const CalendarControlsHeader: React.FC<CalendarControlsHeaderProps> = ({
 const CalendarV2Page: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Dayjs>(dayjs().startOf('isoWeek'));
   const [viewMode, setViewMode] = useState<CalendarViewMode>('scheduleTemplate');
+  const [filters, setFilters] = useState<CalendarFilters>({
+    searchText: '',
+    trainerIds: [],
+    trainingTypeIds: [],
+    studentIds: [],
+  });
 
   const handleDateChange = (date: Dayjs | null) => {
     if (date) {
@@ -135,6 +148,49 @@ const CalendarV2Page: React.FC = () => {
   const isLoading = viewMode === 'scheduleTemplate' ? isLoadingTemplates : isLoadingActual;
   const error = viewMode === 'scheduleTemplate' ? errorTemplates : errorActual;
 
+  // Создаем опции для фильтров на основе загруженных данных
+  const filterOptions = useMemo(() => {
+    if (viewMode === 'scheduleTemplate' && scheduleTemplates) {
+      return createFilterOptionsFromTemplates(scheduleTemplates);
+    }
+    if (viewMode === 'actualTrainings' && actualTrainings) {
+      return createFilterOptionsFromRealTrainings(actualTrainings);
+    }
+    return {
+      trainerOptions: [],
+      trainingTypeOptions: [],
+      studentOptions: [],
+    };
+  }, [viewMode, scheduleTemplates, actualTrainings]);
+
+  // Фильтруем данные на основе текущих фильтров
+  const filteredTemplatesData = useMemo(() => {
+    if (!scheduleTemplates) return undefined;
+    
+    const hasActiveFilters = filters.searchText || 
+      filters.trainerIds.length > 0 || 
+      filters.trainingTypeIds.length > 0 || 
+      filters.studentIds.length > 0;
+    
+    return hasActiveFilters ? filterEvents(scheduleTemplates, filters) as typeof scheduleTemplates : scheduleTemplates;
+  }, [scheduleTemplates, filters]);
+
+  const filteredActualData = useMemo(() => {
+    if (!actualTrainings) return undefined;
+    
+    const hasActiveFilters = filters.searchText || 
+      filters.trainerIds.length > 0 || 
+      filters.trainingTypeIds.length > 0 || 
+      filters.studentIds.length > 0;
+    
+    return hasActiveFilters ? filterEvents(actualTrainings, filters) as typeof actualTrainings : actualTrainings;
+  }, [actualTrainings, filters]);
+
+  // Обработчик изменения фильтров
+  const handleFiltersChange = (newFilters: CalendarFilters) => {
+    setFilters(newFilters);
+  };
+
   return (
     <Box sx={{ p: 1 }}>
       <CalendarControlsHeader
@@ -146,11 +202,19 @@ const CalendarV2Page: React.FC = () => {
         onNextWeek={handleNextWeek}
         weekDisplay={weekDisplay}
       />
+      <CalendarSearchBar
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        trainerOptions={filterOptions.trainerOptions}
+        trainingTypeOptions={filterOptions.trainingTypeOptions}
+        studentOptions={filterOptions.studentOptions}
+        isLoading={isLoading}
+      />
       <CalendarShell 
         currentDate={currentDate}
         viewMode={viewMode}
-        templatesData={scheduleTemplates}
-        actualData={actualTrainings}
+        templatesData={filteredTemplatesData}
+        actualData={filteredActualData}
         isLoading={isLoading}
         error={error}
       />
