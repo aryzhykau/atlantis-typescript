@@ -19,11 +19,14 @@ import {
   useCreateTrainingTemplateMutation,
   useCreateRealTrainingMutation,
   useCreateTrainingStudentTemplateMutation,
-  useAddStudentToRealTrainingMutation
+  useAddStudentToRealTrainingMutation,
+  useGetTrainingTemplatesQuery,
+  useGetRealTrainingsQuery
 } from '../../../store/apis/calendarApi-v2';
 import DraggableTrainingChip from './DraggableTrainingChip';
 import DroppableSlotComponent from './DroppableSlot';
 import { debugLog } from '../utils/debug';
+import { useAltKey } from '../hooks/useAltKey';
 
 // Определим объединенный тип для тренировок для удобства
 export type CalendarEvent = TrainingTemplate | RealTraining;
@@ -166,6 +169,7 @@ const TrainingChip = memo<{
       disableHoverListener={isDragActive}
       disableFocusListener={isDragActive}
       disableTouchListener={isDragActive}
+      open={isDragActive ? false : undefined}
     >
       <Box onClick={handleClick} sx={chipSx}>
         <Typography
@@ -280,8 +284,18 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
   const [createTrainingStudentTemplate] = useCreateTrainingStudentTemplateMutation();
   const [addStudentToRealTraining] = useAddStudentToRealTrainingMutation();
   
+  // Инвалидация кеша для обновления UI после дублирования
+  const { refetch: refetchTemplates } = useGetTrainingTemplatesQuery();
+  const { refetch: refetchRealTrainings } = useGetRealTrainingsQuery({
+    startDate: currentDate.startOf('isoWeek').format('YYYY-MM-DD'),
+    endDate: currentDate.endOf('isoWeek').format('YYYY-MM-DD'),
+  });
+  
   // Состояние драга будет передаваться из внутреннего компонента
   const [isDragging, setIsDragging] = useState(false);
+
+  // Глобальный Alt listener - создается только один раз на весь календарь  
+  const { isAltPressed, getCurrentAltState, forceResetAltState } = useAltKey();
 
   // Обработчик перемещения/дублирования тренировок с react-dnd
   const handleTrainingDrop = useCallback(async (
@@ -290,8 +304,10 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
     sourceTime: string, 
     targetDay: Dayjs, 
     targetTime: string,
-    isDuplicate: boolean = false
+    isDuplicate: boolean = false // Используем переданное значение
   ) => {
+    // isDuplicate теперь точно определяется в DroppableSlot
+    
     // Проверяем, изменилось ли положение
     if (sourceDay.isSame(targetDay, 'day') && sourceTime === targetTime) {
       return; // Ничего не изменилось
@@ -301,7 +317,8 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
       eventId: event.id, 
       from: `${sourceDay.format('ddd')} ${sourceTime}`,
       to: `${targetDay.format('ddd')} ${targetTime}`,
-      isDuplicate
+      isDuplicate,
+      ctrlPressed: isDuplicate
     });
 
     try {
@@ -346,6 +363,9 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
           const studentCount = originalStudents.length;
           const studentText = studentCount > 0 ? ` (со ${studentCount} студентами)` : '';
           displaySnackbar(`📋 Шаблон тренировки "${event.training_type?.name}" продублирован${studentText}`, 'success');
+          
+          // Обновляем данные для отображения актуального количества студентов
+          refetchTemplates();
         } else if (isRealTraining(event)) {
           const trainingDate = targetDay.format('YYYY-MM-DD');
           
@@ -382,6 +402,9 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
           const studentCount = originalStudents.length;
           const studentText = studentCount > 0 ? ` (со ${studentCount} студентами)` : '';
           displaySnackbar(`📋 Тренировка "${event.training_type?.name}" продублирована${studentText}`, 'success');
+          
+          // Обновляем данные для отображения актуального количества студентов
+          refetchRealTrainings();
         }
       } else {
         // Логика перемещения (существующая)
@@ -414,7 +437,7 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
       const errorMessage = error?.data?.detail || error?.message || 'Неизвестная ошибка';
       displaySnackbar(`❌ Не удалось ${isDuplicate ? 'продублировать' : 'переместить'} тренировку: ${errorMessage}`, 'error');
     }
-  }, [moveTrainingTemplate, moveRealTraining, createTrainingTemplate, createRealTraining, createTrainingStudentTemplate, addStudentToRealTraining, displaySnackbar]);
+  }, [moveTrainingTemplate, moveRealTraining, createTrainingTemplate, createRealTraining, createTrainingStudentTemplate, addStudentToRealTraining, displaySnackbar, refetchTemplates, refetchRealTrainings]);
 
   const getEventsForSlot = useCallback((day: Dayjs, time: string): CalendarEvent[] => {
     const slotHour = parseInt(time.split(':')[0]);
@@ -557,6 +580,9 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
           theme,
           isDragging,
           setIsDragging,
+          isAltPressed,
+          getCurrentAltState,
+          forceResetAltState,
         }}
       />
     </DndProvider>
@@ -591,6 +617,11 @@ interface CalendarContentProps {
   theme: any;
   isDragging: boolean;
   setIsDragging: (value: boolean) => void;
+  // Добавляем Alt состояние
+  isAltPressed: boolean;
+  getCurrentAltState: () => boolean;
+  forceResetAltState: () => void;
+
 }
 
 // Внутренний компонент для работы с drag & drop контекстом
@@ -601,7 +632,8 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
     handleOpenDetailModal, handleCloseDetailModal, handleCloseForm,
     responsiveStyles, selectedSlotInfo, isFormOpen, isDetailModalOpen,
     selectedEventId, selectedEventType, daysOfWeek, timeSlots,
-    isMobile, isTablet, theme, isDragging, setIsDragging
+    isMobile, isTablet, theme, isDragging, setIsDragging,
+    isAltPressed, getCurrentAltState, forceResetAltState
   } = props;
 
   // Рефы для контейнеров скролла
@@ -835,6 +867,9 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
                     time={time}
                     onClick={(e) => handleSlotClick(e, day, time, slotEvents)}
                     onDrop={handleTrainingDrop}
+                    isAltPressed={isAltPressed}
+                    getCurrentAltState={getCurrentAltState}
+                    forceResetAltState={forceResetAltState}
                     sx={{
                       minHeight: responsiveStyles.slotHeight,
                       backgroundColor: theme.palette.background.paper,
@@ -887,7 +922,7 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
                               isMobile={isMobile}
                               isTablet={isTablet}
                               onEventClick={handleOpenDetailModal}
-                              isDragActive={isDragging}
+                              // isDragActive передается из DraggableTrainingChip
                             />
                           </DraggableTrainingChip>
                         ))}
@@ -900,6 +935,7 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
                             disableHoverListener={isDragging}
                             disableFocusListener={isDragging}
                             disableTouchListener={isDragging}
+                            open={isDragging ? false : undefined}
                           >
                             <Box
                               sx={{
@@ -970,6 +1006,7 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
                             disableHoverListener={isDragging}
                             disableFocusListener={isDragging}
                             disableTouchListener={isDragging}
+                            open={isDragging ? false : undefined}
                           >
                             <Box
                               className="add-button"

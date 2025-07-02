@@ -11,6 +11,10 @@ interface DroppableSlotProps {
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
   sx?: any;
   onDrop?: (event: CalendarEvent, sourceDay: Dayjs, sourceTime: string, targetDay: Dayjs, targetTime: string, isDuplicate?: boolean) => void;
+  // Получаем состояние Alt извне
+  isAltPressed: boolean;
+  getCurrentAltState: () => boolean;
+  forceResetAltState: () => void;
 }
 
 interface DragItem {
@@ -18,7 +22,8 @@ interface DragItem {
   event: CalendarEvent;
   sourceDay: Dayjs;
   sourceTime: string;
-  isDuplicate: boolean;
+  isDuplicate?: boolean;
+  isVirtualCopy?: boolean; // Флаг что это виртуальная копия для дублирования
 }
 
 const DroppableSlot: React.FC<DroppableSlotProps> = memo(({
@@ -28,12 +33,26 @@ const DroppableSlot: React.FC<DroppableSlotProps> = memo(({
   onClick,
   sx = {},
   onDrop,
+  isAltPressed,
+  getCurrentAltState,
+  forceResetAltState,
 }) => {
+  // Получаем состояние Alt как пропы
+
   const [{ isOver, canDrop, dragItem }, drop] = useDrop<DragItem, void, { isOver: boolean; canDrop: boolean; dragItem: DragItem | null }>({
     accept: 'TRAINING',
-    drop: (item) => {
+    // Убираем hover спам для чистоты логов
+    drop: (item, monitor) => {
       if (onDrop) {
-        onDrop(item.event, item.sourceDay, item.sourceTime, day, time, item.isDuplicate);
+        // Используем isDuplicate из самого item (определяется в момент начала drag)
+        const isDuplicate = item.isDuplicate || false;
+        
+        // Принудительно сбрасываем состояние Alt после drop (против "залипания")
+        setTimeout(() => {
+          forceResetAltState();
+        }, 50);
+        
+        onDrop(item.event, item.sourceDay, item.sourceTime, day, time, isDuplicate);
       }
     },
     collect: (monitor) => ({
@@ -79,7 +98,7 @@ const DroppableSlot: React.FC<DroppableSlotProps> = memo(({
             left: '50%',
             transform: 'translate(-50%, -50%)',
             zIndex: 2,
-            backgroundColor: dragItem.isDuplicate ? 'info.main' : 'primary.main',
+            backgroundColor: dragItem?.isDuplicate ? 'info.main' : 'primary.main',
             color: 'white',
             px: 1,
             py: 0.5,
@@ -89,7 +108,7 @@ const DroppableSlot: React.FC<DroppableSlotProps> = memo(({
             whiteSpace: 'nowrap',
           }}
         >
-          {dragItem.isDuplicate ? '📋 Дублировать сюда' : '📅 Переместить сюда'}
+          {dragItem?.isDuplicate ? '📋 Дублировать сюда' : '📅 Переместить сюда'}
         </Box>
       )}
     </Box>
