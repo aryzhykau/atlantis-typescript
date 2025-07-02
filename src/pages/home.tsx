@@ -29,7 +29,12 @@ export function HomePage() {
             )}
             {isSuccess && (isMobile ? <MobileHomeLayout><Outlet/></MobileHomeLayout> : <HomeLayout  data={data} isLoading={isLoading}><Outlet/></HomeLayout>)}
             {isError && <Paper sx={{display: "flex", justifyContent: "center", alignItems: "center"}}>Ошибка</Paper>}
-            <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={hideSnackbar}>
+            <Snackbar 
+                open={snackbar.open} 
+                autoHideDuration={6000} 
+                onClose={hideSnackbar}
+                sx={{ zIndex: 9999 }}
+            >
                 <Alert onClose={hideSnackbar} severity={snackbar.severity}>
                     {snackbar.message}
                 </Alert>

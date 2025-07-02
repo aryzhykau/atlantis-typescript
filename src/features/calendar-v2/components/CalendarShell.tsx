@@ -1,6 +1,8 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, memo } from 'react';
 import { Box, Typography, Paper, useTheme, useMediaQuery, Tooltip } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import { DndProvider, useDragLayer } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import dayjs, { Dayjs } from 'dayjs';
 import { CalendarViewMode } from './CalendarV2Page'; // Предполагается, что типы там же
 import { TrainingTemplate } from '../models/trainingTemplate';
@@ -8,6 +10,15 @@ import { RealTraining } from '../models/realTraining';
 import TrainingTemplateForm from './TrainingTemplateForm'; // Импорт формы
 import TrainingDetailModal from './TrainingDetailModal'; // Импортируем детальное модальное окно
 import { calculateCapacity, formatCapacityText, shouldShowCapacityBadge } from '../utils/capacityUtils';
+
+import { useSnackbar } from '../../../hooks/useSnackBar';
+import { 
+  useMoveTrainingTemplateMutation, 
+  useMoveRealTrainingMutation 
+} from '../../../store/apis/calendarApi-v2';
+import DraggableTrainingChip from './DraggableTrainingChip';
+import DroppableSlotComponent from './DroppableSlot';
+import { debugLog } from '../utils/debug';
 
 // Определим объединенный тип для тренировок для удобства
 export type CalendarEvent = TrainingTemplate | RealTraining;
@@ -36,7 +47,187 @@ interface SelectedSlotInfo {
   time: string;
 }
 
-const CalendarShell: React.FC<CalendarShellProps> = ({
+// Мемоизированный компонент для Training Chip (вынесен отдельно для оптимизации)
+const TrainingChip = memo<{ 
+  event: CalendarEvent; 
+  index: number; 
+  isMobile: boolean; 
+  isTablet: boolean;
+  onEventClick: (event: CalendarEvent) => void;
+  isDragActive?: boolean;
+}>(({ event, index, isMobile, isTablet, onEventClick, isDragActive = false }) => {
+  const theme = useTheme();
+  
+  // Мемоизируем тяжелые вычисления
+  const chipData = useMemo(() => {
+    const typeColor = event.training_type?.color || theme.palette.primary.main;
+    let trainerName = 'Без тренера';
+    let studentCount = 0;
+    const maxParticipants = event.training_type?.max_participants || null;
+
+    // Получаем информацию о тренере
+    if (isTrainingTemplate(event) && event.responsible_trainer) {
+      trainerName = `${event.responsible_trainer.first_name || ''} ${event.responsible_trainer.last_name ? event.responsible_trainer.last_name.charAt(0) + '.' : ''}`.trim();
+    } else if (isRealTraining(event) && event.trainer) {
+      trainerName = `${event.trainer.first_name || ''} ${event.trainer.last_name ? event.trainer.last_name.charAt(0) + '.' : ''}`.trim();
+    }
+
+    // Получаем количество студентов
+    if (isTrainingTemplate(event) && event.assigned_students) {
+      studentCount = event.assigned_students.length;
+    } else if (isRealTraining(event) && event.students) {
+      studentCount = event.students.length;
+    }
+
+    // Рассчитываем информацию о загруженности
+    const capacityInfo = calculateCapacity(studentCount, maxParticipants);
+    const capacityText = formatCapacityText(capacityInfo);
+    const showCapacityBadge = shouldShowCapacityBadge(capacityInfo);
+
+    return {
+      typeColor,
+      trainerName,
+      studentCount,
+      maxParticipants,
+      capacityInfo,
+      capacityText,
+      showCapacityBadge
+    };
+  }, [event, theme.palette.primary.main]);
+
+  // Мемоизируем tooltip content
+  const tooltipContent = useMemo(() => (
+    <Box sx={{ textAlign: 'center' }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+        {event.training_type?.name || 'Тренировка'}
+      </Typography>
+      <Typography variant="body2" sx={{ mb: 0.25 }}>
+        👨 {chipData.trainerName}
+      </Typography>
+      <Typography variant="body2" sx={{ mb: 0.25 }}>
+        👥 Студентов: {chipData.capacityText}
+      </Typography>
+      {chipData.maxParticipants && chipData.maxParticipants < 999 && (
+        <Typography variant="body2" sx={{ 
+          color: chipData.capacityInfo.isFull ? '#ffcdd2' : '#e8f5e8',
+          fontSize: '0.75rem'
+        }}>
+          {chipData.capacityInfo.isFull ? '⚠️ Группа переполнена' : 
+           chipData.capacityInfo.percentage >= 90 ? '⚠️ Почти заполнена' :
+           chipData.capacityInfo.percentage >= 70 ? '⚡ Заполняется' : '✅ Есть свободные места'}
+        </Typography>
+      )}
+    </Box>
+  ), [event.training_type?.name, chipData]);
+
+  // Красивые hover эффекты с оптимизацией производительности
+  const chipSx = useMemo(() => ({
+    backgroundColor: alpha(chipData.typeColor, 0.1),
+    border: `2px solid ${chipData.typeColor}`,
+    borderRadius: 1,
+    px: 0.75,
+    py: 0.25,
+    cursor: 'pointer',
+    maxWidth: isMobile ? '80px' : (isTablet ? '100px' : '120px'),
+    width: 'fit-content',
+    // Оптимизированные transitions без transform (только background и border)
+    transition: 'background 0.2s ease-out, border-color 0.2s ease-out',
+    '&:hover': {
+      background: `linear-gradient(135deg, ${alpha(chipData.typeColor, 0.8)}, ${alpha(chipData.typeColor, 0.6)})`,
+      borderColor: chipData.typeColor,
+      borderRadius: 4, // Более круглые при наведении
+      '& .chip-text': {
+        color: theme.palette.getContrastText(alpha(chipData.typeColor, 0.7)),
+        fontWeight: 700,
+      },
+      '& .trainer-text': {
+        color: alpha(theme.palette.getContrastText(alpha(chipData.typeColor, 0.7)), 0.9),
+      },
+    },
+  }), [chipData.typeColor, isMobile, isTablet, theme.palette]);
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEventClick(event);
+  }, [event, onEventClick]);
+
+  return (
+    <Tooltip 
+      title={isDragActive ? '' : tooltipContent} 
+      arrow 
+      placement="top"
+      enterDelay={300}
+      leaveDelay={100}
+      disableHoverListener={isDragActive}
+      disableFocusListener={isDragActive}
+      disableTouchListener={isDragActive}
+    >
+      <Box onClick={handleClick} sx={chipSx}>
+        <Typography
+          variant="caption"
+          className="chip-text"
+          sx={{
+            fontSize: isMobile ? '0.6rem' : '0.65rem',
+            fontWeight: 600,
+            color: chipData.typeColor,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: 'block',
+            lineHeight: 1.2,
+            transition: 'color 0.2s ease-out, font-weight 0.2s ease-out',
+          }}
+        >
+          {event.training_type?.name || 'Тренировка'}
+        </Typography>
+        {!isMobile && (
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            width: '100%'
+          }}>
+            <Typography
+              variant="caption"
+              className="trainer-text"
+              sx={{
+                fontSize: '0.6rem',
+                color: alpha(chipData.typeColor, 0.8),
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                flex: 1,
+                transition: 'color 0.2s ease-out',
+              }}
+            >
+              {chipData.trainerName}
+            </Typography>
+            {chipData.showCapacityBadge && (
+              <Box
+                sx={{
+                  backgroundColor: chipData.capacityInfo.color,
+                  color: 'white',
+                  fontSize: '0.5rem',
+                  fontWeight: 600,
+                  borderRadius: '6px',
+                  px: 0.5,
+                  py: 0.125,
+                  minWidth: '16px',
+                  textAlign: 'center',
+                  ml: 0.5,
+                }}
+              >
+                {chipData.capacityText}
+              </Box>
+            )}
+          </Box>
+        )}
+      </Box>
+    </Tooltip>
+  );
+});
+
+const CalendarShell: React.FC<CalendarShellProps> = memo(({
   currentDate,
   viewMode,
   templatesData,
@@ -64,15 +255,79 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
 
   // Выбираем актуальные данные в зависимости от viewMode
   const eventsToDisplay: CalendarEvent[] = useMemo(() => {
+    let events: CalendarEvent[] = [];
     if (viewMode === 'scheduleTemplate') {
-      return templatesData || [];
+      events = templatesData || [];
+      debugLog(`📊 Данные шаблонов обновились: ${events.length} элементов`);
+    } else {
+      events = actualData || [];
+      debugLog(`📊 Данные тренировок обновились: ${events.length} элементов`);
     }
-    return actualData || [];
+    return events;
   }, [viewMode, templatesData, actualData]);
+
+  // Hooks для drag and drop (ПЕРЕМЕЩЕНО СЮДА - до getEventsForSlot)
+  const { displaySnackbar } = useSnackbar();
+  const [moveTrainingTemplate] = useMoveTrainingTemplateMutation();
+  const [moveRealTraining] = useMoveRealTrainingMutation();
+  
+  // Состояние драга будет передаваться из внутреннего компонента
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Обработчик перемещения тренировок с react-dnd
+  const handleTrainingDrop = useCallback(async (
+    event: CalendarEvent, 
+    sourceDay: Dayjs, 
+    sourceTime: string, 
+    targetDay: Dayjs, 
+    targetTime: string
+  ) => {
+    // Проверяем, изменилось ли положение
+    if (sourceDay.isSame(targetDay, 'day') && sourceTime === targetTime) {
+      return; // Ничего не изменилось
+    }
+
+    debugLog('🚀 Начинаем перемещение с react-dnd:', { 
+      eventId: event.id, 
+      from: `${sourceDay.format('ddd')} ${sourceTime}`,
+      to: `${targetDay.format('ddd')} ${targetTime}`
+    });
+
+    try {
+      if (isTrainingTemplate(event)) {
+        const dayNumber = targetDay.isoWeekday(); // 1-7 (1 - понедельник)
+        
+        await moveTrainingTemplate({
+          id: event.id,
+          dayNumber,
+          startTime: targetTime,
+        }).unwrap();
+        
+        debugLog('🎉 Перемещение шаблона завершено успешно');
+        displaySnackbar(`✅ Шаблон тренировки "${event.training_type?.name}" перемещен`, 'success');
+      } else if (isRealTraining(event)) {
+        const trainingDate = targetDay.format('YYYY-MM-DD');
+        
+        await moveRealTraining({
+          id: event.id,
+          trainingDate,
+          startTime: targetTime,
+        }).unwrap();
+        
+        debugLog('🎉 Перемещение тренировки завершено успешно');
+        displaySnackbar(`✅ Тренировка "${event.training_type?.name}" перемещена`, 'success');
+      }
+    } catch (error: any) {
+      console.error('❌ Ошибка при перемещении тренировки:', error);
+      const errorMessage = error?.data?.detail || error?.message || 'Неизвестная ошибка';
+      displaySnackbar(`❌ Не удалось переместить тренировку: ${errorMessage}`, 'error');
+    }
+  }, [moveTrainingTemplate, moveRealTraining, displaySnackbar]);
 
   const getEventsForSlot = useCallback((day: Dayjs, time: string): CalendarEvent[] => {
     const slotHour = parseInt(time.split(':')[0]);
     const slotMinute = parseInt(time.split(':')[1]);
+    const slotKey = `${day.format('ddd')} ${time}`;
 
     let filteredEvents: CalendarEvent[] = [];
 
@@ -81,7 +336,13 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
         if (isTrainingTemplate(event)) {
           // day_number: 1-7 (1 - Пн), day.isoWeekday(): 1-7 (1 - Пн)
           const eventStartTime = event.start_time.substring(0, 5); // "HH:MM"
-          return event.day_number === day.isoWeekday() && eventStartTime === time;
+          const matches = event.day_number === day.isoWeekday() && eventStartTime === time;
+          
+          if (matches) {
+            debugLog(`📍 Слот ${slotKey}: найден шаблон #${event.id} "${event.training_type?.name}"`);
+          }
+          
+          return matches;
         }
         return false;
       });
@@ -89,13 +350,25 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
       filteredEvents = eventsToDisplay.filter(event => {
         if (isRealTraining(event)) {
           const eventStart = dayjs(`${event.training_date}T${event.start_time}`);
-          return eventStart.isSame(day, 'day') &&
+          const matches = eventStart.isSame(day, 'day') &&
                  eventStart.hour() === slotHour &&
                  eventStart.minute() === slotMinute;
+                 
+          if (matches) {
+            debugLog(`📍 Слот ${slotKey}: найдена тренировка #${event.id} "${event.training_type?.name}"`);
+          }
+          
+          return matches;
         }
         return false;
       });
     }
+    
+    // Логируем только если есть события в слоте
+    if (filteredEvents.length > 0) {
+      debugLog(`🎯 Рендер слота ${slotKey}: ${filteredEvents.length} событий`);
+    }
+    
     return filteredEvents;
   }, [eventsToDisplay, viewMode]);
 
@@ -107,185 +380,37 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
   const [selectedEventType, setSelectedEventType] = useState<'template' | 'real' | null>(null);
   
-  // Состояние для отслеживания hover на слотах
-  const [hoveredSlot, setHoveredSlot] = useState<string | null>(null);
+  // Убрали hoveredSlot состояние для улучшения производительности - используем чистый CSS hover
 
-  const handleSlotClick = (event: React.MouseEvent<HTMLElement>, day: Dayjs, time: string, eventsInSlot: CalendarEvent[]) => {
+  const handleSlotClick = useCallback((event: React.MouseEvent<HTMLElement>, day: Dayjs, time: string, eventsInSlot: CalendarEvent[]) => {
     // В режиме шаблонов всегда разрешаем создание новых тренировок (независимо от количества существующих)
     if (viewMode === 'scheduleTemplate') {
       setSelectedSlotInfo({ date: day, time });
       setIsFormOpen(true);
     }
-  };
+  }, [viewMode]);
 
-  const handleOpenDetailModal = (eventData: CalendarEvent) => {
+  const handleOpenDetailModal = useCallback((eventData: CalendarEvent) => {
     setSelectedEventId(eventData.id);
     setSelectedEventType(isTrainingTemplate(eventData) ? 'template' : 'real');
     setIsDetailModalOpen(true);
-  };
+  }, []);
 
-  const handleCloseDetailModal = () => {
+  const handleCloseDetailModal = useCallback(() => {
     setIsDetailModalOpen(false);
     setSelectedEventId(null);
     setSelectedEventType(null);
-  };
+  }, []);
 
-  const handleCloseForm = () => {
+  const handleCloseForm = useCallback(() => {
     setIsFormOpen(false);
     setSelectedSlotInfo(null);
-  };
+  }, []);
 
-  // Компонент для рендеринга чипа тренировки
-  const TrainingChip: React.FC<{ event: CalendarEvent; index: number }> = ({ event, index }) => {
-    const typeColor = event.training_type?.color || theme.palette.primary.main;
-    let trainerName = 'Без тренера';
-    let studentCount = 0;
-    const maxParticipants = event.training_type?.max_participants || null;
 
-    // Получаем информацию о тренере
-    if (isTrainingTemplate(event) && event.responsible_trainer) {
-      trainerName = `${event.responsible_trainer.first_name || ''} ${event.responsible_trainer.last_name ? event.responsible_trainer.last_name.charAt(0) + '.' : ''}`.trim();
-    } else if (isRealTraining(event) && event.trainer) {
-      trainerName = `${event.trainer.first_name || ''} ${event.trainer.last_name ? event.trainer.last_name.charAt(0) + '.' : ''}`.trim();
-    }
-
-    // Получаем количество студентов
-    if (isTrainingTemplate(event) && event.assigned_students) {
-      studentCount = event.assigned_students.length;
-    } else if (isRealTraining(event) && event.students) {
-      studentCount = event.students.length;
-    }
-
-    // Рассчитываем информацию о загруженности
-    const capacityInfo = calculateCapacity(studentCount, maxParticipants);
-    const capacityText = formatCapacityText(capacityInfo);
-    const showCapacityBadge = shouldShowCapacityBadge(capacityInfo);
-
-    const tooltipContent = (
-      <Box sx={{ textAlign: 'center' }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-          {event.training_type?.name || 'Тренировка'}
-        </Typography>
-        <Typography variant="body2" sx={{ mb: 0.25 }}>
-          👨 {trainerName}
-        </Typography>
-        <Typography variant="body2" sx={{ mb: 0.25 }}>
-          👥 Студентов: {capacityText}
-        </Typography>
-        {maxParticipants && maxParticipants < 999 && (
-          <Typography variant="body2" sx={{ 
-            color: capacityInfo.isFull ? '#ffcdd2' : '#e8f5e8',
-            fontSize: '0.75rem'
-          }}>
-            {capacityInfo.isFull ? '⚠️ Группа переполнена' : 
-             capacityInfo.percentage >= 90 ? '⚠️ Почти заполнена' :
-             capacityInfo.percentage >= 70 ? '⚡ Заполняется' : '✅ Есть свободные места'}
-          </Typography>
-        )}
-      </Box>
-    );
-
-    return (
-      <Tooltip 
-        title={tooltipContent} 
-        arrow 
-        placement="top"
-        enterDelay={300}
-        leaveDelay={100}
-      >
-        <Box
-          onClick={(e) => {
-            e.stopPropagation();
-            handleOpenDetailModal(event);
-          }}
-          sx={{
-            backgroundColor: alpha(typeColor, 0.1),
-            border: `2px solid ${typeColor}`,
-            borderRadius: 1, // Более квадратные в обычном состоянии
-            px: 0.75,
-            py: 0.25,
-            cursor: 'pointer',
-            maxWidth: isMobile ? '80px' : (isTablet ? '100px' : '120px'), // Ограничиваем ширину
-            width: 'fit-content', // Подгоняем под контент
-            transition: theme.transitions.create(['transform', 'background-color', 'border-radius', 'border-color'], {
-              duration: theme.transitions.duration.short,
-              easing: theme.transitions.easing.easeOut,
-            }),
-                          '&:hover': {
-                transform: 'translateY(-2px) scale(1.02)',
-                background: `linear-gradient(135deg, ${alpha(typeColor, 0.8)}, ${alpha(typeColor, 0.6)})`, // Красивый градиент!
-                borderColor: typeColor, // Полностью яркий цвет границы без прозрачности!
-                borderRadius: 4, // Более круглые при наведении!
-                '& .MuiTypography-root': {
-                  color: theme.palette.getContrastText(alpha(typeColor, 0.7)), // Подходящий контрастный цвет!
-                  fontWeight: 700,
-                },
-              },
-          }}
-                  >
-            <Typography
-              variant="caption"
-              sx={{
-                fontSize: isMobile ? '0.6rem' : '0.65rem',
-                fontWeight: 600,
-                color: typeColor,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: 'block',
-                lineHeight: 1.2,
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {event.training_type?.name || 'Тренировка'}
-            </Typography>
-            {!isMobile && (
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                width: '100%'
-              }}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontSize: '0.6rem',
-                    color: alpha(typeColor, 0.8),
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    flex: 1,
-                  }}
-                >
-                  {trainerName}
-                </Typography>
-                {showCapacityBadge && (
-                  <Box
-                    sx={{
-                      backgroundColor: capacityInfo.color,
-                      color: 'white',
-                      fontSize: '0.5rem',
-                      fontWeight: 600,
-                      borderRadius: '6px',
-                      px: 0.5,
-                      py: 0.125,
-                      minWidth: '16px',
-                      textAlign: 'center',
-                      ml: 0.5,
-                    }}
-                  >
-                    {capacityText}
-                  </Box>
-                )}
-              </Box>
-            )}
-          </Box>
-        </Tooltip>
-    );
-  };
 
   // Адаптивные размеры для разных экранов
-  const getResponsiveStyles = () => {
+  const responsiveStyles = useMemo(() => {
     if (isMobile) {
       return {
         gridTemplateColumns: '60px repeat(7, minmax(80px, 1fr))',
@@ -308,22 +433,112 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
         cardPadding: '6px',
       };
     }
-  };
-
-  const responsiveStyles = getResponsiveStyles();
+  }, [isMobile, isTablet]);
 
   return (
-    <Paper 
-      elevation={3} 
-      sx={{
-        p: isMobile ? 1 : 2, 
-        mt: 2, 
-        overflow: 'auto',
-        maxHeight: '75vh',
-        display: 'flex',
-        flexDirection: 'column'
-      }}
-    >
+    <DndProvider backend={HTML5Backend}>
+      <CalendarContent 
+        {...{
+          currentDate,
+          viewMode, 
+          templatesData,
+          actualData,
+          isLoading,
+          error,
+          eventsToDisplay,
+          getEventsForSlot,
+          handleTrainingDrop,
+          handleSlotClick,
+          handleOpenDetailModal,
+          handleCloseDetailModal,
+          handleCloseForm,
+          responsiveStyles,
+          selectedSlotInfo,
+          isFormOpen,
+          isDetailModalOpen,
+          selectedEventId,
+          selectedEventType,
+          daysOfWeek,
+          timeSlots,
+          isMobile,
+          isTablet,
+          theme,
+          isDragging,
+          setIsDragging,
+        }}
+      />
+    </DndProvider>
+  );
+});
+
+// Типы для внутреннего компонента
+interface CalendarContentProps {
+  currentDate: Dayjs;
+  viewMode: CalendarViewMode;
+  templatesData?: TrainingTemplate[];
+  actualData?: RealTraining[];
+  isLoading: boolean;
+  error?: any;
+  eventsToDisplay: CalendarEvent[];
+  getEventsForSlot: (day: Dayjs, time: string) => CalendarEvent[];
+  handleTrainingDrop: (event: CalendarEvent, sourceDay: Dayjs, sourceTime: string, targetDay: Dayjs, targetTime: string) => Promise<void>;
+  handleSlotClick: (event: React.MouseEvent<HTMLElement>, day: Dayjs, time: string, eventsInSlot: CalendarEvent[]) => void;
+  handleOpenDetailModal: (eventData: CalendarEvent) => void;
+  handleCloseDetailModal: () => void;
+  handleCloseForm: () => void;
+  responsiveStyles: any;
+  selectedSlotInfo: SelectedSlotInfo | null;
+  isFormOpen: boolean;
+  isDetailModalOpen: boolean;
+  selectedEventId: number | null;
+  selectedEventType: 'template' | 'real' | null;
+  daysOfWeek: Dayjs[];
+  timeSlots: string[];
+  isMobile: boolean;
+  isTablet: boolean;
+  theme: any;
+  isDragging: boolean;
+  setIsDragging: (value: boolean) => void;
+}
+
+// Внутренний компонент для работы с drag & drop контекстом
+const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
+  const {
+    currentDate, viewMode, templatesData, actualData, isLoading, error,
+    eventsToDisplay, getEventsForSlot, handleTrainingDrop, handleSlotClick,
+    handleOpenDetailModal, handleCloseDetailModal, handleCloseForm,
+    responsiveStyles, selectedSlotInfo, isFormOpen, isDetailModalOpen,
+    selectedEventId, selectedEventType, daysOfWeek, timeSlots,
+    isMobile, isTablet, theme, isDragging, setIsDragging
+  } = props;
+
+  // Теперь можем использовать useDragLayer внутри DndProvider
+  const { isDraggingGlobal } = useDragLayer((monitor) => ({
+    isDraggingGlobal: monitor.isDragging(),
+  }));
+
+  // Обновляем состояние в родительском компоненте
+  useEffect(() => {
+    setIsDragging(isDraggingGlobal);
+    if (isDraggingGlobal) {
+      debugLog('🎯 Начался drag - тултипы отключены');
+    } else {
+      debugLog('🎯 Drag завершен - тултипы включены');
+    }
+  }, [isDraggingGlobal, setIsDragging]);
+
+  return (
+      <Paper 
+        elevation={3} 
+        sx={{
+          p: isMobile ? 1 : 2, 
+          mt: 2, 
+          overflow: 'auto',
+          maxHeight: '75vh',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
       {isLoading && <Typography>Загрузка данных...</Typography>}
       {error && <Typography color="error">Ошибка: {error?.message || JSON.stringify(error)}</Typography>}
       
@@ -415,13 +630,14 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                 const visibleEvents = slotEvents.slice(0, maxChips);
                 const hiddenEventsCount = slotEvents.length - maxChips;
                 const slotKey = `${day.format('YYYY-MM-DD')}-${time}`;
-                const isHovered = hoveredSlot === slotKey;
 
                 return (
-                  <Box
+                  <DroppableSlotComponent
                     key={slotKey}
-                    onMouseEnter={() => setHoveredSlot(slotKey)}
-                    onMouseLeave={() => setHoveredSlot(null)}
+                    day={day}
+                    time={time}
+                    onClick={(e) => handleSlotClick(e, day, time, slotEvents)}
+                    onDrop={handleTrainingDrop}
                     sx={{
                       minHeight: responsiveStyles.slotHeight,
                       backgroundColor: theme.palette.background.paper,
@@ -432,20 +648,24 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                       flexDirection: 'column',
                       justifyContent: 'flex-start',
                       cursor: viewMode === 'scheduleTemplate' ? 'pointer' : 'default',
-                      transition: theme.transitions.create(['background-color', 'box-shadow', 'transform'], {
-                        duration: theme.transitions.duration.standard,
-                        easing: theme.transitions.easing.easeInOut,
-                      }),
+                      // Упрощенные transitions для лучшей производительности
+                      transition: 'background-color 0.15s ease-out, box-shadow 0.15s ease-out',
                       overflow: 'visible', // Разрешаем тултипам показываться за границами
                       '&:hover': viewMode === 'scheduleTemplate' ? {
                         backgroundColor: slotEvents.length === 0 
                           ? theme.palette.background.default 
-                          : alpha(theme.palette.primary.main, 0.02),
-                        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
-                        transform: 'scale(1.01)',
+                          : alpha(theme.palette.primary.main, 0.04),
+                        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.4)}`,
+                        // Убрали transform: scale для лучшей производительности
+                        // CSS селекторы для показа подсказок при hover
+                        '& .create-hint': {
+                          opacity: 0.6,
+                        },
+                        '& .add-button': {
+                          opacity: 1,
+                        },
                       } : {},
                     }}
-                    onClick={(e) => handleSlotClick(e, day, time, slotEvents)}
                   >
                     {/* Отображение чипов тренировок */}
                     {slotEvents.length > 0 && (
@@ -458,14 +678,31 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                         paddingRight: viewMode === 'scheduleTemplate' ? '28px' : '0px', // Место для кнопки "+"
                       }}>
                         {visibleEvents.map((eventItem, index) => (
-                          <TrainingChip key={eventItem.id} event={eventItem} index={index} />
+                          <DraggableTrainingChip
+                            key={eventItem.id}
+                            event={eventItem}
+                            day={day}
+                            time={time}
+                          >
+                            <TrainingChip 
+                              event={eventItem} 
+                              index={index} 
+                              isMobile={isMobile}
+                              isTablet={isTablet}
+                              onEventClick={handleOpenDetailModal}
+                              isDragActive={isDragging}
+                            />
+                          </DraggableTrainingChip>
                         ))}
                         
                         {hiddenEventsCount > 0 && (
                           <Tooltip 
-                            title={`Ещё ${hiddenEventsCount} тренировок. Кликните чтобы увидеть все.`}
+                            title={isDragging ? '' : `Ещё ${hiddenEventsCount} тренировок. Кликните чтобы увидеть все.`}
                             arrow 
                             placement="top"
+                            disableHoverListener={isDragging}
+                            disableFocusListener={isDragging}
+                            disableTouchListener={isDragging}
                           >
                             <Box
                               sx={{
@@ -476,11 +713,8 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                                 py: 0.5,
                                 cursor: 'pointer',
                                 textAlign: 'center',
-                                transition: theme.transitions.create(['transform', 'background-color'], {
-                                  duration: theme.transitions.duration.short,
-                                }),
+                                transition: 'background-color 0.15s ease-out',
                                 '&:hover': {
-                                  transform: 'translateY(-1px)',
                                   backgroundColor: alpha(theme.palette.primary.main, 0.15),
                                 },
                               }}
@@ -507,15 +741,14 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                                                 {/* Подсказка для пустых слотов */}
                         {slotEvents.length === 0 && (
                           <Box
+                            className="create-hint"
                             sx={{
                               position: 'absolute',
                               top: '50%',
                               left: '50%',
                               transform: 'translate(-50%, -50%)',
-                              opacity: isHovered ? 0.6 : 0,
-                              transition: theme.transitions.create('opacity', {
-                                duration: theme.transitions.duration.short,
-                              }),
+                              opacity: 0,
+                              transition: 'opacity 0.15s ease-out',
                             }}
                           >
                             <Typography 
@@ -534,11 +767,15 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                         {/* Кнопка "+" для занятых слотов */}
                         {slotEvents.length > 0 && (
                           <Tooltip 
-                            title="Добавить ещё одну тренировку в этот слот" 
+                            title={isDragging ? '' : "Добавить ещё одну тренировку в этот слот"} 
                             arrow 
                             placement="top"
+                            disableHoverListener={isDragging}
+                            disableFocusListener={isDragging}
+                            disableTouchListener={isDragging}
                           >
                             <Box
+                              className="add-button"
                               sx={{
                                 position: 'absolute',
                                 top: 4,
@@ -551,15 +788,12 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                opacity: isHovered ? 1 : 0,
-                                transition: theme.transitions.create(['opacity', 'transform'], {
-                                  duration: theme.transitions.duration.short,
-                                }),
+                                opacity: 0,
+                                transition: 'opacity 0.15s ease-out, background-color 0.15s ease-out',
                                 cursor: 'pointer',
                                 zIndex: 10,
                                 '&:hover': {
                                   backgroundColor: theme.palette.primary.main,
-                                  transform: 'scale(1.2)',
                                 },
                               }}
                               onClick={(e) => {
@@ -582,7 +816,7 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
                         )}
                       </>
                     )}
-                  </Box>
+                  </DroppableSlotComponent>
                 );
               })}
             </Box>
@@ -623,6 +857,6 @@ const CalendarShell: React.FC<CalendarShellProps> = ({
       )}
     </Paper>
   );
-};
-
+});
+  
 export default CalendarShell; 

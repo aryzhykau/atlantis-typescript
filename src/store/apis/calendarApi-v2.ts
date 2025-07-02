@@ -1,4 +1,5 @@
 import { baseApi } from './api';
+import { debugLog } from '../../features/calendar-v2/utils/debug';
 import {
   TrainingTemplate,
   TrainingTemplateCreate,
@@ -68,6 +69,84 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         body: data,
       }),
       invalidatesTags: (result, error, { id }) => [{ type: TRAINING_TEMPLATE_TAG, id }],
+    }),
+    // Специализированная мутация для перемещения тренировки
+    moveTrainingTemplate: builder.mutation<TrainingTemplate, { 
+      id: number; 
+      dayNumber: number; 
+      startTime: string; 
+    }>({
+      query: ({ id, dayNumber, startTime }) => ({
+        url: `training_templates/${id}`,
+        method: 'PUT',
+        body: {
+          day_number: dayNumber,
+          start_time: startTime,
+        },
+      }),
+      // Оптимистичные обновления с поиском всех кешей
+      onQueryStarted: async ({ id, dayNumber, startTime }, { dispatch, queryFulfilled, getState }) => {
+        debugLog('🎯 Начинаем оптимистичное обновление шаблона:', { id, dayNumber, startTime });
+        
+        const patches: any[] = [];
+        
+        // Получаем все активные кеши для getTrainingTemplates
+        const state = getState() as any;
+        const apiState = state.api;
+        
+        debugLog('🔍 Ищем кеши getTrainingTemplates...');
+        Object.keys(apiState.queries).forEach(queryKey => {
+          if (queryKey.startsWith('getTrainingTemplates')) {
+            debugLog('🎯 Найден кеш getTrainingTemplates:', queryKey);
+          }
+        });
+        
+        // Обновляем все найденные кеши getTrainingTemplates
+        Object.keys(apiState.queries).forEach(queryKey => {
+          if (queryKey.startsWith('getTrainingTemplates')) {
+            try {
+              // Пытаемся понять параметры из ключа кеша
+              let queryArgs = undefined;
+              if (queryKey.includes('dayNumber')) {
+                // Это запрос с фильтром по дню
+                const match = queryKey.match(/"dayNumber":(\d+)/);
+                if (match) {
+                  queryArgs = { dayNumber: parseInt(match[1]) };
+                }
+              }
+              
+              const patchResult = dispatch(
+                calendarApiV2.util.updateQueryData('getTrainingTemplates', queryArgs, (draft) => {
+                  debugLog('📝 Обновляем кеш с параметрами:', queryArgs, 'найдено элементов:', draft.length);
+                  const template = draft.find(t => t.id === id);
+                  if (template) {
+                    debugLog('✅ Нашли шаблон в кеше, обновляем:', template);
+                    template.day_number = dayNumber;
+                    template.start_time = startTime;
+                    debugLog('✨ Обновленный шаблон:', template);
+                  } else {
+                    debugLog('❌ Шаблон не найден в кеше!');
+                  }
+                })
+              );
+              patches.push(patchResult);
+            } catch (e) {
+              debugLog('⚠️ Ошибка при обновлении кеша getTrainingTemplates:', e);
+            }
+          }
+        });
+
+        try {
+          debugLog('⏳ Ждем ответ API...');
+          await queryFulfilled;
+          debugLog('✅ API ответил успешно');
+        } catch (error) {
+          debugLog('❌ Ошибка API, откатываем изменения:', error);
+          // В случае ошибки откатываем все изменения
+          patches.forEach(patch => patch.undo());
+        }
+      },
+      // НЕТ invalidatesTags! Только оптимистичные обновления
     }),
     deleteTrainingTemplate: builder.mutation<{ success: boolean; id: number }, number>({
       query: (id) => ({
@@ -185,6 +264,82 @@ export const calendarApiV2 = baseApi.injectEndpoints({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: REAL_TRAINING_TAG, id }],
     }),
+    // Специализированная мутация для перемещения реальной тренировки
+    moveRealTraining: builder.mutation<RealTraining, { 
+      id: number; 
+      trainingDate: string; 
+      startTime: string; 
+    }>({
+      query: ({ id, trainingDate, startTime }) => ({
+        url: `real-trainings/${id}`,
+        method: 'PUT',
+        body: {
+          training_date: trainingDate,
+          start_time: startTime,
+        },
+      }),
+      // Оптимистичные обновления с учетом параметров даты
+      onQueryStarted: async ({ id, trainingDate, startTime }, { dispatch, queryFulfilled, getState }) => {
+        debugLog('🎯 Начинаем оптимистичное обновление тренировки:', { id, trainingDate, startTime });
+        
+        const patches: any[] = [];
+        
+        // Получаем все активные кеши для getRealTrainings
+        const state = getState() as any;
+        const apiState = state.api;
+        
+        // Обновляем все найденные кеши getRealTrainings
+        Object.keys(apiState.queries).forEach(queryKey => {
+          if (queryKey.startsWith('getRealTrainings')) {
+            debugLog('🔍 Найден кеш:', queryKey);
+            
+            try {
+              // Пытаемся понять параметры из ключа кеша
+              let queryArgs = undefined;
+              if (queryKey.includes('startDate')) {
+                // Это запрос с параметрами даты
+                const match = queryKey.match(/"startDate":"([^"]+)","endDate":"([^"]+)"/);
+                if (match) {
+                  queryArgs = {
+                    startDate: match[1],
+                    endDate: match[2]
+                  };
+                }
+              }
+              
+              const patchResult = dispatch(
+                calendarApiV2.util.updateQueryData('getRealTrainings', queryArgs, (draft) => {
+                  debugLog('📝 Обновляем кеш с параметрами:', queryArgs, 'найдено элементов:', draft.length);
+                  const training = draft.find(t => t.id === id);
+                  if (training) {
+                    debugLog('✅ Нашли тренировку в кеше, обновляем:', training);
+                    training.training_date = trainingDate;
+                    training.start_time = startTime;
+                    debugLog('✨ Обновленная тренировка:', training);
+                  } else {
+                    debugLog('❌ Тренировка не найдена в кеше!');
+                  }
+                })
+              );
+              patches.push(patchResult);
+            } catch (e) {
+              debugLog('⚠️ Ошибка при обновлении кеша:', e);
+            }
+          }
+        });
+
+        try {
+          debugLog('⏳ Ждем ответ API...');
+          await queryFulfilled;
+          debugLog('✅ API ответил успешно');
+        } catch (error) {
+          debugLog('❌ Ошибка API, откатываем изменения:', error);
+          // В случае ошибки откатываем все изменения
+          patches.forEach(patch => patch.undo());
+        }
+      },
+      // НЕТ invalidatesTags! Только оптимистичные обновления
+    }),
     deleteRealTraining: builder.mutation<{ success: boolean; id: number }, number>({
       query: (id) => ({
         url: `real-trainings/${id}`,
@@ -265,6 +420,7 @@ export const {
   useGetTrainingTemplateByIdQuery,
   useCreateTrainingTemplateMutation,
   useUpdateTrainingTemplateMutation,
+  useMoveTrainingTemplateMutation,
   useDeleteTrainingTemplateMutation,
   useGetTrainingStudentTemplatesQuery,
   useGetTrainingStudentTemplateByIdQuery,
@@ -275,6 +431,7 @@ export const {
   useGetRealTrainingByIdQuery,
   useCreateRealTrainingMutation,
   useUpdateRealTrainingMutation,
+  useMoveRealTrainingMutation,
   useDeleteRealTrainingMutation,
   useGenerateNextWeekTrainingsMutation,
   useAddStudentToRealTrainingMutation,

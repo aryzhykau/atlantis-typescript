@@ -250,7 +250,7 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {studentsToDisplay.map((s_item) => (
           <Box 
-            key={s_item.id}
+            key={s_item.id} 
             sx={{ 
               p: 2,
               borderRadius: 2,
@@ -425,22 +425,22 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
               )}
             </Typography>
           </Box>
-          <IconButton 
-            onClick={onClose} 
+        <IconButton 
+          onClick={onClose} 
             disabled={isDeletingStudent}
-            sx={{
+          sx={{
               color: 'white',
               backgroundColor: alpha('#ffffff', 0.1),
               backdropFilter: 'blur(10px)',
-              '&:hover': {
+            '&:hover': {
                 backgroundColor: alpha('#ffffff', 0.2),
                 transform: 'scale(1.1)',
               },
               transition: 'all 0.2s ease',
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
         </Box>
       </DialogTitle>
       <DialogContent sx={{ p: 3, backgroundColor: theme.palette.background.default }}>
@@ -474,19 +474,19 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
                 Тренер
               </Typography>
               <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
-                {(isTrainingTemplate(event) && event.responsible_trainer) ? 
-                  `${event.responsible_trainer.first_name || ''} ${event.responsible_trainer.last_name || ''}`.trim() :
-                 (isRealTraining(event) && event.trainer) ? 
-                  `${event.trainer.first_name || ''} ${event.trainer.last_name || ''}`.trim() :
-                 'Не назначен'}
-              </Typography>
+            {(isTrainingTemplate(event) && event.responsible_trainer) ? 
+              `${event.responsible_trainer.first_name || ''} ${event.responsible_trainer.last_name || ''}`.trim() :
+             (isRealTraining(event) && event.trainer) ? 
+              `${event.trainer.first_name || ''} ${event.trainer.last_name || ''}`.trim() :
+             'Не назначен'}
+          </Typography>
             </Box>
-          </Box>
-          
-          {isRealTraining(event) && (
+        </Box>
+
+        {isRealTraining(event) && (
             <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${alpha(borderColor, 0.2)}` }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <EventNoteIcon sx={{ mr: 1, color: theme.palette.info.main }} />
+            <EventNoteIcon sx={{ mr: 1, color: theme.palette.info.main }} />
                 <Typography variant="body2" sx={{ fontWeight: 500, mr: 1 }}>Статус:</Typography>
                 <Chip 
                   label={event.status || 'Не указан'} 
@@ -757,7 +757,7 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button 
             onClick={() => {console.log('Edit clicked', event)}} 
-            variant="contained"
+            variant="contained" 
             disabled={isDeletingStudent}
             sx={{
               background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${alpha(theme.palette.secondary.main, 0.8)} 100%)`,
@@ -777,7 +777,7 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
           </Button>
           <Button 
             onClick={() => {console.log('Delete clicked', event)}} 
-            variant="contained"
+            variant="contained" 
             disabled={isDeletingStudent}
             sx={{
               background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${alpha(theme.palette.error.main, 0.8)} 100%)`,
@@ -799,11 +799,11 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
         
         <Button 
           onClick={onClose} 
-          variant="outlined"
+          variant="outlined" 
           disabled={isDeletingStudent}
           sx={{ 
             borderColor: alpha(borderColor, 0.4),
-            color: borderColor,
+            color: borderColor, 
             px: 4,
             py: 1.2,
             borderRadius: 2,
@@ -817,7 +817,7 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
           }}
           autoFocus
         >
-          Закрыть
+            Закрыть
         </Button>
       </Box>
     </Dialog>
