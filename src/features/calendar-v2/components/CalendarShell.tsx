@@ -1,12 +1,13 @@
-import React, { useMemo, useState, useCallback, useEffect, memo } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, memo, useRef } from 'react';
 import { Box, Typography, Paper, useTheme, useMediaQuery, Tooltip } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { DndProvider, useDragLayer } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import dayjs, { Dayjs } from 'dayjs';
 import { CalendarViewMode } from './CalendarV2Page'; // Предполагается, что типы там же
-import { TrainingTemplate } from '../models/trainingTemplate';
-import { RealTraining } from '../models/realTraining';
+import { TrainingTemplate, TrainingTemplateCreate } from '../models/trainingTemplate';
+import { RealTraining, RealTrainingCreate, AddStudentToRealTrainingPayload } from '../models/realTraining';
+import { TrainingStudentTemplateCreate } from '../models/trainingStudentTemplate';
 import TrainingTemplateForm from './TrainingTemplateForm'; // Импорт формы
 import TrainingDetailModal from './TrainingDetailModal'; // Импортируем детальное модальное окно
 import { calculateCapacity, formatCapacityText, shouldShowCapacityBadge } from '../utils/capacityUtils';
@@ -14,7 +15,11 @@ import { calculateCapacity, formatCapacityText, shouldShowCapacityBadge } from '
 import { useSnackbar } from '../../../hooks/useSnackBar';
 import { 
   useMoveTrainingTemplateMutation, 
-  useMoveRealTrainingMutation 
+  useMoveRealTrainingMutation,
+  useCreateTrainingTemplateMutation,
+  useCreateRealTrainingMutation,
+  useCreateTrainingStudentTemplateMutation,
+  useAddStudentToRealTrainingMutation
 } from '../../../store/apis/calendarApi-v2';
 import DraggableTrainingChip from './DraggableTrainingChip';
 import DroppableSlotComponent from './DroppableSlot';
@@ -270,59 +275,142 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
   const { displaySnackbar } = useSnackbar();
   const [moveTrainingTemplate] = useMoveTrainingTemplateMutation();
   const [moveRealTraining] = useMoveRealTrainingMutation();
+  const [createTrainingTemplate] = useCreateTrainingTemplateMutation();
+  const [createRealTraining] = useCreateRealTrainingMutation();
+  const [createTrainingStudentTemplate] = useCreateTrainingStudentTemplateMutation();
+  const [addStudentToRealTraining] = useAddStudentToRealTrainingMutation();
   
   // Состояние драга будет передаваться из внутреннего компонента
   const [isDragging, setIsDragging] = useState(false);
 
-  // Обработчик перемещения тренировок с react-dnd
+  // Обработчик перемещения/дублирования тренировок с react-dnd
   const handleTrainingDrop = useCallback(async (
     event: CalendarEvent, 
     sourceDay: Dayjs, 
     sourceTime: string, 
     targetDay: Dayjs, 
-    targetTime: string
+    targetTime: string,
+    isDuplicate: boolean = false
   ) => {
     // Проверяем, изменилось ли положение
     if (sourceDay.isSame(targetDay, 'day') && sourceTime === targetTime) {
       return; // Ничего не изменилось
     }
 
-    debugLog('🚀 Начинаем перемещение с react-dnd:', { 
+    debugLog(`🚀 Начинаем ${isDuplicate ? 'дублирование' : 'перемещение'} с react-dnd:`, { 
       eventId: event.id, 
       from: `${sourceDay.format('ddd')} ${sourceTime}`,
-      to: `${targetDay.format('ddd')} ${targetTime}`
+      to: `${targetDay.format('ddd')} ${targetTime}`,
+      isDuplicate
     });
 
     try {
-      if (isTrainingTemplate(event)) {
-        const dayNumber = targetDay.isoWeekday(); // 1-7 (1 - понедельник)
-        
-        await moveTrainingTemplate({
-          id: event.id,
-          dayNumber,
-          startTime: targetTime,
-        }).unwrap();
-        
-        debugLog('🎉 Перемещение шаблона завершено успешно');
-        displaySnackbar(`✅ Шаблон тренировки "${event.training_type?.name}" перемещен`, 'success');
-      } else if (isRealTraining(event)) {
-        const trainingDate = targetDay.format('YYYY-MM-DD');
-        
-        await moveRealTraining({
-          id: event.id,
-          trainingDate,
-          startTime: targetTime,
-        }).unwrap();
-        
-        debugLog('🎉 Перемещение тренировки завершено успешно');
-        displaySnackbar(`✅ Тренировка "${event.training_type?.name}" перемещена`, 'success');
+      if (isDuplicate) {
+        // Логика дублирования
+        if (isTrainingTemplate(event)) {
+          const dayNumber = targetDay.isoWeekday(); // 1-7 (1 - понедельник)
+          
+          // Извлекаем студентов из оригинального шаблона
+          const originalStudents = event.assigned_students || [];
+          
+          const newTemplate: TrainingTemplateCreate = {
+            training_type_id: event.training_type?.id!,
+            responsible_trainer_id: event.responsible_trainer?.id!,
+            day_number: dayNumber,
+            start_time: targetTime,
+          };
+          
+          // Сначала создаем шаблон
+          const createdTemplate = await createTrainingTemplate(newTemplate).unwrap();
+          
+          // Затем добавляем студентов отдельными запросами
+          if (originalStudents.length > 0) {
+            const studentPromises = originalStudents.map(async (studentTemplate) => {
+              const studentData: TrainingStudentTemplateCreate = {
+                training_template_id: createdTemplate.id,
+                student_id: studentTemplate.student.id,
+                start_date: studentTemplate.start_date, // Копируем исходную дату
+                is_frozen: studentTemplate.is_frozen,
+              };
+              return createTrainingStudentTemplate(studentData).unwrap();
+            });
+            
+            await Promise.all(studentPromises);
+          }
+          
+          debugLog('🎉 Дублирование шаблона завершено успешно');
+          const studentCount = originalStudents.length;
+          const studentText = studentCount > 0 ? ` (со ${studentCount} студентами)` : '';
+          displaySnackbar(`📋 Шаблон тренировки "${event.training_type?.name}" продублирован${studentText}`, 'success');
+        } else if (isRealTraining(event)) {
+          const trainingDate = targetDay.format('YYYY-MM-DD');
+          
+          // Извлекаем студентов из оригинальной тренировки
+          const originalStudents = event.students || [];
+          
+          const newTraining: RealTrainingCreate = {
+            training_type_id: event.training_type?.id!,
+            responsible_trainer_id: event.trainer?.id!,
+            training_date: trainingDate,
+            start_time: targetTime,
+          };
+          
+          // Сначала создаем тренировку
+          const createdTraining = await createRealTraining(newTraining).unwrap();
+          
+          // Затем добавляем студентов отдельными запросами
+          if (originalStudents.length > 0) {
+            const studentPromises = originalStudents.map(async (trainingStudent) => {
+              const studentPayload: AddStudentToRealTrainingPayload = {
+                student_id: trainingStudent.student.id,
+                // template_student_id может быть undefined для дублированных тренировок
+              };
+              return addStudentToRealTraining({
+                trainingId: createdTraining.id,
+                payload: studentPayload,
+              }).unwrap();
+            });
+            
+            await Promise.all(studentPromises);
+          }
+          
+          debugLog('🎉 Дублирование тренировки завершено успешно');
+          const studentCount = originalStudents.length;
+          const studentText = studentCount > 0 ? ` (со ${studentCount} студентами)` : '';
+          displaySnackbar(`📋 Тренировка "${event.training_type?.name}" продублирована${studentText}`, 'success');
+        }
+      } else {
+        // Логика перемещения (существующая)
+        if (isTrainingTemplate(event)) {
+          const dayNumber = targetDay.isoWeekday(); // 1-7 (1 - понедельник)
+          
+          await moveTrainingTemplate({
+            id: event.id,
+            dayNumber,
+            startTime: targetTime,
+          }).unwrap();
+          
+          debugLog('🎉 Перемещение шаблона завершено успешно');
+          displaySnackbar(`✅ Шаблон тренировки "${event.training_type?.name}" перемещен`, 'success');
+        } else if (isRealTraining(event)) {
+          const trainingDate = targetDay.format('YYYY-MM-DD');
+          
+          await moveRealTraining({
+            id: event.id,
+            trainingDate,
+            startTime: targetTime,
+          }).unwrap();
+          
+          debugLog('🎉 Перемещение тренировки завершено успешно');
+          displaySnackbar(`✅ Тренировка "${event.training_type?.name}" перемещена`, 'success');
+        }
       }
     } catch (error: any) {
-      console.error('❌ Ошибка при перемещении тренировки:', error);
+      console.error(`❌ Ошибка при ${isDuplicate ? 'дублировании' : 'перемещении'} тренировки:`, error);
       const errorMessage = error?.data?.detail || error?.message || 'Неизвестная ошибка';
-      displaySnackbar(`❌ Не удалось переместить тренировку: ${errorMessage}`, 'error');
+      displaySnackbar(`❌ Не удалось ${isDuplicate ? 'продублировать' : 'переместить'} тренировку: ${errorMessage}`, 'error');
     }
-  }, [moveTrainingTemplate, moveRealTraining, displaySnackbar]);
+  }, [moveTrainingTemplate, moveRealTraining, createTrainingTemplate, createRealTraining, createTrainingStudentTemplate, addStudentToRealTraining, displaySnackbar]);
 
   const getEventsForSlot = useCallback((day: Dayjs, time: string): CalendarEvent[] => {
     const slotHour = parseInt(time.split(':')[0]);
@@ -481,7 +569,7 @@ interface CalendarContentProps {
   error?: any;
   eventsToDisplay: CalendarEvent[];
   getEventsForSlot: (day: Dayjs, time: string) => CalendarEvent[];
-  handleTrainingDrop: (event: CalendarEvent, sourceDay: Dayjs, sourceTime: string, targetDay: Dayjs, targetTime: string) => Promise<void>;
+  handleTrainingDrop: (event: CalendarEvent, sourceDay: Dayjs, sourceTime: string, targetDay: Dayjs, targetTime: string, isDuplicate?: boolean) => Promise<void>;
   handleSlotClick: (event: React.MouseEvent<HTMLElement>, day: Dayjs, time: string, eventsInSlot: CalendarEvent[]) => void;
   handleOpenDetailModal: (eventData: CalendarEvent) => void;
   handleCloseDetailModal: () => void;
@@ -512,10 +600,105 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
     isMobile, isTablet, theme, isDragging, setIsDragging
   } = props;
 
+  // Рефы для контейнеров скролла
+  const paperScrollRef = useRef<HTMLDivElement>(null);
+  const autoScrollIntervalRef = useRef<number | null>(null);
+
   // Теперь можем использовать useDragLayer внутри DndProvider
-  const { isDraggingGlobal } = useDragLayer((monitor) => ({
+  const { isDraggingGlobal, clientOffset } = useDragLayer((monitor) => ({
     isDraggingGlobal: monitor.isDragging(),
+    clientOffset: monitor.getClientOffset(),
   }));
+
+  // Хук для автоскролла
+  useEffect(() => {
+    if (!isDraggingGlobal || !clientOffset || !paperScrollRef.current) {
+      // Очищаем интервал если не драгаем
+      if (autoScrollIntervalRef.current) {
+        window.clearInterval(autoScrollIntervalRef.current);
+        autoScrollIntervalRef.current = null;
+      }
+      return;
+    }
+
+    const container = paperScrollRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const scrollThreshold = 120; // Зона автоскролла от края viewport
+    const scrollSpeed = 15; // Скорость скролла
+    
+    // Проверяем позицию курсора относительно VIEWPORT (не контейнера!)
+    const mouseY = clientOffset.y;
+    const viewportHeight = window.innerHeight;
+    
+    // Рассчитываем расстояния от краев ЭКРАНА
+    const distanceFromViewportTop = mouseY;
+    const distanceFromViewportBottom = viewportHeight - mouseY;
+    
+    // Проверяем что контейнер виден на экране
+    const containerVisibleTop = Math.max(containerRect.top, 0);
+    const containerVisibleBottom = Math.min(containerRect.bottom, viewportHeight);
+    
+    // Дебаг только при первом срабатывании
+    if (!autoScrollIntervalRef.current) {
+      debugLog('🎯 Autoscroll viewport check:', {
+        mouseY,
+        viewportHeight,
+        distanceFromViewportTop,
+        distanceFromViewportBottom,
+        containerTop: containerRect.top,
+        containerBottom: containerRect.bottom,
+        containerVisibleTop,
+        containerVisibleBottom,
+        canScrollUp: container.scrollTop > 0,
+        canScrollDown: container.scrollTop < (container.scrollHeight - container.clientHeight)
+      });
+    }
+    
+    let shouldScroll = false;
+    let scrollDirection: 'up' | 'down' | null = null;
+    
+    // Автоскролл вверх: курсор близко к верху экрана + можем скроллить вверх
+    if (distanceFromViewportTop < scrollThreshold && 
+        mouseY > containerVisibleTop && // курсор над видимой частью контейнера
+        container.scrollTop > 0) {
+      shouldScroll = true;
+      scrollDirection = 'up';
+      debugLog('🔼 Скролл вверх активирован (viewport)');
+    } 
+    // Автоскролл вниз: курсор близко к низу экрана + можем скроллить вниз  
+    else if (distanceFromViewportBottom < scrollThreshold && 
+             mouseY < containerVisibleBottom && // курсор под видимой частью контейнера
+             container.scrollTop < (container.scrollHeight - container.clientHeight)) {
+      shouldScroll = true;
+      scrollDirection = 'down';
+      debugLog('🔽 Скролл вниз активирован (viewport)');
+    }
+    
+    if (shouldScroll && scrollDirection) {
+      // Очищаем предыдущий интервал
+      if (autoScrollIntervalRef.current) {
+        window.clearInterval(autoScrollIntervalRef.current);
+      }
+      
+      // Запускаем новый интервал для плавного скролла
+      autoScrollIntervalRef.current = window.setInterval(() => {
+        if (scrollDirection === 'up') {
+          container.scrollTop = Math.max(0, container.scrollTop - scrollSpeed);
+        } else if (scrollDirection === 'down') {
+          container.scrollTop = Math.min(
+            container.scrollHeight - container.clientHeight,
+            container.scrollTop + scrollSpeed
+          );
+        }
+      }, 16); // ~60 FPS
+    } else {
+      // Останавливаем скролл если курсор не у края
+      if (autoScrollIntervalRef.current) {
+        window.clearInterval(autoScrollIntervalRef.current);
+        autoScrollIntervalRef.current = null;
+      }
+    }
+  }, [isDraggingGlobal, clientOffset]);
 
   // Обновляем состояние в родительском компоненте
   useEffect(() => {
@@ -527,8 +710,18 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
     }
   }, [isDraggingGlobal, setIsDragging]);
 
+  // Очистка интервала при размонтировании
+  useEffect(() => {
+    return () => {
+      if (autoScrollIntervalRef.current) {
+        window.clearInterval(autoScrollIntervalRef.current);
+      }
+    };
+  }, []);
+
   return (
       <Paper 
+        ref={paperScrollRef}
         elevation={3} 
         sx={{
           p: isMobile ? 1 : 2, 
@@ -547,8 +740,7 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
         display: 'flex', 
         flexDirection: 'column', 
         gap: theme.spacing(0.5),
-        flexGrow: 1,
-        overflow: 'hidden'
+        flexGrow: 1
       }}>
         {/* Заголовки дней недели */}
         <Box sx={{
@@ -595,10 +787,11 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
         </Box>
 
         {/* Основная сетка временных слотов */}
-        <Box sx={{ 
-          overflow: 'auto',
-          flexGrow: 1
-        }}>
+        <Box 
+          sx={{ 
+            flexGrow: 1
+          }}
+        >
           {timeSlots.map(time => (
             <Box 
               key={time} 

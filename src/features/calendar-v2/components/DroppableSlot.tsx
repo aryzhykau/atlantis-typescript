@@ -10,7 +10,7 @@ interface DroppableSlotProps {
   children: React.ReactNode;
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
   sx?: any;
-  onDrop?: (event: CalendarEvent, sourceDay: Dayjs, sourceTime: string, targetDay: Dayjs, targetTime: string) => void;
+  onDrop?: (event: CalendarEvent, sourceDay: Dayjs, sourceTime: string, targetDay: Dayjs, targetTime: string, isDuplicate?: boolean) => void;
 }
 
 interface DragItem {
@@ -18,6 +18,7 @@ interface DragItem {
   event: CalendarEvent;
   sourceDay: Dayjs;
   sourceTime: string;
+  isDuplicate: boolean;
 }
 
 const DroppableSlot: React.FC<DroppableSlotProps> = memo(({
@@ -28,16 +29,17 @@ const DroppableSlot: React.FC<DroppableSlotProps> = memo(({
   sx = {},
   onDrop,
 }) => {
-  const [{ isOver, canDrop }, drop] = useDrop<DragItem, void, { isOver: boolean; canDrop: boolean }>({
+  const [{ isOver, canDrop, dragItem }, drop] = useDrop<DragItem, void, { isOver: boolean; canDrop: boolean; dragItem: DragItem | null }>({
     accept: 'TRAINING',
     drop: (item) => {
       if (onDrop) {
-        onDrop(item.event, item.sourceDay, item.sourceTime, day, time);
+        onDrop(item.event, item.sourceDay, item.sourceTime, day, time, item.isDuplicate);
       }
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),
+      dragItem: monitor.getItem(),
     }),
   });
 
@@ -69,7 +71,7 @@ const DroppableSlot: React.FC<DroppableSlotProps> = memo(({
       sx={dropSx}
     >
       {children}
-      {isOver && canDrop && (
+      {isOver && canDrop && dragItem && (
         <Box
           sx={{
             position: 'absolute',
@@ -77,7 +79,7 @@ const DroppableSlot: React.FC<DroppableSlotProps> = memo(({
             left: '50%',
             transform: 'translate(-50%, -50%)',
             zIndex: 2,
-            backgroundColor: 'primary.main',
+            backgroundColor: dragItem.isDuplicate ? 'info.main' : 'primary.main',
             color: 'white',
             px: 1,
             py: 0.5,
@@ -87,7 +89,7 @@ const DroppableSlot: React.FC<DroppableSlotProps> = memo(({
             whiteSpace: 'nowrap',
           }}
         >
-          📅 Переместить сюда
+          {dragItem.isDuplicate ? '📋 Дублировать сюда' : '📅 Переместить сюда'}
         </Box>
       )}
     </Box>

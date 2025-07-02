@@ -35,14 +35,14 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd'; // Иконка дл�
 import WarningIcon from '@mui/icons-material/Warning'; // Иконка для диалога удаления
 import { CalendarEvent, isRealTraining, isTrainingTemplate } from './CalendarShell'; // Нужны type guards
 import dayjs from 'dayjs';
-import { useDeleteTrainingStudentTemplateMutation, useCreateTrainingStudentTemplateMutation, useGetTrainingTemplateByIdQuery, useGetRealTrainingByIdQuery, useDeleteTrainingTemplateMutation, useDeleteRealTrainingMutation, useUpdateTrainingTemplateMutation, useUpdateRealTrainingMutation } from '../../../store/apis/calendarApi-v2';
+import { useDeleteTrainingStudentTemplateMutation, useCreateTrainingStudentTemplateMutation, useGetTrainingTemplateByIdQuery, useGetRealTrainingByIdQuery, useDeleteTrainingTemplateMutation, useDeleteRealTrainingMutation, useUpdateTrainingTemplateMutation, useUpdateRealTrainingMutation, useCreateTrainingTemplateMutation, useCreateRealTrainingMutation } from '../../../store/apis/calendarApi-v2';
 import { calendarApiV2 } from '../../../store/apis/calendarApi-v2';
 import { useGetStudentsQuery } from '../../../store/apis/studentsApi';
 import { useGetTrainingTypesQuery } from '../../../store/apis/trainingTypesApi';
 import { useGetTrainersQuery } from '../../../store/apis/trainersApi';
 import { TrainingStudentTemplateCreate } from '../models/trainingStudentTemplate';
-import { TrainingTemplateUpdate } from '../models/trainingTemplate';
-import { RealTrainingUpdate } from '../models/realTraining';
+import { TrainingTemplateUpdate, TrainingTemplateCreate } from '../models/trainingTemplate';
+import { RealTrainingUpdate, RealTrainingCreate } from '../models/realTraining';
 import { useSnackbar } from '../../../hooks/useSnackBar';
 
 interface TrainingDetailModalProps {
@@ -69,6 +69,10 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
   // Мутации для обновления тренировок
   const [updateTrainingTemplate, { isLoading: isUpdatingTemplate }] = useUpdateTrainingTemplateMutation();
   const [updateRealTraining, { isLoading: isUpdatingReal }] = useUpdateRealTrainingMutation();
+  
+  // Мутации для создания тренировок (дублирование)
+  const [createTrainingTemplate, { isLoading: isCreatingTemplate }] = useCreateTrainingTemplateMutation();
+  const [createRealTraining, { isLoading: isCreatingReal }] = useCreateRealTrainingMutation();
   
   const { data: allStudents } = useGetStudentsQuery();
   const { data: trainingTypesData } = useGetTrainingTypesQuery({});
@@ -125,9 +129,26 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
     trainingDate: '',
   });
 
+  // Состояние для дублирования
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [duplicateFormData, setDuplicateFormData] = useState<{
+    trainingTypeId: number | null;
+    trainerId: number | null;
+    dayNumber: number | null;
+    startTime: string;
+    trainingDate: string;
+  }>({
+    trainingTypeId: null,
+    trainerId: null,
+    dayNumber: null,
+    startTime: '',
+    trainingDate: '',
+  });
+
   // Определяем состояние загрузки операций
   const isDeletingTraining = isDeletingTemplate || isDeletingReal;
   const isUpdatingTraining = isUpdatingTemplate || isUpdatingReal;
+  const isCreatingTraining = isCreatingTemplate || isCreatingReal;
 
   useEffect(() => {
     if (event && isTrainingTemplate(event)) {
@@ -138,12 +159,26 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
   // Инициализация формы при загрузке события
   useEffect(() => {
     if (event) {
-      setEditFormData({
+      const baseData = {
         trainingTypeId: event.training_type?.id || null,
         trainerId: isTrainingTemplate(event) ? event.responsible_trainer?.id || null : event.trainer?.id || null,
         dayNumber: isTrainingTemplate(event) ? event.day_number : null,
         startTime: event.start_time || '',
         trainingDate: isRealTraining(event) ? event.training_date : '',
+      };
+      
+      setEditFormData(baseData);
+      
+      // Для дублирования устанавливаем те же данные, но с измененным временем (+1 час)
+      const currentHour = parseInt(event.start_time?.substring(0,2) || '0');
+      const newHour = Math.min(currentHour + 1, 22); // Не позже 22:00
+      const newTime = `${newHour.toString().padStart(2, '0')}:00:00`;
+      
+      setDuplicateFormData({
+        ...baseData,
+        startTime: newTime,
+        // Для реальных тренировок устанавливаем завтрашнюю дату
+        trainingDate: isRealTraining(event) ? dayjs(event.training_date).add(1, 'day').format('YYYY-MM-DD') : '',
       });
     }
   }, [event]);
@@ -246,6 +281,67 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
       });
     }
     setIsEditing(false);
+  };
+
+  // Функция для начала дублирования
+  const handleDuplicateTraining = () => {
+    setIsDuplicating(true);
+  };
+
+  // Функция для создания дубликата
+  const handleCreateDuplicate = async () => {
+    if (!event) return;
+    
+    try {
+      if (eventType === 'template') {
+        const createData: TrainingTemplateCreate = {
+          training_type_id: duplicateFormData.trainingTypeId!,
+          responsible_trainer_id: duplicateFormData.trainerId!,
+          day_number: duplicateFormData.dayNumber!,
+          start_time: duplicateFormData.startTime,
+        };
+        
+        await createTrainingTemplate(createData).unwrap();
+        displaySnackbar('Шаблон тренировки продублирован!', 'success');
+      } else if (eventType === 'real') {
+        const createData: RealTrainingCreate = {
+          training_type_id: duplicateFormData.trainingTypeId!,
+          responsible_trainer_id: duplicateFormData.trainerId!,
+          training_date: duplicateFormData.trainingDate,
+          start_time: duplicateFormData.startTime,
+        };
+        
+        await createRealTraining(createData).unwrap();
+        displaySnackbar('Тренировка продублирована!', 'success');
+      }
+      
+      setIsDuplicating(false);
+      onClose(); // Закрываем модал после успешного создания
+      
+    } catch (err: any) {
+      console.error('[TrainingDetailModal] Failed to duplicate training:', err);
+      const errorMessage = err?.data?.detail || err?.message || 'Ошибка при дублировании тренировки';
+      displaySnackbar(errorMessage, 'error');
+    }
+  };
+
+  // Функция для отмены дублирования
+  const handleCancelDuplicate = () => {
+    // Восстанавливаем исходные данные для дублирования
+    if (event) {
+      const currentHour = parseInt(event.start_time?.substring(0,2) || '0');
+      const newHour = Math.min(currentHour + 1, 22);
+      const newTime = `${newHour.toString().padStart(2, '0')}:00:00`;
+      
+      setDuplicateFormData({
+        trainingTypeId: event.training_type?.id || null,
+        trainerId: isTrainingTemplate(event) ? event.responsible_trainer?.id || null : event.trainer?.id || null,
+        dayNumber: isTrainingTemplate(event) ? event.day_number : null,
+        startTime: newTime,
+        trainingDate: isRealTraining(event) ? dayjs(event.training_date).add(1, 'day').format('YYYY-MM-DD') : '',
+      });
+    }
+    setIsDuplicating(false);
   };
 
   // Функция для добавления студента
@@ -574,6 +670,8 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5, textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
               {isEditing ? (
                 <>✏️ Редактирование тренировки</>
+              ) : isDuplicating ? (
+                <>📋 Дублирование тренировки</>
               ) : (
                 event.training_type?.name || 'Тренировка'
               )}
@@ -581,6 +679,8 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
             <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.9rem' }}>
               {isEditing ? (
                 <>Внесите изменения в поля ниже и нажмите "Сохранить"</>
+              ) : isDuplicating ? (
+                <>Настройте параметры новой тренировки и нажмите "Создать копию"</>
               ) : (
                 isTrainingTemplate(event) ? (
                   <>Шаблон • {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][event.day_number - 1]} в {event.start_time.substring(0,5)}</>
@@ -848,6 +948,193 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
           </Box>
         )}
 
+        {/* Карточка для дублирования тренировки */}
+        {isDuplicating && (
+          <Box 
+            sx={{ 
+              mb: 3,
+              p: 2.5,
+              borderRadius: 2,
+              backgroundColor: theme.palette.background.paper,
+              border: `2px solid ${alpha(theme.palette.info.main, 0.3)}`,
+              boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.15)}`,
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.info.main, mb: 2 }}>
+              Настройки дубликата тренировки
+            </Typography>
+            
+            {/* Тренер */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: theme.palette.text.secondary }}>
+                Тренер
+              </Typography>
+              <Autocomplete
+                value={trainers.find(t => t.id === duplicateFormData.trainerId) || null}
+                onChange={(_, newValue) => {
+                  setDuplicateFormData(prev => ({ ...prev, trainerId: newValue?.id || null }));
+                }}
+                options={trainers}
+                getOptionLabel={(option) => `${option.first_name || ''} ${option.last_name || ''}`.trim()}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="Выберите тренера"
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                        '&:hover fieldset': {
+                          borderColor: theme.palette.info.main,
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: theme.palette.info.main,
+                        },
+                      },
+                    }}
+                  />
+                )}
+                fullWidth
+              />
+            </Box>
+            
+            {/* Тип тренировки */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: theme.palette.text.secondary }}>
+                Тип тренировки
+              </Typography>
+              <Autocomplete
+                value={trainingTypes.find(t => t.id === duplicateFormData.trainingTypeId) || null}
+                onChange={(_, newValue) => {
+                  setDuplicateFormData(prev => ({ ...prev, trainingTypeId: newValue?.id || null }));
+                }}
+                options={trainingTypes}
+                getOptionLabel={(option) => option.name}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="Выберите тип тренировки"
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                        '&:hover fieldset': {
+                          borderColor: theme.palette.info.main,
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: theme.palette.info.main,
+                        },
+                      },
+                    }}
+                  />
+                )}
+                fullWidth
+              />
+            </Box>
+
+            {/* Время и дата/день недели */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: theme.palette.text.secondary }}>
+                  Время начала
+                  <Typography component="span" variant="caption" sx={{ ml: 1, fontStyle: 'italic', color: alpha(theme.palette.text.secondary, 0.7) }}>
+                    (только полные часы: 6:00-22:00)
+                  </Typography>
+                </Typography>
+                <FormControl size="small" fullWidth>
+                  <Select
+                    value={duplicateFormData.startTime?.substring(0,5) || ''}
+                    onChange={(e) => {
+                      setDuplicateFormData(prev => ({ ...prev, startTime: e.target.value + ':00' }));
+                    }}
+                    sx={{
+                      borderRadius: 1,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: theme.palette.info.main,
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: theme.palette.info.main,
+                      },
+                    }}
+                  >
+                    {Array.from({ length: 17 }, (_, i) => {
+                      const hour = (i + 6).toString().padStart(2, '0'); // С 6:00 до 22:00
+                      const timeValue = `${hour}:00`;
+                      return (
+                        <MenuItem key={timeValue} value={timeValue}>
+                          {timeValue}
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {isTrainingTemplate(event) ? (
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: theme.palette.text.secondary }}>
+                    День недели
+                  </Typography>
+                  <FormControl size="small" fullWidth>
+                    <Select
+                      value={duplicateFormData.dayNumber || ''}
+                      onChange={(e) => {
+                        setDuplicateFormData(prev => ({ ...prev, dayNumber: Number(e.target.value) }));
+                      }}
+                      sx={{
+                        borderRadius: 1,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: theme.palette.info.main,
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: theme.palette.info.main,
+                        },
+                      }}
+                    >
+                      {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day, index) => (
+                        <MenuItem key={index + 1} value={index + 1}>
+                          {day}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+              ) : (
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: theme.palette.text.secondary }}>
+                    Дата тренировки
+                    <Typography component="span" variant="caption" sx={{ ml: 1, fontStyle: 'italic', color: alpha(theme.palette.text.secondary, 0.7) }}>
+                      (по умолчанию: завтра)
+                    </Typography>
+                  </Typography>
+                  <TextField
+                    type="date"
+                    value={duplicateFormData.trainingDate || ''}
+                    onChange={(e) => {
+                      setDuplicateFormData(prev => ({ ...prev, trainingDate: e.target.value }));
+                    }}
+                    size="small"
+                    fullWidth
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                        '&:hover fieldset': {
+                          borderColor: theme.palette.info.main,
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: theme.palette.info.main,
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              )}
+            </Box>
+          </Box>
+        )}
+
         {/* Карточка со студентами */}
         <Box 
           sx={{ 
@@ -893,7 +1180,7 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
                 </Typography>
               </Box>
             </Box>
-            {isTrainingTemplate(event) && !isEditing && (
+            {isTrainingTemplate(event) && !isEditing && !isDuplicating && (
               <IconButton 
                 onClick={() => setIsAddStudentFormOpen(true)}
                 disabled={isDeletingStudent}
@@ -1101,12 +1388,12 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
         }}
       >
         <Box sx={{ display: 'flex', gap: 2 }}>
-          {!isEditing ? (
+          {!isEditing && !isDuplicating ? (
             <>
               <Button 
                 onClick={handleEditTraining} 
                 variant="contained" 
-                disabled={isDeletingStudent || isDeletingTraining || isUpdatingTraining}
+                disabled={isDeletingStudent || isDeletingTraining || isUpdatingTraining || isCreatingTraining}
                 sx={{
                   background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${alpha(theme.palette.secondary.main, 0.8)} 100%)`,
                   color: 'white',
@@ -1128,9 +1415,33 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
                 Редактировать
               </Button>
               <Button 
+                onClick={handleDuplicateTraining} 
+                variant="contained" 
+                disabled={isDeletingStudent || isDeletingTraining || isUpdatingTraining || isCreatingTraining}
+                sx={{
+                  background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${alpha(theme.palette.info.main, 0.8)} 100%)`,
+                  color: 'white',
+                  px: 3,
+                  py: 1.2,
+                  borderRadius: 2,
+                  boxShadow: `0 4px 15px ${alpha(theme.palette.info.main, 0.3)}`,
+                  '&:hover': {
+                    boxShadow: `0 6px 20px ${alpha(theme.palette.info.main, 0.4)}`,
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:disabled': {
+                    background: alpha(theme.palette.text.primary, 0.3),
+                    color: alpha(theme.palette.text.primary, 0.5),
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Дублировать
+              </Button>
+              <Button 
                 onClick={() => setShowDeleteConfirmation(true)} 
                 variant="contained" 
-                disabled={isDeletingStudent || isDeletingTraining || isUpdatingTraining}
+                disabled={isDeletingStudent || isDeletingTraining || isUpdatingTraining || isCreatingTraining}
                 sx={{
                   background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${alpha(theme.palette.error.main, 0.8)} 100%)`,
                   color: 'white',
@@ -1152,7 +1463,7 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
                 {isDeletingTraining ? <CircularProgress size={20} color="inherit" /> : 'Удалить'}
               </Button>
             </>
-          ) : (
+          ) : isEditing ? (
             <>
               <Button 
                 onClick={handleCancelEdit} 
@@ -1209,13 +1520,70 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
                 )}
               </Button>
             </>
+          ) : (
+            <>
+              <Button 
+                onClick={handleCancelDuplicate} 
+                variant="outlined" 
+                disabled={isCreatingTraining}
+                sx={{
+                  borderColor: alpha(theme.palette.text.primary, 0.3),
+                  color: theme.palette.text.primary,
+                  px: 3,
+                  py: 1.2,
+                  borderRadius: 2,
+                  '&:hover': {
+                    borderColor: alpha(theme.palette.text.primary, 0.5),
+                    backgroundColor: alpha(theme.palette.text.primary, 0.05),
+                  },
+                  '&:disabled': {
+                    borderColor: alpha(theme.palette.text.primary, 0.2),
+                    color: alpha(theme.palette.text.primary, 0.3),
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Отменить
+              </Button>
+              <Button 
+                onClick={handleCreateDuplicate} 
+                variant="contained" 
+                disabled={isCreatingTraining}
+                sx={{
+                  background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${alpha(theme.palette.info.main, 0.8)} 100%)`,
+                  color: 'white',
+                  px: 3,
+                  py: 1.2,
+                  borderRadius: 2,
+                  boxShadow: `0 4px 15px ${alpha(theme.palette.info.main, 0.3)}`,
+                  '&:hover': {
+                    boxShadow: `0 6px 20px ${alpha(theme.palette.info.main, 0.4)}`,
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:disabled': {
+                    background: alpha(theme.palette.text.primary, 0.3),
+                    color: alpha(theme.palette.text.primary, 0.5),
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {isCreatingTraining ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CircularProgress size={16} color="inherit" />
+                    Создание...
+                  </Box>
+                ) : (
+                  'Создать копию'
+                )}
+              </Button>
+            </>
           )}
         </Box>
         
         <Button 
           onClick={onClose} 
           variant="outlined" 
-          disabled={isDeletingStudent || isDeletingTraining || isUpdatingTraining || isEditing}
+          disabled={isDeletingStudent || isDeletingTraining || isUpdatingTraining || isCreatingTraining || isEditing || isDuplicating}
           sx={{ 
             borderColor: alpha(borderColor, 0.4),
             color: borderColor, 
@@ -1234,7 +1602,7 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
             },
             transition: 'all 0.2s ease',
           }}
-          autoFocus={!isEditing}
+          autoFocus={!isEditing && !isDuplicating}
         >
             Закрыть
         </Button>
