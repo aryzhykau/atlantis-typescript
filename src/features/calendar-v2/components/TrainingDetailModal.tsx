@@ -35,10 +35,14 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd'; // Иконка дл�
 import WarningIcon from '@mui/icons-material/Warning'; // Иконка для диалога удаления
 import { CalendarEvent, isRealTraining, isTrainingTemplate } from './CalendarShell'; // Нужны type guards
 import dayjs from 'dayjs';
-import { useDeleteTrainingStudentTemplateMutation, useCreateTrainingStudentTemplateMutation, useGetTrainingTemplateByIdQuery, useGetRealTrainingByIdQuery, useDeleteTrainingTemplateMutation, useDeleteRealTrainingMutation } from '../../../store/apis/calendarApi-v2';
+import { useDeleteTrainingStudentTemplateMutation, useCreateTrainingStudentTemplateMutation, useGetTrainingTemplateByIdQuery, useGetRealTrainingByIdQuery, useDeleteTrainingTemplateMutation, useDeleteRealTrainingMutation, useUpdateTrainingTemplateMutation, useUpdateRealTrainingMutation } from '../../../store/apis/calendarApi-v2';
 import { calendarApiV2 } from '../../../store/apis/calendarApi-v2';
 import { useGetStudentsQuery } from '../../../store/apis/studentsApi';
+import { useGetTrainingTypesQuery } from '../../../store/apis/trainingTypesApi';
+import { useGetTrainersQuery } from '../../../store/apis/trainersApi';
 import { TrainingStudentTemplateCreate } from '../models/trainingStudentTemplate';
+import { TrainingTemplateUpdate } from '../models/trainingTemplate';
+import { RealTrainingUpdate } from '../models/realTraining';
 import { useSnackbar } from '../../../hooks/useSnackBar';
 
 interface TrainingDetailModalProps {
@@ -62,7 +66,16 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
   const [deleteTrainingTemplate, { isLoading: isDeletingTemplate }] = useDeleteTrainingTemplateMutation();
   const [deleteRealTraining, { isLoading: isDeletingReal }] = useDeleteRealTrainingMutation();
   
+  // Мутации для обновления тренировок
+  const [updateTrainingTemplate, { isLoading: isUpdatingTemplate }] = useUpdateTrainingTemplateMutation();
+  const [updateRealTraining, { isLoading: isUpdatingReal }] = useUpdateRealTrainingMutation();
+  
   const { data: allStudents } = useGetStudentsQuery();
+  const { data: trainingTypesData } = useGetTrainingTypesQuery({});
+  const { data: trainersData } = useGetTrainersQuery();
+  
+  const trainingTypes = trainingTypesData || [];
+  const trainers = trainersData?.trainers || [];
   
   // Загружаем свежие данные в зависимости от типа события
   const { data: templateData, isLoading: isLoadingTemplate } = useGetTrainingTemplateByIdQuery(
@@ -96,14 +109,44 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
   // Состояние для диалога подтверждения удаления
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  // Определяем состояние загрузки удаления
+  // Состояние для режима редактирования
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState<{
+    trainingTypeId: number | null;
+    trainerId: number | null;
+    dayNumber: number | null;
+    startTime: string;
+    trainingDate: string;
+  }>({
+    trainingTypeId: null,
+    trainerId: null,
+    dayNumber: null,
+    startTime: '',
+    trainingDate: '',
+  });
+
+  // Определяем состояние загрузки операций
   const isDeletingTraining = isDeletingTemplate || isDeletingReal;
+  const isUpdatingTraining = isUpdatingTemplate || isUpdatingReal;
 
   useEffect(() => {
     if (event && isTrainingTemplate(event)) {
       console.log('[TrainingDetailModal] Event updated, assigned_students:', JSON.parse(JSON.stringify(event.assigned_students)));
     }
   }, [event, templateData, realTrainingData]); // Зависимость от свежих данных
+
+  // Инициализация формы при загрузке события
+  useEffect(() => {
+    if (event) {
+      setEditFormData({
+        trainingTypeId: event.training_type?.id || null,
+        trainerId: isTrainingTemplate(event) ? event.responsible_trainer?.id || null : event.trainer?.id || null,
+        dayNumber: isTrainingTemplate(event) ? event.day_number : null,
+        startTime: event.start_time || '',
+        trainingDate: isRealTraining(event) ? event.training_date : '',
+      });
+    }
+  }, [event]);
 
   // Функция для обработки удаления тренировки
   const handleDeleteTraining = async () => {
@@ -129,11 +172,80 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
     }
   };
 
-  // Функция для обработки редактирования тренировки
+  // Функция для входа в режим редактирования
   const handleEditTraining = () => {
-    // TODO: Здесь будет логика редактирования
-    console.log('[TrainingDetailModal] Edit training:', event);
-    displaySnackbar('Функция редактирования в разработке!', 'info');
+    setIsEditing(true);
+  };
+
+  // Функция для сохранения изменений
+  const handleSaveTraining = async () => {
+    if (!event || !eventId) return;
+    
+    try {
+      if (eventType === 'template') {
+        const updateData: TrainingTemplateUpdate = {};
+        
+        if (editFormData.trainingTypeId && editFormData.trainingTypeId !== event.training_type?.id) {
+          updateData.training_type_id = editFormData.trainingTypeId;
+        }
+        if (editFormData.trainerId && editFormData.trainerId !== (event as any).responsible_trainer?.id) {
+          updateData.responsible_trainer_id = editFormData.trainerId;
+        }
+        if (editFormData.dayNumber && editFormData.dayNumber !== (event as any).day_number) {
+          updateData.day_number = editFormData.dayNumber;
+        }
+        if (editFormData.startTime && editFormData.startTime !== event.start_time) {
+          updateData.start_time = editFormData.startTime;
+        }
+        
+        if (Object.keys(updateData).length > 0) {
+          await updateTrainingTemplate({ id: eventId, data: updateData }).unwrap();
+          displaySnackbar('Шаблон тренировки обновлен!', 'success');
+        }
+      } else if (eventType === 'real') {
+        const updateData: RealTrainingUpdate = {};
+        
+        if (editFormData.trainingTypeId && editFormData.trainingTypeId !== event.training_type?.id) {
+          updateData.training_type_id = editFormData.trainingTypeId;
+        }
+        if (editFormData.trainerId && editFormData.trainerId !== (event as any).trainer?.id) {
+          updateData.responsible_trainer_id = editFormData.trainerId;
+        }
+        if (editFormData.trainingDate && editFormData.trainingDate !== (event as any).training_date) {
+          updateData.training_date = editFormData.trainingDate;
+        }
+        if (editFormData.startTime && editFormData.startTime !== event.start_time) {
+          updateData.start_time = editFormData.startTime;
+        }
+        
+        if (Object.keys(updateData).length > 0) {
+          await updateRealTraining({ id: eventId, data: updateData }).unwrap();
+          displaySnackbar('Тренировка обновлена!', 'success');
+        }
+      }
+      
+      setIsEditing(false);
+      
+    } catch (err: any) {
+      console.error('[TrainingDetailModal] Failed to update training:', err);
+      const errorMessage = err?.data?.detail || err?.message || 'Ошибка при обновлении тренировки';
+      displaySnackbar(errorMessage, 'error');
+    }
+  };
+
+  // Функция для отмены редактирования
+  const handleCancelEdit = () => {
+    // Восстанавливаем исходные данные
+    if (event) {
+      setEditFormData({
+        trainingTypeId: event.training_type?.id || null,
+        trainerId: isTrainingTemplate(event) ? event.responsible_trainer?.id || null : event.trainer?.id || null,
+        dayNumber: isTrainingTemplate(event) ? event.day_number : null,
+        startTime: event.start_time || '',
+        trainingDate: isRealTraining(event) ? event.training_date : '',
+      });
+    }
+    setIsEditing(false);
   };
 
   // Функция для добавления студента
@@ -460,13 +572,21 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5, textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-              {event.training_type?.name || 'Тренировка'}
+              {isEditing ? (
+                <>✏️ Редактирование тренировки</>
+              ) : (
+                event.training_type?.name || 'Тренировка'
+              )}
             </Typography>
             <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.9rem' }}>
-              {isTrainingTemplate(event) ? (
-                <>Шаблон • {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][event.day_number - 1]} в {event.start_time.substring(0,5)}</>
+              {isEditing ? (
+                <>Внесите изменения в поля ниже и нажмите "Сохранить"</>
               ) : (
-                <>Тренировка • {dayjs(event.training_date).format('D MMMM YYYY')} в {event.start_time.substring(0,5)}</>
+                isTrainingTemplate(event) ? (
+                  <>Шаблон • {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][event.day_number - 1]} в {event.start_time.substring(0,5)}</>
+                ) : (
+                  <>Тренировка • {dayjs(event.training_date).format('D MMMM YYYY')} в {event.start_time.substring(0,5)}</>
+                )
               )}
             </Typography>
           </Box>
@@ -514,17 +634,49 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
             >
               <PersonIcon sx={{ color: 'white', fontSize: '1.5rem' }} />
             </Box>
-            <Box>
+            <Box sx={{ flex: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 600, color: borderColor, mb: 0.5 }}>
                 Тренер
               </Typography>
-              <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
-            {(isTrainingTemplate(event) && event.responsible_trainer) ? 
-              `${event.responsible_trainer.first_name || ''} ${event.responsible_trainer.last_name || ''}`.trim() :
-             (isRealTraining(event) && event.trainer) ? 
-              `${event.trainer.first_name || ''} ${event.trainer.last_name || ''}`.trim() :
-             'Не назначен'}
-          </Typography>
+              
+              {!isEditing ? (
+                <Typography variant="body1" sx={{ fontSize: '1.1rem' }}>
+                  {(isTrainingTemplate(event) && event.responsible_trainer) ? 
+                    `${event.responsible_trainer.first_name || ''} ${event.responsible_trainer.last_name || ''}`.trim() :
+                   (isRealTraining(event) && event.trainer) ? 
+                    `${event.trainer.first_name || ''} ${event.trainer.last_name || ''}`.trim() :
+                   'Не назначен'}
+                </Typography>
+              ) : (
+                <Autocomplete
+                  value={trainers.find(t => t.id === editFormData.trainerId) || null}
+                  onChange={(_, newValue) => {
+                    setEditFormData(prev => ({ ...prev, trainerId: newValue?.id || null }));
+                  }}
+                  options={trainers}
+                  getOptionLabel={(option) => `${option.first_name || ''} ${option.last_name || ''}`.trim()}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder="Выберите тренера"
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 1,
+                          '&:hover fieldset': {
+                            borderColor: borderColor,
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: borderColor,
+                          },
+                        },
+                      }}
+                    />
+                  )}
+                  sx={{ minWidth: 250, mt: 0.5 }}
+                />
+              )}
             </Box>
         </Box>
 
@@ -546,6 +698,155 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
             </Box>
           )}
         </Box>
+
+        {/* Карточка для редактирования деталей тренировки */}
+        {isEditing && (
+          <Box 
+            sx={{ 
+              mb: 3,
+              p: 2.5,
+              borderRadius: 2,
+              backgroundColor: theme.palette.background.paper,
+              border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+              boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.15)}`,
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.primary.main, mb: 2 }}>
+              Редактирование тренировки
+            </Typography>
+            
+            {/* Тип тренировки */}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: theme.palette.text.secondary }}>
+                Тип тренировки
+              </Typography>
+              <Autocomplete
+                value={trainingTypes.find(t => t.id === editFormData.trainingTypeId) || null}
+                onChange={(_, newValue) => {
+                  setEditFormData(prev => ({ ...prev, trainingTypeId: newValue?.id || null }));
+                }}
+                options={trainingTypes}
+                getOptionLabel={(option) => option.name}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="Выберите тип тренировки"
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                        '&:hover fieldset': {
+                          borderColor: theme.palette.primary.main,
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: theme.palette.primary.main,
+                        },
+                      },
+                    }}
+                  />
+                )}
+                fullWidth
+              />
+            </Box>
+
+            {/* Время и дата/день недели */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: theme.palette.text.secondary }}>
+                  Время начала
+                  <Typography component="span" variant="caption" sx={{ ml: 1, fontStyle: 'italic', color: alpha(theme.palette.text.secondary, 0.7) }}>
+                    (только полные часы: 6:00-22:00)
+                  </Typography>
+                </Typography>
+                <FormControl size="small" fullWidth>
+                  <Select
+                    value={editFormData.startTime?.substring(0,5) || ''}
+                    onChange={(e) => {
+                      setEditFormData(prev => ({ ...prev, startTime: e.target.value + ':00' }));
+                    }}
+                    sx={{
+                      borderRadius: 1,
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: theme.palette.primary.main,
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: theme.palette.primary.main,
+                      },
+                    }}
+                  >
+                    {Array.from({ length: 17 }, (_, i) => {
+                      const hour = (i + 6).toString().padStart(2, '0'); // С 6:00 до 22:00
+                      const timeValue = `${hour}:00`;
+                      return (
+                        <MenuItem key={timeValue} value={timeValue}>
+                          {timeValue}
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {isTrainingTemplate(event) ? (
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: theme.palette.text.secondary }}>
+                    День недели
+                  </Typography>
+                  <FormControl size="small" fullWidth>
+                    <Select
+                      value={editFormData.dayNumber || ''}
+                      onChange={(e) => {
+                        setEditFormData(prev => ({ ...prev, dayNumber: Number(e.target.value) }));
+                      }}
+                      sx={{
+                        borderRadius: 1,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: theme.palette.primary.main,
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: theme.palette.primary.main,
+                        },
+                      }}
+                    >
+                      {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day, index) => (
+                        <MenuItem key={index + 1} value={index + 1}>
+                          {day}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+              ) : (
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: theme.palette.text.secondary }}>
+                    Дата тренировки
+                  </Typography>
+                  <TextField
+                    type="date"
+                    value={editFormData.trainingDate || ''}
+                    onChange={(e) => {
+                      setEditFormData(prev => ({ ...prev, trainingDate: e.target.value }));
+                    }}
+                    size="small"
+                    fullWidth
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                        '&:hover fieldset': {
+                          borderColor: theme.palette.primary.main,
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: theme.palette.primary.main,
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              )}
+            </Box>
+          </Box>
+        )}
 
         {/* Карточка со студентами */}
         <Box 
@@ -592,7 +893,7 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
                 </Typography>
               </Box>
             </Box>
-            {isTrainingTemplate(event) && (
+            {isTrainingTemplate(event) && !isEditing && (
               <IconButton 
                 onClick={() => setIsAddStudentFormOpen(true)}
                 disabled={isDeletingStudent}
@@ -800,60 +1101,121 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
         }}
       >
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button 
-            onClick={handleEditTraining} 
-            variant="contained" 
-            disabled={isDeletingStudent || isDeletingTraining}
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${alpha(theme.palette.secondary.main, 0.8)} 100%)`,
-              color: 'white',
-              px: 3,
-              py: 1.2,
-              borderRadius: 2,
-              boxShadow: `0 4px 15px ${alpha(theme.palette.secondary.main, 0.3)}`,
-              '&:hover': {
-                boxShadow: `0 6px 20px ${alpha(theme.palette.secondary.main, 0.4)}`,
-                transform: 'translateY(-1px)',
-              },
-              '&:disabled': {
-                background: alpha(theme.palette.text.primary, 0.3),
-                color: alpha(theme.palette.text.primary, 0.5),
-              },
-              transition: 'all 0.2s ease',
-            }}
-          >
-            Редактировать
-          </Button>
-          <Button 
-            onClick={() => setShowDeleteConfirmation(true)} 
-            variant="contained" 
-            disabled={isDeletingStudent || isDeletingTraining}
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${alpha(theme.palette.error.main, 0.8)} 100%)`,
-              color: 'white',
-              px: 3,
-              py: 1.2,
-              borderRadius: 2,
-              boxShadow: `0 4px 15px ${alpha(theme.palette.error.main, 0.3)}`,
-              '&:hover': {
-                boxShadow: `0 6px 20px ${alpha(theme.palette.error.main, 0.4)}`,
-                transform: 'translateY(-1px)',
-              },
-              '&:disabled': {
-                background: alpha(theme.palette.text.primary, 0.3),
-                color: alpha(theme.palette.text.primary, 0.5),
-              },
-              transition: 'all 0.2s ease',
-            }}
-          >
-            {isDeletingTraining ? <CircularProgress size={20} color="inherit" /> : 'Удалить'}
-          </Button>
+          {!isEditing ? (
+            <>
+              <Button 
+                onClick={handleEditTraining} 
+                variant="contained" 
+                disabled={isDeletingStudent || isDeletingTraining || isUpdatingTraining}
+                sx={{
+                  background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${alpha(theme.palette.secondary.main, 0.8)} 100%)`,
+                  color: 'white',
+                  px: 3,
+                  py: 1.2,
+                  borderRadius: 2,
+                  boxShadow: `0 4px 15px ${alpha(theme.palette.secondary.main, 0.3)}`,
+                  '&:hover': {
+                    boxShadow: `0 6px 20px ${alpha(theme.palette.secondary.main, 0.4)}`,
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:disabled': {
+                    background: alpha(theme.palette.text.primary, 0.3),
+                    color: alpha(theme.palette.text.primary, 0.5),
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Редактировать
+              </Button>
+              <Button 
+                onClick={() => setShowDeleteConfirmation(true)} 
+                variant="contained" 
+                disabled={isDeletingStudent || isDeletingTraining || isUpdatingTraining}
+                sx={{
+                  background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${alpha(theme.palette.error.main, 0.8)} 100%)`,
+                  color: 'white',
+                  px: 3,
+                  py: 1.2,
+                  borderRadius: 2,
+                  boxShadow: `0 4px 15px ${alpha(theme.palette.error.main, 0.3)}`,
+                  '&:hover': {
+                    boxShadow: `0 6px 20px ${alpha(theme.palette.error.main, 0.4)}`,
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:disabled': {
+                    background: alpha(theme.palette.text.primary, 0.3),
+                    color: alpha(theme.palette.text.primary, 0.5),
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {isDeletingTraining ? <CircularProgress size={20} color="inherit" /> : 'Удалить'}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                onClick={handleCancelEdit} 
+                variant="outlined" 
+                disabled={isUpdatingTraining}
+                sx={{
+                  borderColor: alpha(theme.palette.text.primary, 0.3),
+                  color: theme.palette.text.primary,
+                  px: 3,
+                  py: 1.2,
+                  borderRadius: 2,
+                  '&:hover': {
+                    borderColor: alpha(theme.palette.text.primary, 0.5),
+                    backgroundColor: alpha(theme.palette.text.primary, 0.05),
+                  },
+                  '&:disabled': {
+                    borderColor: alpha(theme.palette.text.primary, 0.2),
+                    color: alpha(theme.palette.text.primary, 0.3),
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Отменить
+              </Button>
+              <Button 
+                onClick={handleSaveTraining} 
+                variant="contained" 
+                disabled={isUpdatingTraining}
+                sx={{
+                  background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${alpha(theme.palette.success.main, 0.8)} 100%)`,
+                  color: 'white',
+                  px: 3,
+                  py: 1.2,
+                  borderRadius: 2,
+                  boxShadow: `0 4px 15px ${alpha(theme.palette.success.main, 0.3)}`,
+                  '&:hover': {
+                    boxShadow: `0 6px 20px ${alpha(theme.palette.success.main, 0.4)}`,
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:disabled': {
+                    background: alpha(theme.palette.text.primary, 0.3),
+                    color: alpha(theme.palette.text.primary, 0.5),
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {isUpdatingTraining ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CircularProgress size={16} color="inherit" />
+                    Сохранение...
+                  </Box>
+                ) : (
+                  'Сохранить'
+                )}
+              </Button>
+            </>
+          )}
         </Box>
         
         <Button 
           onClick={onClose} 
           variant="outlined" 
-          disabled={isDeletingStudent || isDeletingTraining}
+          disabled={isDeletingStudent || isDeletingTraining || isUpdatingTraining || isEditing}
           sx={{ 
             borderColor: alpha(borderColor, 0.4),
             color: borderColor, 
@@ -872,7 +1234,7 @@ const TrainingDetailModal: React.FC<TrainingDetailModalProps> = ({ open, onClose
             },
             transition: 'all 0.2s ease',
           }}
-          autoFocus
+          autoFocus={!isEditing}
         >
             Закрыть
         </Button>
