@@ -23,6 +23,7 @@ import {
 import { Formik, Form, Field } from 'formik';
 import { TextField as FormikTextField } from 'formik-mui';
 import * as Yup from 'yup';
+import { useGradients } from '../hooks/useGradients';
 
 interface Student {
   id: number;
@@ -64,16 +65,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   onToggleForm,
 }) => {
   const theme = useTheme();
-
-  // Динамические градиенты в зависимости от темы
-  const gradients = {
-    primary: theme.palette.mode === 'dark' 
-      ? 'linear-gradient(135deg, #8e44ad 0%, #6c5ce7 100%)'
-      : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    success: theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)'
-      : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  };
+  const gradients = useGradients();
 
   const handleFormSubmit = async (values: PaymentFormData, { resetForm }: any) => {
     try {

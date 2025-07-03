@@ -49,6 +49,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useGetCurrentUserQuery } from '../../../store/apis/userApi';
 import { StatsGrid } from './StatsGrid';
 import { PaymentForm } from './PaymentForm';
+import { useGradients } from '../hooks/useGradients';
 
 type PeriodFilter = 'week' | 'month' | '3months';
 
@@ -95,21 +96,8 @@ export const TrainerPayments: React.FC = () => {
   ) || [];
   const todayAmount = todayPayments.reduce((sum, payment) => sum + payment.amount, 0);
 
-  // Динамические градиенты в зависимости от темы
-  const gradients = {
-    primary: theme.palette.mode === 'dark' 
-      ? 'linear-gradient(135deg, #8e44ad 0%, #6c5ce7 100%)'
-      : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    success: theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)'
-      : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    warning: theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)'
-      : 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    info: theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)'
-      : 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-  };
+  // Получаем градиенты
+  const gradients = useGradients();
 
   // Данные для статистических карточек
   const statsItems = [

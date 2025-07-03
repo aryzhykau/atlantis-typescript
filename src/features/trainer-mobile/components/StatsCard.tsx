@@ -1,12 +1,13 @@
 import React from 'react';
 import { Box, Paper, Typography, SxProps, useTheme } from '@mui/material';
 import { SvgIconComponent } from '@mui/icons-material';
+import { useGradients, GradientType } from '../hooks/useGradients';
 
 interface StatsCardProps {
   icon: SvgIconComponent;
   value: string | number;
   label: string;
-  gradient?: 'primary' | 'success' | 'warning' | 'info';
+  gradient?: GradientType;
   sx?: SxProps;
 }
 
@@ -18,22 +19,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   sx = {}
 }) => {
   const theme = useTheme();
-
-  // Динамические градиенты в зависимости от темы
-  const gradients = {
-    primary: theme.palette.mode === 'dark' 
-      ? 'linear-gradient(135deg, #8e44ad 0%, #6c5ce7 100%)'
-      : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    success: theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)'
-      : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    warning: theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)'
-      : 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    info: theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)'
-      : 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-  };
+  const gradients = useGradients();
 
   return (
     <Paper 
