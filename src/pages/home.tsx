@@ -6,6 +6,7 @@ import {useEffect} from "react";
 import {useSnackbar} from "../hooks/useSnackBar.tsx";
 import useIsMobile from "../hooks/useMobile.tsx";
 import {MobileHomeLayout} from "../layouts/MobileHomeLayout.tsx";
+import { TrainerMobileApp } from "../features/trainer-mobile/components/TrainerMobileApp";
 
 export function HomePage() {
     const {isLoading, isSuccess, data, error, isError} = useGetCurrentUserQuery();
@@ -27,7 +28,15 @@ export function HomePage() {
                     s<CircularProgress/>
                 </Box>
             )}
-            {isSuccess && (isMobile ? <MobileHomeLayout><Outlet/></MobileHomeLayout> : <HomeLayout  data={data} isLoading={isLoading}><Outlet/></HomeLayout>)}
+            {isSuccess && (
+                // Если пользователь - тренер, показываем специальный мобильный интерфейс
+                data.role === 'TRAINER' ? (
+                    <TrainerMobileApp />
+                ) : (
+                    // Для админов и клиентов - обычный интерфейс
+                    isMobile ? <MobileHomeLayout><Outlet/></MobileHomeLayout> : <HomeLayout  data={data} isLoading={isLoading}><Outlet/></HomeLayout>
+                )
+            )}
             {isError && <Paper sx={{display: "flex", justifyContent: "center", alignItems: "center"}}>Ошибка</Paper>}
             <Snackbar 
                 open={snackbar.open} 

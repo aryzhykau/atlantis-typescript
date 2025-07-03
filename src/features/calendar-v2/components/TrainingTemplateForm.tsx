@@ -228,7 +228,7 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                       </Box>
                       <Divider sx={{ mb: 2 }} />
                       
-                      {selectedDate && selectedTime && (
+                  {selectedDate && selectedTime && (
                         <Box sx={styles.timeBox}>
                           <Typography variant="body1" sx={{ fontWeight: 500 }}>
                             📅 {selectedDate.format('dddd, D MMMM YYYY')}
@@ -242,7 +242,7 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                             sx={styles.timeChip}
                           />
                         </Box>
-                      )}
+                  )}
                     </CardContent>
                   </Card>
 
@@ -375,7 +375,7 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                               Добавить ученика
                             </Button>
                             
-                            {values.studentAssignments && values.studentAssignments.length > 0 ? (
+                              {values.studentAssignments && values.studentAssignments.length > 0 ? (
                               <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}>
                                 {values.studentAssignments.map((assignment, index) => (
                                   <Paper 
@@ -383,53 +383,53 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                                     sx={styles.paperStyles}
                                   >
                                     <Grid container spacing={2} alignItems="center">
-                                      <Grid item xs={12} sm={5}>
-                                        <Field
-                                          name={`studentAssignments.${index}.student`}
-                                          component={Autocomplete}
-                                          options={studentOptions || []}
+                                    <Grid item xs={12} sm={5}>
+                                      <Field
+                                        name={`studentAssignments.${index}.student`}
+                                        component={Autocomplete}
+                                        options={studentOptions || []}
                                           getOptionLabel={(option: IStudent) => option ? `${option.first_name} ${option.last_name}` : ''}
-                                          isOptionEqualToValue={(option: IStudent, value: IStudent | null) => value !== null && option.id === value.id}
-                                          loading={isLoadingStudents}
-                                          textFieldProps={{
-                                            label: "Ученик",
-                                            error: !!studentsError, 
-                                            helperText: studentsError ? 'Ошибка загрузки учеников' : undefined,
+                                        isOptionEqualToValue={(option: IStudent, value: IStudent | null) => value !== null && option.id === value.id}
+                                        loading={isLoadingStudents}
+                                        textFieldProps={{
+                                          label: "Ученик",
+                                          error: !!studentsError, 
+                                          helperText: studentsError ? 'Ошибка загрузки учеников' : undefined,
                                             size: "small",
                                             fullWidth: true
-                                          }}
-                                          renderInput={(rawParams: AutocompleteRenderInputParams) => {
-                                            const params = rawParams as AutocompleteRenderInputParams & { error?: boolean; helperText?: string };
-                                            return (
-                                              <MuiTextField
-                                                {...params}
-                                                label="Ученик"
-                                                error={params.error}
+                                        }}
+                                        renderInput={(rawParams: AutocompleteRenderInputParams) => {
+                                          const params = rawParams as AutocompleteRenderInputParams & { error?: boolean; helperText?: string };
+                                          return (
+                                            <MuiTextField
+                                              {...params}
+                                              label="Ученик"
+                                              error={params.error}
                                                 helperText={params.helperText}
-                                                size="small"
-                                              />
-                                            );
-                                          }}
-                                        />
-                                      </Grid>
-                                      <Grid item xs={10} sm={5}>
-                                        <Field
-                                          name={`studentAssignments.${index}.startDate`}
-                                          component={DesktopDatePicker}
-                                          label="Дата начала"
+                                              size="small"
+                                            />
+                                          );
+                                        }}
+                                      />
+                                    </Grid>
+                                    <Grid item xs={10} sm={5}>
+                                      <Field
+                                        name={`studentAssignments.${index}.startDate`}
+                                        component={DesktopDatePicker}
+                                        label="Дата начала"
                                           slotProps={{ textField: { size: 'small', fullWidth: true } }}
-                                        />
-                                      </Grid>
+                                      />
+                                    </Grid>
                                       <Grid item xs={2} sm={2}>
                                         <IconButton
                                           color="error"
                                           onClick={() => arrayHelpers.remove(index)}
                                           size="small"
                                         >
-                                          <RemoveCircleOutlineIcon />
-                                        </IconButton>
-                                      </Grid>
+                                        <RemoveCircleOutlineIcon />
+                                      </IconButton>
                                     </Grid>
+                                  </Grid>
                                   </Paper>
                                 ))}
                               </Box>

@@ -3,9 +3,17 @@ import { StudentBasicInfo } from './trainingStudentTemplate';
 
 /**
  * Статус посещения студентом реальной тренировки.
- * (Уточнить возможные значения из openapi.json или по логике бэкенда)
+ * Обновлено согласно новой системе статусов с отменами
  */
-export type TrainingAttendanceStatus = 'planned' | 'attended' | 'missed_ уважительная' | 'missed_неуважительная' | 'cancelled_by_student' | 'cancelled_by_admin';
+export type TrainingAttendanceStatus = 
+  | 'REGISTERED'        // Зарегистрирован
+  | 'CANCELLED_SAFE'    // Отменен безопасно (>12ч, без штрафа)
+  | 'CANCELLED_PENALTY' // Отменен поздно (<12ч, со штрафом)
+  | 'PRESENT'           // Присутствовал
+  | 'ABSENT'            // Отсутствовал
+  | 'WAITLIST'          // В листе ожидания
+  // Старые статусы для обратной совместимости
+  | 'PLANNED' | 'ABSENT_RESPECTFUL' | 'ABSENT_LATE_CANCEL';
 
 /**
  * Статус реальной тренировки.
@@ -21,9 +29,12 @@ export interface RealTrainingStudent {
   id: number; // ID записи студента на тренировку (не ID самого студента)
   student_id: number;
   student: StudentBasicInfo;
-  status_of_presence: TrainingAttendanceStatus;
+  status: TrainingAttendanceStatus; // Изменено с status_of_presence на status согласно бэкенду
   cancellation_reason?: string;
-  // Можно добавить поля о заморозке, если они актуальны для реальных тренировок
+  notification_time?: string;
+  cancelled_at?: string;
+  attendance_marked_at?: string;
+  requires_payment: boolean;
   // template_student_id?: number; // Если нужно связывать с записью в шаблоне
 }
 
@@ -92,6 +103,14 @@ export interface GetRealTrainingsParams {
 export interface AddStudentToRealTrainingPayload {
   student_id: number;
   // template_student_id?: number; // Если нужно связать с шаблоном
+}
+
+/**
+ * Данные для отмены записи студента.
+ */
+export interface StudentCancellationRequest {
+  reason: string;
+  notification_time: string; // ISO 8601 format
 }
 
 /**

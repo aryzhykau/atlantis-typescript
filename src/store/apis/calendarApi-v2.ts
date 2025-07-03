@@ -20,6 +20,7 @@ import {
   AddStudentToRealTrainingPayload,
   UpdateStudentAttendancePayload,
   RealTrainingStudent,
+  StudentCancellationRequest,
 } from '../../features/calendar-v2/models/realTraining';
 
 // Определяем типы тегов как строки, соответствующие тем, что в baseApi.tagTypes
@@ -361,36 +362,36 @@ export const calendarApiV2 = baseApi.injectEndpoints({
     }),
 
     // Эндпоинты для управления студентами на реальной тренировке
-    addStudentToRealTraining: builder.mutation<RealTraining, { trainingId: number; payload: AddStudentToRealTrainingPayload }>({
-      query: ({ trainingId, payload }) => ({
-        url: `real-trainings/${trainingId}/students`,
+    addStudentToRealTraining: builder.mutation<RealTrainingStudent, { training_id: number; student_id: number }>({
+      query: ({ training_id, student_id }) => ({
+        url: `real-trainings/${training_id}/students`,
         method: 'POST',
-        body: payload,
+        body: { student_id },
       }),
-      invalidatesTags: (result, error, { trainingId }) => [{ type: REAL_TRAINING_TAG, id: trainingId }],
+      invalidatesTags: (result, error, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
     }),
-    removeStudentFromRealTraining: builder.mutation<{ success: boolean }, { trainingId: number; studentId: number; removeFuture?: boolean }>({
-      query: ({ trainingId, studentId, removeFuture }) => ({
-        url: `real-trainings/${trainingId}/students/${studentId}`,
-        method: 'DELETE',
-        params: removeFuture ? { remove_future: true } : {},
-      }),
-      invalidatesTags: (result, error, { trainingId }) => [{ type: REAL_TRAINING_TAG, id: trainingId }],
-    }),
-    updateStudentAttendance: builder.mutation<RealTrainingStudent, { trainingId: number; studentId: number; payload: UpdateStudentAttendancePayload }>({
-      query: ({ trainingId, studentId, payload }) => ({
-        url: `real-trainings/${trainingId}/students/${studentId}/attendance`,
+    updateStudentAttendance: builder.mutation<RealTrainingStudent, { training_id: number; student_id: number; status_of_presence: string }>({
+      query: ({ training_id, student_id, status_of_presence }) => ({
+        url: `real-trainings/${training_id}/students/${student_id}/attendance`,
         method: 'PUT',
-        body: payload,
+        body: { status_of_presence },
       }),
-      invalidatesTags: (result, error, { trainingId }) => [{ type: REAL_TRAINING_TAG, id: trainingId }],
+      invalidatesTags: (result, error, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
     }),
-    cancelStudentFromTraining: builder.mutation<{ success: boolean }, { trainingId: number; studentId: number }>({
-      query: ({ trainingId, studentId }) => ({
-        url: `real-trainings/${trainingId}/students/${studentId}/cancel`,
+    removeStudentFromRealTraining: builder.mutation<{ success: boolean }, { training_id: number; student_id: number }>({
+      query: ({ training_id, student_id }) => ({
+        url: `real-trainings/${training_id}/students/${student_id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, { trainingId }) => [{ type: REAL_TRAINING_TAG, id: trainingId }],
+      invalidatesTags: (result, error, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
+    }),
+    cancelStudentFromTraining: builder.mutation<{ success: boolean }, { training_id: number; student_id: number; data: StudentCancellationRequest }>({
+      query: ({ training_id, student_id, data }) => ({
+        url: `real-trainings/${training_id}/students/${student_id}/cancel`,
+        method: 'DELETE',
+        body: data,
+      }),
+      invalidatesTags: (result, error, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
     }),
 
     // Эндпоинт для полной отмены реальной тренировки администратором

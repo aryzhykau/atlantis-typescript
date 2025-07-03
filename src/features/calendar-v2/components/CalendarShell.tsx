@@ -6,10 +6,11 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import dayjs, { Dayjs } from 'dayjs';
 import { CalendarViewMode } from './CalendarV2Page'; // Предполагается, что типы там же
 import { TrainingTemplate, TrainingTemplateCreate } from '../models/trainingTemplate';
-import { RealTraining, RealTrainingCreate, AddStudentToRealTrainingPayload } from '../models/realTraining';
+import { RealTraining, RealTrainingCreate } from '../models/realTraining';
 import { TrainingStudentTemplateCreate } from '../models/trainingStudentTemplate';
 import TrainingTemplateForm from './TrainingTemplateForm'; // Импорт формы
-import TrainingDetailModal from './TrainingDetailModal'; // Импортируем детальное модальное окно
+import TrainingTemplateModal from './TrainingTemplateModal'; // Импортируем модалку для шаблонов
+import RealTrainingModal from './RealTrainingModal'; // Импортируем модалку для реальных тренировок
 import { calculateCapacity, formatCapacityText, shouldShowCapacityBadge } from '../utils/capacityUtils';
 
 import { useSnackbar } from '../../../hooks/useSnackBar';
@@ -385,13 +386,9 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
           // Затем добавляем студентов отдельными запросами
           if (originalStudents.length > 0) {
             const studentPromises = originalStudents.map(async (trainingStudent) => {
-              const studentPayload: AddStudentToRealTrainingPayload = {
-                student_id: trainingStudent.student.id,
-                // template_student_id может быть undefined для дублированных тренировок
-              };
               return addStudentToRealTraining({
-                trainingId: createdTraining.id,
-                payload: studentPayload,
+                training_id: createdTraining.id,
+                student_id: trainingStudent.student.id,
               }).unwrap();
             });
             
@@ -1068,13 +1065,21 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
         />
       )}
 
-      {/* Детальное модальное окно */}
-      <TrainingDetailModal 
-        open={isDetailModalOpen}
-        onClose={handleCloseDetailModal}
-        eventId={selectedEventId}
-        eventType={selectedEventType}
-      />
+      {/* Модальные окна для разных типов тренировок */}
+      {selectedEventType === 'template' && (
+        <TrainingTemplateModal 
+          open={isDetailModalOpen}
+          onClose={handleCloseDetailModal}
+          templateId={selectedEventId}
+        />
+      )}
+      {selectedEventType === 'real' && (
+        <RealTrainingModal 
+          open={isDetailModalOpen}
+          onClose={handleCloseDetailModal}
+          trainingId={selectedEventId}
+        />
+      )}
 
       {/* Отображение загруженных данных (временно для отладки) */}
       {viewMode === 'scheduleTemplate' && templatesData && !isLoading && (

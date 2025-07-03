@@ -68,5 +68,7 @@ export const baseApi = createApi({
         'TrainingTemplateV2',
         'TrainingStudentTemplateV2',
         'RealTrainingV2',
+        'Payment',
+        'TrainerStats',
     ],
 });

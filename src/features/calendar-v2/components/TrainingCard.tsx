@@ -243,7 +243,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ event, variant = 'full', is
                     fontWeight: 600,
                     color: typeColor,
                   }}>
-                    {studentCount}
+                  {studentCount}
                   </Typography>
                 </Box>
               )}
