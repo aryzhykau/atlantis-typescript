@@ -56,12 +56,33 @@ export const trainerApi = baseApi.injectEndpoints({
       invalidatesTags: ['Payment'],
     }),
 
+    // Получение платежей тренера
+    getTrainerPayments: builder.query<any[], { period?: 'week' | 'month' | '3months' }>({
+      query: ({ period = 'week' }) => ({
+        url: '/payments/filtered',
+        params: {
+          registered_by_me: true,
+          period,
+        },
+      }),
+      providesTags: ['Payment'],
+    }),
+
     // Получение статистики тренера
     getTrainerStats: builder.query<TrainerStats, { period?: 'today' | 'week' | 'month' }>({
       query: ({ period = 'week' }) => ({
         url: `/trainers/me/stats?period=${period}`,
       }),
       providesTags: ['TrainerStats'],
+    }),
+
+    // Получение студентов тренера
+    getTrainerStudents: builder.query<any[], { trainer_id: number }>({
+      query: ({ trainer_id }) => ({
+        url: `/students/trainer/${trainer_id}`,
+        method: 'GET',
+      }),
+      providesTags: ['Students'],
     }),
   }),
 });
@@ -71,5 +92,7 @@ export const {
   useGetTrainerTrainingsRangeQuery,
   useUpdateStudentAttendanceMutation,
   useCreateQuickPaymentMutation,
+  useGetTrainerPaymentsQuery,
   useGetTrainerStatsQuery,
+  useGetTrainerStudentsQuery,
 } = trainerApi; 

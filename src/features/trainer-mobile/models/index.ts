@@ -37,11 +37,9 @@ export interface AttendanceUpdate {
 }
 
 export interface QuickPayment {
-  student_id: number;
+  client_id: number;
   amount: number;
-  payment_method: 'CASH' | 'CARD' | 'TRANSFER';
   description?: string;
-  training_id?: number;
 }
 
 export interface TrainerStats {
