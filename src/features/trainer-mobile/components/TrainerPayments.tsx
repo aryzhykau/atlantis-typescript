@@ -48,6 +48,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useGetCurrentUserQuery } from '../../../store/apis/userApi';
 import { StatsGrid } from './StatsGrid';
+import { PaymentForm } from './PaymentForm';
 
 type PeriodFilter = 'week' | 'month' | '3months';
 
@@ -126,7 +127,7 @@ export const TrainerPayments: React.FC = () => {
     },
   ];
 
-  const handleFormSubmit = async (values: PaymentFormData, { resetForm }: any) => {
+  const handleFormSubmit = async (values: PaymentFormData) => {
     const selectedStudent = students.find(s => s.id === values.student_id);
     if (!selectedStudent?.client?.id) {
       displaySnackbar('Ошибка: не найден клиент студента', 'error');
@@ -141,13 +142,12 @@ export const TrainerPayments: React.FC = () => {
       }).unwrap();
 
       displaySnackbar('Платёж успешно зарегистрирован', 'success');
-      resetForm();
-      setShowForm(false);
     } catch (error: any) {
       displaySnackbar(
         error?.data?.detail || 'Ошибка при регистрации платежа',
         'error'
       );
+      throw error; // Пробрасываем ошибку, чтобы форма не сбрасывалась
     }
   };
 
@@ -218,164 +218,13 @@ export const TrainerPayments: React.FC = () => {
       <StatsGrid items={statsItems} columns={2} />
 
       {/* Форма регистрации платежа */}
-      <Paper 
-        elevation={0}
-        sx={{ 
-          mb: 3, 
-          borderRadius: 3,
-          border: '1px solid',
-          borderColor: 'divider',
-          overflow: 'hidden',
-          background: theme.palette.background.paper,
-        }}
-      >
-        <Box sx={{ 
-          p: 2, 
-          background: alpha(theme.palette.primary.main, 0.05),
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <AddIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-                Регистрация платежа
-              </Typography>
-            </Box>
-            <Tooltip title={showForm ? 'Скрыть форму' : 'Показать форму'}>
-              <IconButton 
-                onClick={() => setShowForm(!showForm)}
-                sx={{ 
-                  background: showForm ? theme.palette.primary.main : 'transparent',
-                  color: showForm ? 'white' : theme.palette.primary.main,
-                  '&:hover': {
-                    background: showForm ? theme.palette.primary.dark : alpha(theme.palette.primary.main, 0.1),
-                  }
-                }}
-              >
-                {showForm ? <Close /> : <AddIcon />}
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-
-        <Slide direction="down" in={showForm} mountOnEnter unmountOnExit>
-          <Box sx={{ p: 3 }}>
-            {students.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Person sx={{ fontSize: 48, color: theme.palette.text.secondary, mb: 2 }} />
-                <Typography color="text.secondary" variant="h6">
-                  Нет доступных студентов
-                </Typography>
-                <Typography color="text.secondary" variant="body2">
-                  Для регистрации платежа нужны активные студенты
-                </Typography>
-              </Box>
-            ) : (
-              <Formik
-                initialValues={{
-                  student_id: 0,
-                  amount: '',
-                }}
-                validationSchema={PaymentSchema}
-                onSubmit={handleFormSubmit}
-              >
-                {({ isSubmitting, values }) => (
-                  <Form>
-                    <Grid container spacing={3}>
-                      <Grid item xs={12}>
-                        <FormControl fullWidth size="medium">
-                          <InputLabel>Выберите студента</InputLabel>
-                          <Field
-                            component={FormikSelect}
-                            name="student_id"
-                            label="Выберите студента"
-                            formControl={{ fullWidth: true }}
-                          >
-                            {students.map((student) => (
-                              <MenuItem key={student.id} value={student.id}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 0.5 }}>
-                                  <Avatar 
-                                    sx={{ 
-                                      width: 32, 
-                                      height: 32, 
-                                      background: gradients.primary,
-                                      fontSize: '0.875rem',
-                                      fontWeight: 600,
-                                    }}
-                                  >
-                                    {student.first_name[0]}{student.last_name[0]}
-                                  </Avatar>
-                                  <Box>
-                                    <Typography variant="body2" sx={{ fontWeight: 500, color: theme.palette.text.primary }}>
-                                      {student.first_name} {student.last_name}
-                                    </Typography>
-                                    {student.client && (
-                                      <Typography variant="caption" color="text.secondary">
-                                        Клиент: {student.client.first_name} {student.client.last_name}
-                                      </Typography>
-                                    )}
-                                  </Box>
-                                </Box>
-                              </MenuItem>
-                            ))}
-                          </Field>
-                        </FormControl>
-                      </Grid>
-
-                      <Grid item xs={12}>
-                        <Field
-                          component={FormikTextField}
-                          name="amount"
-                          label="Сумма платежа"
-                          type="number"
-                          fullWidth
-                          size="medium"
-                          InputProps={{
-                            startAdornment: <Euro sx={{ mr: 1, color: theme.palette.text.secondary }} />,
-                            sx: { borderRadius: 2 }
-                          }}
-                          inputProps={{ min: 0, step: 0.01 }}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12}>
-                        <Button
-                          type="submit"
-                          variant="contained"
-                          fullWidth
-                          size="large"
-                          disabled={isSubmitting || isCreating || !values.student_id || !values.amount}
-                          sx={{ 
-                            background: gradients.success,
-                            borderRadius: 2,
-                            py: 1.5,
-                            fontSize: '1.1rem',
-                            fontWeight: 600,
-                            textTransform: 'none',
-                            '&:hover': {
-                              background: theme.palette.mode === 'dark' 
-                                ? 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)'
-                                : 'linear-gradient(135deg, #3f87fe 0%, #00d2fe 100%)',
-                            },
-                            '&:disabled': {
-                              background: theme.palette.mode === 'dark' ? '#424242' : '#e0e0e0',
-                              color: theme.palette.mode === 'dark' ? '#757575' : '#9e9e9e',
-                            }
-                          }}
-                          startIcon={isCreating ? <CircularProgress size={20} color="inherit" /> : <PaymentIcon />}
-                        >
-                          {isCreating ? 'Регистрация...' : 'Зарегистрировать платёж'}
-                        </Button>
-                      </Grid>
-                    </Grid>
-                  </Form>
-                )}
-              </Formik>
-            )}
-          </Box>
-        </Slide>
-      </Paper>
+      <PaymentForm
+        students={students}
+        onSubmit={handleFormSubmit}
+        isLoading={isCreating}
+        showForm={showForm}
+        onToggleForm={() => setShowForm(!showForm)}
+      />
 
       {/* Фильтры */}
       <Paper 
