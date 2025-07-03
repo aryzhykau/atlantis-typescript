@@ -35,9 +35,18 @@ function TabPanel({ children, value, index }: TabPanelProps) {
         height: '100%', 
         display: value === index ? 'flex' : 'none',
         flexDirection: 'column',
+        overflow: 'hidden',
       }}
     >
-      {value === index && children}
+      {value === index && (
+        <Box sx={{ 
+          flex: 1, 
+          overflow: 'auto',
+          WebkitOverflowScrolling: 'touch',
+        }}>
+          {children}
+        </Box>
+      )}
     </Box>
   );
 }
@@ -68,7 +77,13 @@ export const TrainerMobileApp: React.FC = () => {
       </AppBar>
 
       {/* Content */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <Box sx={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        overflow: 'hidden',
+        pb: 8, // Отступ для нижнего меню (64px высота + 16px отступ)
+      }}>
         <TabPanel value={currentTab} index={0}>
           <TrainerSchedule />
         </TabPanel>
