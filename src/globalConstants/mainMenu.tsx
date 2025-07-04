@@ -59,20 +59,6 @@ export const MenuItems: IMenuItems[] = [
         mobilePage: <></>
     },
     {
-        title: "Расписание",
-        link: "timetable",
-        icon: <EditCalendarIcon/>,
-        page: <Timetable/>,
-        mobilePage: <></>
-    },
-    {
-        title: "Календарь",
-        link: "calendar",
-        icon: <CalendarMonthIcon/>,
-        page: <Calendar/>,
-        mobilePage: <></>
-    },
-    {
         title: "Платежи",
         link: "invoices",
         icon: <PaymentsIcon/>,
@@ -80,8 +66,8 @@ export const MenuItems: IMenuItems[] = [
         mobilePage: <></>
     },
     {
-        title: "Календарь v2",
-        link: "calendar-v2",
+        title: "Календарь",
+        link: "calendar",
         icon: <CalendarTodayIcon />,
         page: <CalendarV2Page />,
         mobilePage: <MobileCalendarV2Page />
