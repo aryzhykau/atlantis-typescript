@@ -30,6 +30,7 @@ interface StudentFormValuesForList {
     first_name: string;
     last_name: string;
     date_of_birth: Dayjs | null;
+    client_id: number | null;
 }
 
 // Базовые начальные значения для формы создания студента
@@ -37,6 +38,7 @@ const baseInitialStudentFormValues: StudentFormValuesForList = {
     first_name: '',
     last_name: '',
     date_of_birth: null,
+    client_id: null,
 };
 
 const modalStyle = {
@@ -59,8 +61,7 @@ export function StudentsListPage() {
   const [createStudent, { isLoading: isCreatingStudent }] = useCreateStudentMutation();
   const { displaySnackbar } = useSnackbar();
   
-  const { data: clients, isLoading: isLoadingClients, error: errorClients } = useGetClientsQuery();
-  const [selectedClient, setSelectedClient] = useState<IClientUserGet | null>(null);
+  useGetClientsQuery();
   // Состояние для текущих начальных значений формы студента, соответствующее StudentFormValues
   const [currentStudentFormValues, setCurrentStudentFormValues] = useState<StudentFormValuesForList>(baseInitialStudentFormValues);
 
@@ -105,7 +106,6 @@ export function StudentsListPage() {
   };
 
   const handleOpenAddStudentModal = () => {
-      setSelectedClient(null);
       setCurrentStudentFormValues(baseInitialStudentFormValues); // Сброс значений формы при открытии
       setIsAddStudentModalOpen(true);
   }
@@ -115,30 +115,25 @@ export function StudentsListPage() {
   };
 
   const handleCreateStudentSubmit = async (values: IStudentUpdatePayload) => {
-    if (!selectedClient || !selectedClient.id) {
+    if (!values.client_id) {
         displaySnackbar('Клиент (родитель) не выбран.', 'error');
         return;
     }
-    
-    // Убедимся, что все необходимые поля присутствуют, так как IStudentUpdatePayload опционален
     if (!values.first_name || !values.last_name || !values.date_of_birth) {
         displaySnackbar('Все поля (Имя, Фамилия, Дата рождения) должны быть заполнены.', 'error');
         return;
     }
-
     const payload: IStudentCreatePayload = {
       first_name: values.first_name,
       last_name: values.last_name,
-      date_of_birth: values.date_of_birth, // StudentForm уже передает строку 'YYYY-MM-DD' или null
-      client_id: selectedClient.id,
-      // is_active можно не указывать, бэкенд по умолчанию ставит true
+      date_of_birth: values.date_of_birth,
+      client_id: values.client_id,
     };
-
     try {
       await createStudent(payload).unwrap();
       displaySnackbar('Студент успешно создан', 'success');
       handleCloseAddStudentModal(); 
-      refetch(); // Все же вызовем refetch, чтобы список точно обновился
+      refetch();
     } catch (err: any) {
       console.error("Ошибка создания студента:", err);
       const errorDetail = err?.data?.detail || 'Не удалось создать студента';
@@ -421,28 +416,6 @@ export function StudentsListPage() {
         </Box>
         {/* Контент модального окна */}
         <DialogContent sx={{ p: 3, '&:first-of-type': { pt: 0 } }}>
-          {/* Выбор клиента (родителя) */}
-          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
-            Выберите клиента (родителя)
-          </Typography>
-          <Autocomplete
-            options={clients || []}
-            getOptionLabel={(option) => `${option.first_name} ${option.last_name} (${option.email})`}
-            value={selectedClient}
-            onChange={(_, newValue) => {
-              setSelectedClient(newValue);
-              if (newValue) {
-                setCurrentStudentFormValues(prev => ({...prev, last_name: newValue.last_name}));
-              }
-            }}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
-            renderInput={(params) => (
-              <TextField {...params} label="Выберите клиента (родителя)" margin="normal" fullWidth />
-            )}
-            loading={isLoadingClients}
-            disabled={isLoadingClients}
-            sx={{mb: 2}}
-          />
           {/* Форма добавления ученика */}
           <StudentForm
             initialValues={currentStudentFormValues}
