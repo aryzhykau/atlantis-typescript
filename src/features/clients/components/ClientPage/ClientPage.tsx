@@ -150,7 +150,7 @@ const ClientStats: React.FC<ClientStatsProps> = ({ studentsCount, invoicesCount,
                 <StatCard
                     icon={<PeopleIcon sx={{ fontSize: 32 }} />}
                     value={studentsCount}
-                    label="Студентов"
+                    label="Учеников"
                     gradient={gradients.primary}
                 />
             </Grid>

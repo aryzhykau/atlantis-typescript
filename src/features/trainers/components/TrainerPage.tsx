@@ -1,6 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, CircularProgress, IconButton, Paper, Tabs, Tab, Button, Grid, Dialog, DialogContent } from '@mui/material';
+import { 
+    Box, 
+    Typography, 
+    CircularProgress, 
+    IconButton, 
+    Paper, 
+    Tabs, 
+    Tab, 
+    Button, 
+    Grid, 
+    Dialog, 
+    DialogContent,
+    alpha
+} from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useGetTrainerByIdQuery, useUpdateTrainerStatusMutation, useUpdateTrainerMutation } from '../../../store/apis/trainersApi';
 import { useSnackbar } from '../../../hooks/useSnackBar';
@@ -8,9 +21,14 @@ import { TrainerInfoCard } from './TrainerInfoCard';
 import { TrainerForm } from './TrainerForm';
 import { ITrainerUpdatePayload, IStatusUpdatePayload, ITrainerResponse } from '../models/trainer';
 import dayjs from 'dayjs';
+import { useGradients } from '../../trainer-mobile/hooks/useGradients';
+import { useTheme } from '@mui/material';
 
-// Пока без карточек, добавим их позже
-// import { TrainerInfoCard } from './TrainerInfoCard'; 
+// Иконки для статистики
+import PersonIcon from '@mui/icons-material/Person';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import WorkIcon from '@mui/icons-material/Work';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -40,10 +58,103 @@ function a11yProps(index: number) {
     };
 }
 
+// Компонент статистической карточки
+interface StatCardProps {
+    icon: React.ReactNode;
+    value: string | number;
+    label: string;
+    gradient: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ icon, value, label, gradient }) => {
+    return (
+        <Paper
+            elevation={0}
+            sx={{
+                p: 2,
+                background: gradient,
+                borderRadius: 3,
+                color: 'white',
+                textAlign: 'center',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 8,
+                }
+            }}
+        >
+            <Box sx={{ mb: 1 }}>
+                {icon}
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                {value}
+            </Typography>
+            <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                {label}
+            </Typography>
+        </Paper>
+    );
+};
+
+// Компонент статистики тренера
+interface TrainerStatsProps {
+    age: number;
+    salary: number;
+    isActive: boolean;
+    isFixedSalary: boolean;
+}
+
+const TrainerStats: React.FC<TrainerStatsProps> = ({ age, salary, isActive, isFixedSalary }) => {
+    const gradients = useGradients();
+    
+    return (
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={6} sm={3}>
+                <StatCard
+                    icon={<PersonIcon sx={{ fontSize: 32 }} />}
+                    value={`${age} лет`}
+                    label="Возраст"
+                    gradient={gradients.primary}
+                />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+                <StatCard
+                    icon={<TrendingUpIcon sx={{ fontSize: 32 }} />}
+                    value={`${salary} €`}
+                    label="Оклад"
+                    gradient={gradients.success}
+                />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+                <StatCard
+                    icon={<WorkIcon sx={{ fontSize: 32 }} />}
+                    value={isFixedSalary ? "Фиксированный" : "Процентный"}
+                    label="Тип оклада"
+                    gradient={gradients.info}
+                />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+                <StatCard
+                    icon={<CheckCircleOutlineIcon sx={{ fontSize: 32 }} />}
+                    value={isActive ? "Активен" : "Неактивен"}
+                    label="Статус"
+                    gradient={isActive ? gradients.success : gradients.warning}
+                />
+            </Grid>
+        </Grid>
+    );
+};
+
 export function TrainerPage() {
     const { trainerId } = useParams<{ trainerId: string }>();
     const navigate = useNavigate();
     const { displaySnackbar } = useSnackbar();
+    const theme = useTheme();
+    const gradients = useGradients();
     const [activeTab, setActiveTab] = React.useState(0);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTrainerData, setEditingTrainerData] = useState<Partial<ITrainerResponse> | null>(null);
@@ -79,7 +190,7 @@ export function TrainerPage() {
 
     const handleOpenEditModal = () => {
         if (trainer) {
-            setEditingTrainerData(trainer); // Заполняем форму текущими данными тренера
+            setEditingTrainerData(trainer);
             setIsEditModalOpen(true);
         }
     };
@@ -112,7 +223,7 @@ export function TrainerPage() {
         try {
             await updateTrainerStatus({ trainerId: trainer.id, statusData: newStatusPayload }).unwrap();
             displaySnackbar(`Статус тренера ${trainer.first_name} ${trainer.last_name} успешно изменен`, 'success');
-            refetchTrainer(); // Обновляем данные тренера на странице
+            refetchTrainer();
         } catch (err: any) {
             console.error("Ошибка при изменении статуса тренера: ", err);
             const errorMessage = err?.data?.detail || 'Ошибка изменения статуса';
@@ -137,25 +248,114 @@ export function TrainerPage() {
         );
     }
 
+    // Вычисляем статистику
+    const salary = trainer.salary || 0;
+    const isActive = trainer.is_active ?? false;
+    const isFixedSalary = trainer.is_fixed_salary ?? false;
+    const age = dayjs().diff(dayjs(trainer.date_of_birth), 'year');
+
     return (
         <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-            <IconButton onClick={handleBackClick} sx={{ mb: 2 }}>
-                <ArrowBackIcon />
-            </IconButton>
-            <Typography variant="h4" component="h1" gutterBottom>
-                Тренер: {trainer.first_name} {trainer.last_name}
-            </Typography>
+            {/* Градиентный заголовок */}
+            <Paper
+                elevation={0}
+                sx={{
+                    mb: 3,
+                    p: 3,
+                    background: gradients.primary,
+                    borderRadius: 3,
+                    color: 'white',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                        opacity: 0.3,
+                    }
+                }}
+            >
+                <Box sx={{ position: 'relative', zIndex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <IconButton 
+                            onClick={handleBackClick} 
+                            sx={{ 
+                                color: 'white',
+                                mr: 2,
+                                '&:hover': {
+                                    background: alpha('#ffffff', 0.2),
+                                }
+                            }}
+                        >
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Box sx={{ flexGrow: 1 }}>
+                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, display: 'flex', alignItems: 'center' }}>
+                                🏋️ {trainer.first_name} {trainer.last_name}
+                            </Typography>
+                            <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 300 }}>
+                                Карточка тренера #{trainer.id}
+                            </Typography>
+                        </Box>
+                    </Box>
+                </Box>
+            </Paper>
 
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-                <Tabs value={activeTab} onChange={handleTabChange} aria-label="Trainer details tabs">
-                    <Tab label="Обзор" {...a11yProps(0)} />
-                    <Tab label="Тренировки" {...a11yProps(1)} />
+            {/* Статистика тренера */}
+            <TrainerStats
+                age={age}
+                salary={salary}
+                isActive={isActive}
+                isFixedSalary={isFixedSalary}
+            />
+
+            {/* Стилизованные табы */}
+            <Paper
+                elevation={0}
+                sx={{
+                    mb: 3,
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    overflow: 'hidden',
+                }}
+            >
+                <Tabs 
+                    value={activeTab} 
+                    onChange={handleTabChange} 
+                    aria-label="Trainer details tabs"
+                    sx={{
+                        background: alpha(theme.palette.primary.main, 0.05),
+                        '& .MuiTab-root': {
+                            minHeight: 64,
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            textTransform: 'none',
+                            color: 'text.secondary',
+                            '&.Mui-selected': {
+                                color: theme.palette.primary.main,
+                                background: theme.palette.background.paper,
+                            },
+                            '&:hover': {
+                                background: alpha(theme.palette.primary.main, 0.1),
+                                color: theme.palette.primary.main,
+                            }
+                        },
+                        '& .MuiTabs-indicator': {
+                            background: gradients.primary,
+                            height: 3,
+                        }
+                    }}
+                >
+                    <Tab label="📊 Обзор" {...a11yProps(0)} />
+                    <Tab label="🏋️ Тренировки" {...a11yProps(1)} />
                 </Tabs>
-            </Box>
+            </Paper>
 
             <TabPanel value={activeTab} index={0}>
                 <Grid container spacing={3}>
-                    <Grid item xs={12} md={6} lg={5}>
+                    <Grid item xs={12}>
                         <TrainerInfoCard 
                             trainer={trainer} 
                             onEdit={handleOpenEditModal} 
@@ -171,7 +371,45 @@ export function TrainerPage() {
             </TabPanel>
 
             {editingTrainerData && (
-                 <Dialog open={isEditModalOpen} onClose={handleCloseEditModal} maxWidth="sm" fullWidth PaperProps={{ sx: { m: 1, borderRadius: 2 } }}>
+                <Dialog 
+                    open={isEditModalOpen} 
+                    onClose={handleCloseEditModal} 
+                    maxWidth="sm" 
+                    fullWidth 
+                    PaperProps={{ 
+                        sx: { 
+                            m: 1, 
+                            borderRadius: 3,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            overflow: 'hidden',
+                        } 
+                    }}
+                >
+                    {/* Градиентный заголовок модального окна */}
+                    <Box
+                        sx={{
+                            p: 3,
+                            background: gradients.primary,
+                            color: 'white',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0, left: 0, right: 0, bottom: 0,
+                                background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                                opacity: 0.3,
+                            }
+                        }}
+                    >
+                        <Box sx={{ position: 'relative', zIndex: 1 }}>
+                            <Typography variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                                ✏️ Редактировать тренера
+                            </Typography>
+                        </Box>
+                    </Box>
+                    
                     <DialogContent sx={{ p: 0, '&:first-of-type': { pt: 0 } }}> 
                         <TrainerForm
                             title="Редактировать тренера"
