@@ -1,6 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, CircularProgress, Grid, Paper, IconButton, Button, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent, Checkbox, FormControlLabel } from '@mui/material';
+import { 
+    Box, 
+    Typography, 
+    CircularProgress, 
+    Grid, 
+    Paper, 
+    IconButton, 
+    Button, 
+    Select, 
+    MenuItem, 
+    FormControl, 
+    InputLabel, 
+    SelectChangeEvent, 
+    Checkbox, 
+    FormControlLabel,
+    alpha,
+    Tabs,
+    Tab
+} from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import { useGetStudentByIdQuery, useUpdateStudentMutation } from '../../../store/apis/studentsApi';
@@ -8,26 +26,63 @@ import { useGetStudentSubscriptionsQuery, useGetSubscriptionsQuery, useAddSubscr
 import { IStudent, IStudentUpdatePayload } from '../models/student';
 import { IStudentSubscriptionView, ISubscriptionResponse, IStudentSubscriptionCreatePayload } from '../../subscriptions/models/subscription';
 import { useSnackbar } from '../../../hooks/useSnackBar';
-import dayjs from 'dayjs'; // Нужен для конвертации даты рождения для формы
+import { useGradients } from '../../trainer-mobile/hooks/useGradients';
+import { useTheme } from '@mui/material';
+import dayjs from 'dayjs';
 
 // Импортируем созданные компоненты
 import { StudentInfoCard } from './StudentInfoCard';
 import { StudentParentInfoCard } from './StudentParentInfoCard';
 import { StudentActiveSubscriptionCard } from './StudentActiveSubscriptionCard';
 import { StudentSubscriptionsTable } from './StudentSubscriptionsTable';
-import { StudentForm } from './StudentForm'; // Импортируем форму
+import { StudentForm } from './StudentForm';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import { AddSubscriptionForm } from './AddSubscriptionForm'; // Импортируем новую форму
+import { AddSubscriptionForm } from './AddSubscriptionForm';
+
+// Иконки для статистики
+import SchoolIcon from '@mui/icons-material/School';
+import CardMembershipIcon from '@mui/icons-material/CardMembership';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+
+interface TabPanelProps {
+    children?: React.ReactNode;
+    index: number;
+    value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+    const { children, value, index, ...other } = props;
+
+    return (
+        <div
+            role="tabpanel"
+            hidden={value !== index}
+            id={`student-tabpanel-${index}`}
+            aria-labelledby={`student-tab-${index}`}
+            {...other}
+        >
+            {value === index && (
+                <Box sx={{ pt: 3 }}>
+                    {children}
+                </Box>
+            )}
+        </div>
+    );
+}
 
 export function StudentPage() {
     const { studentId } = useParams<{ studentId: string }>();
     const navigate = useNavigate();
     const { displaySnackbar } = useSnackbar();
+    const theme = useTheme();
+    const gradients = useGradients();
 
     const [isAddSubscriptionModalOpen, setIsAddSubscriptionModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [tabValue, setTabValue] = useState(0);
 
     const { 
         data: student, 
@@ -153,6 +208,14 @@ export function StudentPage() {
         }
     };
 
+    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+        setTabValue(newValue);
+    };
+
+    const calculateAge = (dateOfBirth: string): number => {
+        return dayjs().diff(dayjs(dateOfBirth), 'year');
+    };
+
     if (isLoadingStudent || (student && (isLoadingAllBaseSubscriptions || isLoadingStudentSubscriptions && !studentSubscriptionsData))) {
         // Показываем основной лоадер, если грузится студент, 
         // или если студент загружен, но еще грузятся его абонементы или базовые абонементы
@@ -167,108 +230,335 @@ export function StudentPage() {
         return <Typography sx={{p:3, textAlign: 'center'}}>Студент не найден или произошла ошибка загрузки.</Typography>;
     }
 
+    // Статистика студента
+    const activeSubscriptions = enrichedStudentSubscriptions.filter(sub => 
+        dayjs().isBetween(dayjs(sub.start_date), dayjs(sub.end_date), null, '[]')
+    );
+    const totalSessions = enrichedStudentSubscriptions.reduce((sum, sub) => sum + (sub.sessions_left || 0), 0);
+    const frozenSubscriptions = enrichedStudentSubscriptions.filter(sub => 
+        sub.freeze_start_date && sub.freeze_end_date
+    );
+
     return (
-        <Box sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <IconButton onClick={handleBackClick}>
-                    <ArrowBackIcon />
-                </IconButton>
-                <Box>
-                    <Button 
-                        variant="contained" 
-                        onClick={handleOpenAddSubscriptionModal}
-                        disabled={isLoadingAllBaseSubscriptions || !allBaseSubscriptionsData?.items?.length}
-                        sx={{ mr: 1 }}
-                    >
-                        Добавить абонемент
-                    </Button>
-                    <IconButton onClick={handleOpenEditModal} color="primary" disabled={!student || isLoadingStudent}>
-                        <EditIcon />
-                    </IconButton>
+        <Box sx={{ minHeight: '100vh', background: theme.palette.background.default }}>
+            {/* Градиентный заголовок */}
+            <Box
+                sx={{
+                    background: gradients.primary,
+                    color: 'white',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                        opacity: 0.3,
+                    }
+                }}
+            >
+                <Box sx={{ position: 'relative', zIndex: 1, p: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <IconButton 
+                                onClick={handleBackClick}
+                                sx={{ 
+                                    color: 'white',
+                                    mr: 2,
+                                    '&:hover': {
+                                        background: alpha('#ffffff', 0.1),
+                                    }
+                                }}
+                            >
+                                <ArrowBackIcon />
+                            </IconButton>
+                            <Box>
+                                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+                                    {student.first_name} {student.last_name}
+                                </Typography>
+                                <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                                    Ученик #{student.id} • {calculateAge(student.date_of_birth)} лет
+                                </Typography>
+                            </Box>
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                            <Button 
+                                variant="contained" 
+                                onClick={handleOpenAddSubscriptionModal}
+                                disabled={isLoadingAllBaseSubscriptions || !allBaseSubscriptionsData?.items?.length}
+                                sx={{ 
+                                    background: 'white',
+                                    color: theme.palette.primary.main,
+                                    fontWeight: 600,
+                                    textTransform: 'none',
+                                    px: 3,
+                                    '&:hover': {
+                                        background: alpha('#ffffff', 0.9),
+                                    }
+                                }}
+                            >
+                                Добавить абонемент
+                            </Button>
+                            <IconButton 
+                                onClick={handleOpenEditModal} 
+                                disabled={!student || isLoadingStudent}
+                                sx={{ 
+                                    color: 'white',
+                                    background: alpha('#ffffff', 0.1),
+                                    '&:hover': {
+                                        background: alpha('#ffffff', 0.2),
+                                    }
+                                }}
+                            >
+                                <EditIcon />
+                            </IconButton>
+                        </Box>
+                    </Box>
+
+                    {/* Статистические карточки */}
+                    <Grid container spacing={3} sx={{ mt: 2 }}>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Paper
+                                elevation={0}
+                                sx={{
+                                    p: 2,
+                                    borderRadius: 3,
+                                    border: '1px solid',
+                                    borderColor: alpha('#ffffff', 0.2),
+                                    background: alpha('#ffffff', 0.1),
+                                    backdropFilter: 'blur(10px)',
+                                    textAlign: 'center',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: theme.shadows[8],
+                                    }
+                                }}
+                            >
+                                <SchoolIcon sx={{ fontSize: 32, mb: 1, opacity: 0.9 }} />
+                                <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                    {calculateAge(student.date_of_birth)}
+                                </Typography>
+                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                    Возраст
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Paper
+                                elevation={0}
+                                sx={{
+                                    p: 2,
+                                    borderRadius: 3,
+                                    border: '1px solid',
+                                    borderColor: alpha('#ffffff', 0.2),
+                                    background: alpha('#ffffff', 0.1),
+                                    backdropFilter: 'blur(10px)',
+                                    textAlign: 'center',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: theme.shadows[8],
+                                    }
+                                }}
+                            >
+                                <CardMembershipIcon sx={{ fontSize: 32, mb: 1, opacity: 0.9 }} />
+                                <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                    {activeSubscriptions.length}
+                                </Typography>
+                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                    Активных абонементов
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Paper
+                                elevation={0}
+                                sx={{
+                                    p: 2,
+                                    borderRadius: 3,
+                                    border: '1px solid',
+                                    borderColor: alpha('#ffffff', 0.2),
+                                    background: alpha('#ffffff', 0.1),
+                                    backdropFilter: 'blur(10px)',
+                                    textAlign: 'center',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: theme.shadows[8],
+                                    }
+                                }}
+                            >
+                                <FitnessCenterIcon sx={{ fontSize: 32, mb: 1, opacity: 0.9 }} />
+                                <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                    {totalSessions}
+                                </Typography>
+                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                    Осталось занятий
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Paper
+                                elevation={0}
+                                sx={{
+                                    p: 2,
+                                    borderRadius: 3,
+                                    border: '1px solid',
+                                    borderColor: alpha('#ffffff', 0.2),
+                                    background: alpha('#ffffff', 0.1),
+                                    backdropFilter: 'blur(10px)',
+                                    textAlign: 'center',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: theme.shadows[8],
+                                    }
+                                }}
+                            >
+                                <EventAvailableIcon sx={{ fontSize: 32, mb: 1, opacity: 0.9 }} />
+                                <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                    {frozenSubscriptions.length}
+                                </Typography>
+                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                    Замороженных
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                    </Grid>
                 </Box>
             </Box>
-            <Typography variant="h4" component="h1" gutterBottom sx={{mb: 3}}>
-                Ученик: {student.first_name} {student.last_name}
-            </Typography>
 
-            <Grid container spacing={3}>
-                <Grid item xs={12} md={6} lg={4}>
-                    <StudentInfoCard student={student} onStatusHasChanged={handleStudentStatusHasChanged} />
-                </Grid>
+            {/* Контент страницы */}
+            <Box sx={{ p: 3 }}>
+                {/* Табы */}
+                <Paper
+                    elevation={0}
+                    sx={{
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        overflow: 'hidden',
+                        mb: 3,
+                    }}
+                >
+                    <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                        <Tabs 
+                            value={tabValue} 
+                            onChange={handleTabChange}
+                            sx={{
+                                '& .MuiTab-root': {
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    fontSize: '1rem',
+                                },
+                                '& .Mui-selected': {
+                                    color: theme.palette.primary.main,
+                                },
+                                '& .MuiTabs-indicator': {
+                                    background: gradients.primary,
+                                    height: 3,
+                                }
+                            }}
+                        >
+                            <Tab label="Информация" />
+                            <Tab label="Абонементы" />
+                        </Tabs>
+                    </Box>
 
-                <Grid item xs={12} md={6} lg={4}>
-                    <StudentParentInfoCard parentData={student.client} />
-                </Grid>
+                    <TabPanel value={tabValue} index={0}>
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} md={6} lg={4}>
+                                <StudentInfoCard student={student} onStatusHasChanged={handleStudentStatusHasChanged} />
+                            </Grid>
+                            <Grid item xs={12} md={6} lg={4}>
+                                <StudentParentInfoCard parentData={student.client} />
+                            </Grid>
+                            <Grid item xs={12} md={12} lg={4}>
+                                <StudentActiveSubscriptionCard 
+                                    subscriptions={enrichedStudentSubscriptions}
+                                    isLoading={isLoadingStudentSubscriptions}
+                                    studentId={student.id}
+                                    onSubscriptionUpdate={handleSubscriptionDataUpdate}
+                                />
+                            </Grid>
+                        </Grid>
+                    </TabPanel>
 
-                <Grid item xs={12} md={6} lg={4}>
-                    <StudentActiveSubscriptionCard 
-                        subscriptions={enrichedStudentSubscriptions} 
-                        isLoading={isLoadingStudentSubscriptions}
-                        studentId={Number(studentId)}
-                        onSubscriptionUpdate={handleSubscriptionDataUpdate}
-                    />
-                </Grid>
-
-                <Grid item xs={12}>
-                  
-                        <Typography variant="h6" gutterBottom>
-                            Все абонементы ученика
-                        </Typography>
+                    <TabPanel value={tabValue} index={1}>
                         <StudentSubscriptionsTable 
-                            subscriptions={enrichedStudentSubscriptions} 
-                            isLoading={isLoadingStudentSubscriptions} 
+                            subscriptions={enrichedStudentSubscriptions}
+                            isLoading={isLoadingStudentSubscriptions}
                         />
-                    
-                </Grid>
-            </Grid>
+                    </TabPanel>
+                </Paper>
+            </Box>
 
-            {studentId && (
-                <AddSubscriptionForm
-                    open={isAddSubscriptionModalOpen}
-                    onClose={handleCloseAddSubscriptionModal}
-                    onSubmit={handleAddSubscriptionSubmit}
-                    isLoading={isAddingSubscription}
-                    studentId={Number(studentId)}
-                    availableSubscriptions={allBaseSubscriptionsData?.items || []}
-                    isLoadingSubscriptions={isLoadingAllBaseSubscriptions}
-                />
-            )}
-
-            {/* Модальное окно редактирования студента возвращено к Modal */}
+            {/* Модальные окна */}
             <Dialog 
                 open={isEditModalOpen} 
-                onClose={handleCloseEditModal} 
-                aria-labelledby="edit-student-modal-title"
+                onClose={handleCloseEditModal}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                    }
+                }}
             >
-                <Box sx={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: { xs: '90%', sm: '70%', md: 500 },
-                    bgcolor: 'background.paper',
-                    boxShadow: 24,
-                    p: 4,
-                    borderRadius: 2,
-                    maxHeight: '90vh',
-                    overflowY: 'auto'
+                <DialogTitle sx={{ 
+                    background: gradients.primary,
+                    color: 'white',
+                    fontWeight: 600
                 }}>
-                    <Typography id="edit-student-modal-title" variant="h6" component="h2" sx={{ mb: 2 }}>
-                        Редактировать данные ученика
-                    </Typography>
-                    {student && (
-                        <StudentForm 
-                            initialValues={{
-                                first_name: student.first_name,
-                                last_name: student.last_name,
-                                date_of_birth: student.date_of_birth ? dayjs(student.date_of_birth) : null,
-                            }}
-                            onSubmit={handleUpdateStudent}
-                            onClose={handleCloseEditModal}
-                            isLoading={isUpdatingStudent}
-                        />
-                    )}
-                </Box>
+                    Редактировать данные ученика
+                </DialogTitle>
+                <DialogContent sx={{ p: 3 }}>
+                    <StudentForm 
+                        initialValues={{
+                            first_name: student.first_name,
+                            last_name: student.last_name,
+                            date_of_birth: dayjs(student.date_of_birth),
+                        }}
+                        onSubmit={handleUpdateStudent}
+                        isLoading={isUpdatingStudent}
+                        onClose={handleCloseEditModal}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            <Dialog 
+                open={isAddSubscriptionModalOpen} 
+                onClose={handleCloseAddSubscriptionModal}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                    }
+                }}
+            >
+                <DialogTitle sx={{ 
+                    background: gradients.success,
+                    color: 'white',
+                    fontWeight: 600
+                }}>
+                    Добавить абонемент ученику
+                </DialogTitle>
+                <DialogContent sx={{ p: 3 }}>
+                    <AddSubscriptionForm 
+                        open={isAddSubscriptionModalOpen}
+                        studentId={student.id}
+                        availableSubscriptions={allBaseSubscriptionsData?.items || []}
+                        onSubmit={handleAddSubscriptionSubmit}
+                        isLoading={isAddingSubscription}
+                        onClose={handleCloseAddSubscriptionModal}
+                    />
+                </DialogContent>
             </Dialog>
         </Box>
     );
