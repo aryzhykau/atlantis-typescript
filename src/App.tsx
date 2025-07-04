@@ -12,6 +12,7 @@ import "dayjs/locale/ru";
 import { ClientPage } from "./features/clients/components/ClientPage/ClientPage.tsx";
 import { StudentPage } from './features/students/components/StudentPage.tsx';
 import { TrainerPage } from './features/trainers/components/TrainerPage';
+import { TrainerMobileApp } from './features/trainer-mobile/components/TrainerMobileApp';
 
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import useMobile from "./hooks/useMobile.tsx";
@@ -64,6 +65,7 @@ function App() {
                                       })
                                   }
                               </Route>
+                              <Route path="/trainer-mobile/*" element={<TrainerMobileApp />} />
                           </Routes>
                       </BrowserRouter>
                   </LocalizationProvider>
