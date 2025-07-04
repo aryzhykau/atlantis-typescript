@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Link as MuiLink, Chip, Button, Modal, TextField, FormControlLabel, Checkbox, Autocomplete, DialogTitle, Dialog, DialogContent } from '@mui/material';
+import { Box, Typography, CircularProgress, Link as MuiLink, Chip, Button, Modal, TextField, FormControlLabel, Checkbox, Autocomplete, DialogTitle, Dialog, DialogContent, Switch, InputAdornment, alpha, Paper, IconButton } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Link as RouterLink } from 'react-router-dom';
 import { useGetStudentsQuery, useCreateStudentMutation } from '../../../store/apis/studentsApi';
@@ -9,6 +9,11 @@ import { IStudent, IStudentCreatePayload, IStudentUpdatePayload } from '../model
 import dayjs, { Dayjs } from 'dayjs';
 import { StudentForm } from './StudentForm';
 import { useSnackbar } from '../../../hooks/useSnackBar';
+import { useGradients } from '../../trainer-mobile/hooks/useGradients';
+import { useTheme } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import SchoolIcon from '@mui/icons-material/School';
+import CloseIcon from '@mui/icons-material/Close';
 
 // Функция для вычисления возраста
 const calculateAge = (dateOfBirth: string): number => {
@@ -63,6 +68,10 @@ export function StudentsListPage() {
   const [displayedStudents, setDisplayedStudents] = useState<IStudent[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnlyActive, setShowOnlyActive] = useState(false);
+
+  const gradients = useGradients();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   useEffect(() => {
     if (students) {
@@ -212,86 +221,235 @@ export function StudentsListPage() {
   }
 
   return (
-    <Box sx={{ height: 'auto', width: '100%', p: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h4" component="h1" gutterBottom sx={{ flexGrow: 1 }}>
-                Список студентов
-            </Typography>
-            <Button variant="contained" color="primary" onClick={handleOpenAddStudentModal}>
-                Добавить студента
-            </Button>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
-            <TextField
-                label="Поиск студента (Имя, Фамилия студента, Имя/Фамилия родителя)"
-                variant="outlined"
-                fullWidth
-                value={searchTerm}
-                onChange={handleSearchChange}
-                sx={{ flexGrow: 1 }}
-            />
-            <FormControlLabel
-                control={
-                <Checkbox
-                    checked={showOnlyActive}
-                    onChange={handleShowOnlyActiveChange}
-                    name="showOnlyActive"
-                    color="primary"
-                />
-                }
-                label="Только активные"
-                sx={{ whiteSpace: 'nowrap' }}
-            />
-        </Box>
-      <DataGrid
-        rows={displayedStudents}
-        columns={columns}
-        pageSizeOptions={[10, 25, 50]}
-        initialState={{
-          pagination: {
-            paginationModel: { pageSize: 10, page: 0 },
-          },
-        }}
-        loading={isLoading}
-        disableRowSelectionOnClick
+    <Box sx={{ width: '100%' }}>
+      {/* Фильтры и поиск в отдельной карточке */}
+      <Paper
+        elevation={0}
         sx={{
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: 'divider',
+          background: gradients.primary,
+          color: 'white',
+          mb: 3,
+          p: 3,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 3,
+          flexWrap: 'wrap',
+          boxShadow: isDark ? '0 2px 8px 0 rgba(0,0,0,0.25)' : '0 2px 8px 0 rgba(80,0,120,0.08)',
+        }}
+      >
+        <Typography variant="h5" sx={{ fontWeight: 700, color: 'white', mr: 2 }}>
+          Ученики
+        </Typography>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={showOnlyActive}
+              onChange={handleShowOnlyActiveChange}
+              sx={{
+                '& .MuiSwitch-switchBase': {
+                  color: 'white',
+                },
+                '& .MuiSwitch-switchBase.Mui-checked': {
+                  color: theme.palette.success.light,
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: theme.palette.success.light,
+                  opacity: 1,
+                },
+                '& .MuiSwitch-track': {
+                  backgroundColor: 'rgba(255,255,255,0.3)',
+                  opacity: 1,
+                },
+              }}
+            />
+          }
+          label={<Typography variant="body2" sx={{ fontWeight: 600, color: 'white', textShadow: '0 1px 4px rgba(80,0,120,0.25)' }}>Только активные</Typography>}
+          sx={{ mr: 2 }}
+        />
+        <TextField
+          id="search-student"
+          placeholder="Поиск ученика..."
+          type="search"
+          variant="outlined"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          size="small"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <AddIcon sx={{ color: 'white', opacity: 0 }} />
+              </InputAdornment>
+            ),
+            sx: {
+              borderRadius: 2,
+              background: alpha('#fff', 0.12),
+              color: 'white',
+              '& .MuiInputBase-input': { color: 'white' },
+            }
+          }}
+          sx={{ minWidth: 280, maxWidth: 340, input: { color: 'white' },
+            '& .MuiOutlinedInput-notchedOutline': { borderColor: alpha('#fff', 0.3) },
+            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#fff' },
+            '& .MuiInputAdornment-root svg': { color: 'white' },
+          }}
+        />
+        <Box sx={{ flexGrow: 1 }} />
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleOpenAddStudentModal}
+          sx={{
+            background: 'white',
+            color: theme.palette.primary.main,
+            fontWeight: 600,
+            textTransform: 'none',
+            px: 3,
+            boxShadow: 'none',
+            borderRadius: 2,
+            '&:hover': {
+              background: alpha('#ffffff', isDark ? 0.7 : 0.9),
+            }
+          }}
+        >
+          Добавить ученика
+        </Button>
+      </Paper>
+
+      {/* Таблица без внешнего Paper и заголовка */}
+      <Box sx={{ width: '100%', p: 0 }}>
+        <DataGrid
+          rows={displayedStudents || []}
+          loading={isLoading}
+          columns={columns}
+          pageSizeOptions={[10]}
+          initialState={{
+            pagination: {
+              paginationModel: {
+                pageSize: 10,
+              },
+            },
+          }}
+          disableRowSelectionOnClick
+          sx={{
+            borderRadius: 3,
+            background: isDark ? alpha(theme.palette.background.paper, 0.85) : 'white',
+            fontSize: '1rem',
+            color: theme.palette.text.primary,
+            boxShadow: isDark ? '0 2px 8px 0 rgba(0,0,0,0.18)' : '0 2px 8px 0 rgba(80,0,120,0.06)',
             '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: (theme) => theme.palette.grey[200], 
-                fontWeight: 'bold',
+              background: alpha(theme.palette.primary.main, isDark ? 0.13 : 0.07),
+              fontWeight: 700,
+              fontSize: '1.05rem',
+              color: theme.palette.primary.main,
+            },
+            '& .MuiDataGrid-row': {
+              transition: 'background 0.2s',
             },
             '& .MuiDataGrid-row:hover': {
-                backgroundColor: (theme) => theme.palette.action.hover, 
+              background: alpha(theme.palette.primary.main, isDark ? 0.13 : 0.07),
             },
-            minHeight: 400,
-        }}
+            '& .MuiDataGrid-cell': {
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            },
+            '& .MuiDataGrid-footerContainer': {
+              background: 'transparent',
+            },
+            '& .MuiDataGrid-selectedRowCount': {
+              display: 'none',
+            },
+            '& .MuiDataGrid-actionsCell': {
+              display: 'flex',
+              gap: 1,
+            },
+          }}
         />
-      <Dialog open={isAddStudentModalOpen} onClose={handleCloseAddStudentModal} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
-        <DialogContent>
-            <DialogTitle sx={{ pb: 1 }}>Добавить нового студента</DialogTitle>
-            <Autocomplete
-                options={clients || []}
-                getOptionLabel={(option) => `${option.first_name} ${option.last_name} (${option.email})`}
-                value={selectedClient}
-                onChange={(_, newValue) => {
-                    setSelectedClient(newValue);
-                    if (newValue) {
-                        setCurrentStudentFormValues(prev => ({...prev, last_name: newValue.last_name}));
-                    }
-                }}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                renderInput={(params) => (
-                    <TextField {...params} label="Выберите клиента (родителя)" margin="normal" fullWidth />
-                )}
-                loading={isLoadingClients}
-                disabled={isLoadingClients}
-                sx={{mb: 2}}
-            />
-            <StudentForm
-                initialValues={currentStudentFormValues}
-                onSubmit={handleCreateStudentSubmit}
-                onClose={handleCloseAddStudentModal}
-                isLoading={isCreatingStudent}
-            />
+      </Box>
+
+      <Dialog
+        open={isAddStudentModalOpen}
+        onClose={handleCloseAddStudentModal}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            overflow: 'hidden',
+          }
+        }}
+      >
+        {/* Градиентный заголовок модального окна */}
+        <Box
+          sx={{
+            p: 3,
+            background: gradients.primary,
+            color: 'white',
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              background: 'url("data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.1\"%3E%3Ccircle cx=\"30\" cy=\"30\" r=\"2\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+              opacity: isDark ? 0.18 : 0.3,
+            }
+          }}
+        >
+          <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+              <SchoolIcon sx={{ fontSize: 28, mr: 1 }} /> Добавить ученика
+            </Typography>
+            <IconButton
+              aria-label="Закрыть"
+              onClick={handleCloseAddStudentModal}
+              sx={{
+                color: 'white',
+                ml: 2,
+                '&:hover': {
+                  background: alpha('#ffffff', 0.15),
+                }
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </Box>
+        {/* Контент модального окна */}
+        <DialogContent sx={{ p: 3, '&:first-of-type': { pt: 0 } }}>
+          {/* Выбор клиента (родителя) */}
+          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+            Выберите клиента (родителя)
+          </Typography>
+          <Autocomplete
+            options={clients || []}
+            getOptionLabel={(option) => `${option.first_name} ${option.last_name} (${option.email})`}
+            value={selectedClient}
+            onChange={(_, newValue) => {
+              setSelectedClient(newValue);
+              if (newValue) {
+                setCurrentStudentFormValues(prev => ({...prev, last_name: newValue.last_name}));
+              }
+            }}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            renderInput={(params) => (
+              <TextField {...params} label="Выберите клиента (родителя)" margin="normal" fullWidth />
+            )}
+            loading={isLoadingClients}
+            disabled={isLoadingClients}
+            sx={{mb: 2}}
+          />
+          {/* Форма добавления ученика */}
+          <StudentForm
+            initialValues={currentStudentFormValues}
+            onSubmit={handleCreateStudentSubmit}
+            onClose={handleCloseAddStudentModal}
+            isLoading={isCreatingStudent}
+          />
         </DialogContent>
       </Dialog>
     </Box>

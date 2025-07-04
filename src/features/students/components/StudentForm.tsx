@@ -6,14 +6,21 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import { Box, Button, CircularProgress, Grid, IconButton } from '@mui/material';
+import { Box, Button, CircularProgress, Grid, Typography, Paper, Autocomplete, TextField } from '@mui/material';
 import { IStudentUpdatePayload } from '../models/student';
-import CloseIcon from '@mui/icons-material/Close';
+import PersonIcon from '@mui/icons-material/Person';
+import CakeIcon from '@mui/icons-material/Cake';
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
+import { useGradients } from '../../trainer-mobile/hooks/useGradients';
+import { useTheme } from '@mui/material';
+import { useGetClientsQuery } from '../../../store/apis/clientsApi';
+import { IClientUserGet } from '../../clients/models/client';
 
 interface StudentFormValues {
     first_name: string;
     last_name: string;
     date_of_birth: Dayjs | null;
+    client_id: number | null;
 }
 
 interface StudentFormProps {
@@ -23,23 +30,94 @@ interface StudentFormProps {
     isLoading?: boolean;
 }
 
-const validationSchema = Yup.object().shape({
-    first_name: Yup.string().required('Имя обязательно для заполнения').min(2, 'Слишком короткое имя'),
-    last_name: Yup.string().required('Фамилия обязательна для заполнения').min(2, 'Слишком короткая фамилия'),
+const validationSchema = Yup.object({
+    first_name: Yup.string().required('Имя обязательно'),
+    last_name: Yup.string().required('Фамилия обязательна'),
     date_of_birth: Yup.date().nullable().required('Дата рождения обязательна').max(dayjs().subtract(3, 'year'), 'Студенту должно быть не менее 3 лет'),
+    client_id: Yup.number().nullable().required('Выберите родителя'),
 });
 
+type StyledFieldColor = 'primary' | 'success' | 'warning' | 'info';
+
+interface StyledFieldProps {
+    name: string;
+    label: string;
+    icon: React.ReactNode;
+    color?: StyledFieldColor;
+    [key: string]: any;
+}
+
+const StyledField: React.FC<StyledFieldProps> = ({ name, label, icon, color = 'primary', ...props }) => {
+    const theme = useTheme();
+    const gradients: Record<StyledFieldColor, string> = useGradients();
+    return (
+        <Paper
+            elevation={0}
+            sx={{
+                p: 2,
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                background: theme.palette.background.paper,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                    boxShadow: theme.shadows[4],
+                    borderColor: theme.palette[color].main,
+                    background: theme.palette.action.hover,
+                }
+            }}
+        >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box
+                    sx={{
+                        p: 1,
+                        borderRadius: 2,
+                        background: gradients[color],
+                        color: 'white',
+                        mr: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: 40,
+                        height: 40,
+                    }}
+                >
+                    {icon}
+                </Box>
+                <Typography 
+                    variant="caption" 
+                    sx={{ 
+                        color: 'text.secondary',
+                        fontWeight: 500,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5
+                    }}
+                >
+                    {label}
+                </Typography>
+            </Box>
+            <Box sx={{ pl: 6 }}>
+                <Field
+                    name={name}
+                    {...props}
+                />
+            </Box>
+        </Paper>
+    );
+};
+
 export const StudentForm: React.FC<StudentFormProps> = ({ initialValues, onSubmit, onClose, isLoading }) => {
+    const theme = useTheme();
+    const gradients: Record<StyledFieldColor, string> = useGradients();
+    const { data: clients = [] } = useGetClientsQuery();
     
     const handleSubmit = async (values: StudentFormValues) => {
         const payload: IStudentUpdatePayload = {
-            first_name: values.first_name,
-            last_name: values.last_name,
-            date_of_birth: values.date_of_birth ? values.date_of_birth.format('YYYY-MM-DD') : null,
+            ...values,
+            date_of_birth: values.date_of_birth ? dayjs(values.date_of_birth).format('YYYY-MM-DD') : null,
         };
         await onSubmit(payload);
     };
-
     return (
         <Formik
             initialValues={initialValues}
@@ -49,58 +127,87 @@ export const StudentForm: React.FC<StudentFormProps> = ({ initialValues, onSubmi
         >
             {({ errors, touched, setFieldValue, values }) => (
                 <Form>
-                    <IconButton
-                            onClick={onClose}
-                            sx={{ position: "absolute", top: 8, right: 8 }}
-                        >
-                            <CloseIcon />
-                    </IconButton>   
-                    <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
-                            <Field
-                                component={FormikTextField}
-                                name="first_name"
-                                label="Имя"
-                                fullWidth
-                                required
-                                error={touched.first_name && !!errors.first_name}
-                                helperText={touched.first_name && errors.first_name}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Field
-                                component={FormikTextField}
-                                name="last_name"
-                                label="Фамилия"
-                                fullWidth
-                                required
-                                error={touched.last_name && !!errors.last_name}
-                                helperText={touched.last_name && errors.last_name}
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    label="Дата рождения"
-                                    value={values.date_of_birth}
-                                    onChange={(newValue) => setFieldValue('date_of_birth', newValue)}
-                                    maxDate={dayjs().subtract(3, 'year')}
-                                    slotProps={{
-                                        textField: {
-                                            fullWidth: true,
-                                            required: true,
-                                            error: touched.date_of_birth && !!errors.date_of_birth,
-                                            helperText: touched.date_of_birth && errors.date_of_birth ? String(errors.date_of_birth) : '',
-                                        }
-                                    }}
+                    <Box sx={{ mb: 3 }}>
+                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
+                            Основная информация
+                        </Typography>
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} sm={6}>
+                                <StyledField
+                                    name="first_name"
+                                    label="Имя"
+                                    icon={<PersonIcon />}
+                                    color="primary"
+                                    component={FormikTextField}
+                                    fullWidth
+                                    required
+                                    error={touched.first_name && !!errors.first_name}
+                                    helperText={touched.first_name && errors.first_name}
                                 />
-                            </LocalizationProvider>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <StyledField
+                                    name="last_name"
+                                    label="Фамилия"
+                                    icon={<PersonIcon />}
+                                    color="primary"
+                                    component={FormikTextField}
+                                    fullWidth
+                                    required
+                                    error={touched.last_name && !!errors.last_name}
+                                    helperText={touched.last_name && errors.last_name}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <StyledField
+                                    name="date_of_birth"
+                                    label="Дата рождения"
+                                    icon={<CakeIcon />}
+                                    color="warning"
+                                    component={DatePicker}
+                                    views={["year", "month", "date"]}
+                                    textField={{helperText: "Укажите дату рождения"}}
+                                    inputFormat="dd.MM.yyyy"
+                                    InputLabelProps={{shrink: true}}
+                                    value={values.date_of_birth}
+                                    onChange={(newValue: Dayjs | null) => setFieldValue('date_of_birth', newValue)}
+                                    maxDate={dayjs().subtract(3, 'year')}
+                                    required
+                                    error={touched.date_of_birth && !!errors.date_of_birth}
+                                    helperText={touched.date_of_birth && errors.date_of_birth}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <StyledField
+                                    name="client_id"
+                                    label="Родитель"
+                                    icon={<FamilyRestroomIcon />}
+                                    color="info"
+                                    component={Autocomplete}
+                                    options={clients}
+                                    getOptionLabel={(option: IClientUserGet) => `${option.first_name} ${option.last_name}`}
+                                    value={clients.find(client => client.id === values.client_id) || null}
+                                    onChange={(event: any, newValue: IClientUserGet | null) => setFieldValue('client_id', newValue?.id || null)}
+                                    renderInput={(params: any) => (
+                                        <TextField
+                                            {...params}
+                                            label="Выберите родителя"
+                                            error={touched.client_id && !!errors.client_id}
+                                            helperText={touched.client_id && errors.client_id}
+                                            fullWidth
+                                            required
+                                        />
+                                    )}
+                                />
+                            </Grid>
                         </Grid>
-                    </Grid>
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 1 }}>
-                        <Button onClick={onClose} disabled={isLoading}>Отмена</Button>
-                        <Button type="submit" variant="contained" disabled={isLoading}>
-                            {isLoading ? <CircularProgress size={24} /> : 'Сохранить'}
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4, gap: 2 }}>
+                        <Button onClick={onClose} disabled={isLoading} variant="outlined" sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 500 }}>
+                            Отмена
+                        </Button>
+                        <Button type="submit" variant="contained" disabled={isLoading} sx={{ fontWeight: 600, textTransform: 'none', borderRadius: 2, px: 4, py: 1.5, background: gradients.primary, color: 'white', '&:hover': { background: gradients.primary } }}>
+                            {isLoading ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'Сохранить'}
                         </Button>
                     </Box>
                 </Form>
