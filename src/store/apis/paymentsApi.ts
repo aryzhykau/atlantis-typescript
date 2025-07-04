@@ -36,14 +36,24 @@ export const PaymentsApi = baseApi.injectEndpoints({
                 method: 'DELETE',
             }),
         }),
-        getPaymentHistory: builder.mutation<import("../../features/payments/models/payment").IPaymentHistoryResponse, import("../../features/payments/models/payment").IPaymentHistoryFilter>({
+        getPaymentHistory: builder.query<import("../../features/payments/models/payment").IPaymentHistoryResponse, import("../../features/payments/models/payment").IPaymentHistoryFilter>({
             query: (filters) => ({
                 url: '/payments/history',
-                method: 'POST',
-                body: filters,
+                method: 'GET',
+                params: {
+                    ...(filters.operation_type && { operation_type: filters.operation_type }),
+                    ...(filters.client_id && { client_id: filters.client_id }),
+                    ...(filters.created_by_id && { created_by_id: filters.created_by_id }),
+                    ...(filters.date_from && { date_from: filters.date_from }),
+                    ...(filters.date_to && { date_to: filters.date_to }),
+                    ...(filters.amount_min !== undefined && { amount_min: filters.amount_min }),
+                    ...(filters.amount_max !== undefined && { amount_max: filters.amount_max }),
+                    skip: filters.skip || 0,
+                    limit: filters.limit || 50,
+                },
             }),
         }),
     }),
 });
 
-export const { useCreatePaymentMutation, useGetClientPaymentsQuery, useUpdatePaymentMutation, useCancelPaymentMutation, useGetPaymentHistoryMutation } = PaymentsApi;
+export const { useCreatePaymentMutation, useGetClientPaymentsQuery, useUpdatePaymentMutation, useCancelPaymentMutation, useGetPaymentHistoryQuery } = PaymentsApi;

@@ -5,39 +5,26 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import { useGetPaymentHistoryMutation } from '../../../store/apis/paymentsApi';
+import { useGetPaymentHistoryQuery } from '../../../store/apis/paymentsApi';
 import { IPaymentHistoryFilter, IPaymentHistoryItem } from '../models/payment';
 import { TrendingUp, FilterList, Refresh, Payment, Cancel, Receipt } from '@mui/icons-material';
 import { useGetClientsQuery } from '../../../store/apis/clientsApi';
 import { useGetUsersQuery } from '../../../store/apis/userApi';
+import PaymentHistoryFiltersBar from './PaymentHistoryFiltersBar';
+import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 
 const PaymentHistoryDataGrid: React.FC = () => {
     const theme = useTheme();
-    const [getPaymentHistory, { data, isLoading }] = useGetPaymentHistoryMutation();
-    const { data: clients = [] } = useGetClientsQuery();
-    const { data: users = [] } = useGetUsersQuery();
-    
+    const gradients = useGradients();
     const [filters, setFilters] = useState<IPaymentHistoryFilter>({
         skip: 0,
         limit: 50,
     });
 
-    // Градиенты в соответствии с дизайн-системой
-    const gradients = {
-        primary: theme.palette.mode === 'dark' 
-            ? 'linear-gradient(135deg, #8e44ad 0%, #6c5ce7 100%)'
-            : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        success: theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)'
-            : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-        warning: theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)'
-            : 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-        info: theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)'
-            : 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-    };
-
+    const { data, isLoading } = useGetPaymentHistoryQuery(filters);
+    const { data: clients = [] } = useGetClientsQuery();
+    const { data: users = [] } = useGetUsersQuery();
+    
     // Опции для автокомплитов
     const clientOptions = clients.map(client => ({
         label: `${client.first_name} ${client.last_name}`,
@@ -48,10 +35,6 @@ const PaymentHistoryDataGrid: React.FC = () => {
         label: `${user.first_name} ${user.last_name}`,
         id: user.id
     }));
-
-    useEffect(() => {
-        getPaymentHistory(filters);
-    }, [filters.skip, filters.limit]);
 
     // Отладка данных
     useEffect(() => {
@@ -66,23 +49,9 @@ const PaymentHistoryDataGrid: React.FC = () => {
         }
     }, [data]);
 
-    const handleFilterChange = (field: keyof IPaymentHistoryFilter, value: any) => {
-        setFilters(prev => ({
-            ...prev,
-            [field]: value,
-            skip: 0, // Reset pagination when filters change
-        }));
-    };
-
-    const handleApplyFilters = () => {
-        getPaymentHistory(filters);
-    };
-
-    const handleResetFilters = () => {
-        setFilters({
-            skip: 0,
-            limit: 50,
-        });
+    // Обработчик изменения фильтров
+    const handleFiltersChange = (newFilters: IPaymentHistoryFilter) => {
+        setFilters({ ...newFilters, skip: 0 });
     };
 
     const columns: GridColDef[] = [
@@ -262,173 +231,14 @@ const PaymentHistoryDataGrid: React.FC = () => {
                 </Box>
             </Paper>
 
-            {/* Карточка с фильтрами */}
-            <Paper 
-                elevation={0}
-                sx={{ 
-                    mb: 3, 
-                    borderRadius: 3,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    overflow: 'hidden',
-                    background: theme.palette.background.paper,
-                }}
-            >
-                {/* Заголовок карточки фильтров */}
-                <Box sx={{ 
-                    p: 2, 
-                    background: alpha(theme.palette.primary.main, 0.05),
-                    borderBottom: '1px solid',
-                    borderColor: 'divider',
-                }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <FilterList sx={{ mr: 1, color: theme.palette.primary.main }} />
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-                                Фильтры
-                            </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Button
-                                variant="contained"
-                                size="small"
-                                onClick={handleApplyFilters}
-                                sx={{ 
-                                    background: gradients.success,
-                                    borderRadius: 2,
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    '&:hover': {
-                                        background: theme.palette.mode === 'dark' 
-                                            ? 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)'
-                                            : 'linear-gradient(135deg, #3f87fe 0%, #00d2fe 100%)',
-                                    },
-                                }}
-                            >
-                                Применить
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={handleResetFilters}
-                                sx={{ 
-                                    borderRadius: 2,
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                }}
-                            >
-                                Сбросить
-                            </Button>
-                        </Box>
-                    </Box>
-                </Box>
-
-                {/* Контент фильтров */}
-                <Box sx={{ p: 3 }}>
-                    <Grid container spacing={2} alignItems="center">
-                        {/* Тип операции */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth>
-                                <InputLabel>Тип операции</InputLabel>
-                                <Select
-                                    value={filters.operation_type || ''}
-                                    label="Тип операции"
-                                    onChange={(e) => handleFilterChange('operation_type', e.target.value || undefined)}
-                                >
-                                    <MenuItem value="">Все операции</MenuItem>
-                                    <MenuItem value="PAYMENT">Платеж</MenuItem>
-                                    <MenuItem value="CANCELLATION">Отмена платежа</MenuItem>
-                                    <MenuItem value="INVOICE_PAYMENT">Оплата инвойса</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
-                        {/* Клиент */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Autocomplete
-                                options={clientOptions}
-                                getOptionLabel={(option) => option.label}
-                                value={clientOptions.find(opt => opt.id === filters.client_id) || null}
-                                onChange={(_, newValue) => handleFilterChange('client_id', newValue?.id || undefined)}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Клиент"
-                                        placeholder="Выберите клиента"
-                                    />
-                                )}
-                                isOptionEqualToValue={(option, value) => option.id === value.id}
-                            />
-                        </Grid>
-
-                        {/* Создатель */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Autocomplete
-                                options={userOptions}
-                                getOptionLabel={(option) => option.label}
-                                value={userOptions.find(opt => opt.id === filters.created_by_id) || null}
-                                onChange={(_, newValue) => handleFilterChange('created_by_id', newValue?.id || undefined)}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Создатель"
-                                        placeholder="Выберите создателя"
-                                    />
-                                )}
-                                isOptionEqualToValue={(option, value) => option.id === value.id}
-                            />
-                        </Grid>
-
-                        {/* Сумма от */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                label="Сумма от"
-                                type="number"
-                                placeholder="0"
-                                value={filters.amount_min || ''}
-                                onChange={(e) => handleFilterChange('amount_min', e.target.value ? Number(e.target.value) : undefined)}
-                            />
-                        </Grid>
-
-                        {/* Сумма до */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <TextField
-                                fullWidth
-                                label="Сумма до"
-                                type="number"
-                                placeholder="10000"
-                                value={filters.amount_max || ''}
-                                onChange={(e) => handleFilterChange('amount_max', e.target.value ? Number(e.target.value) : undefined)}
-                            />
-                        </Grid>
-
-                        {/* Дата от */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    label="Дата от"
-                                    value={filters.date_from ? dayjs(filters.date_from) : null}
-                                    onChange={(date) => handleFilterChange('date_from', date ? date.format('YYYY-MM-DD') : undefined)}
-                                    slotProps={{ textField: { fullWidth: true } }}
-                                />
-                            </LocalizationProvider>
-                        </Grid>
-
-                        {/* Дата до */}
-                        <Grid item xs={12} sm={6} md={3}>
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    label="Дата до"
-                                    value={filters.date_to ? dayjs(filters.date_to) : null}
-                                    onChange={(date) => handleFilterChange('date_to', date ? date.format('YYYY-MM-DD') : undefined)}
-                                    slotProps={{ textField: { fullWidth: true } }}
-                                />
-                            </LocalizationProvider>
-                        </Grid>
-                    </Grid>
-                </Box>
-            </Paper>
+            {/* Новый компонент фильтров */}
+            <PaymentHistoryFiltersBar
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                clients={clients}
+                users={users}
+                isLoading={isLoading}
+            />
 
             {/* Карточка с таблицей */}
             <Paper 
@@ -470,43 +280,42 @@ const PaymentHistoryDataGrid: React.FC = () => {
                 </Box>
 
                 {/* Таблица */}
-                <Box sx={{ p: 2 }}>
-                    <DataGrid
-                        rows={data?.items || []}
-                        columns={columns}
-                        loading={isLoading}
-                        pagination
-                        paginationModel={{
-                            page: Math.floor((filters.skip || 0) / (filters.limit || 50)),
-                            pageSize: filters.limit || 50,
-                        }}
-                        onPaginationModelChange={(model) => {
-                            const newFilters = {
-                                ...filters,
-                                skip: model.page * model.pageSize,
-                                limit: model.pageSize,
-                            };
-                            setFilters(newFilters);
-                            getPaymentHistory(newFilters);
-                        }}
-                        pageSizeOptions={[25, 50, 100]}
-                        rowCount={data?.total || 0}
-                        paginationMode="server"
-                        disableRowSelectionOnClick
-                        sx={{
-                            '& .MuiDataGrid-cell': {
-                                fontSize: '0.875rem',
-                            },
-                            '& .MuiDataGrid-row:hover': {
-                                backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                            },
-                            '& .MuiDataGrid-columnHeaders': {
-                                background: alpha(theme.palette.primary.main, 0.05),
-                                fontWeight: 600,
-                            },
-                        }}
-                    />
-                </Box>
+                <DataGrid
+                    rows={data?.items || []}
+                    columns={columns}
+                    loading={isLoading}
+                    autoHeight
+                    disableRowSelectionOnClick
+                    sx={{
+                        border: 'none',
+                        '& .MuiDataGrid-cell': {
+                            borderBottom: `1px solid ${theme.palette.divider}`,
+                        },
+                        '& .MuiDataGrid-columnHeaders': {
+                            background: alpha(theme.palette.primary.main, 0.05),
+                            borderBottom: `2px solid ${theme.palette.divider}`,
+                        },
+                        '& .MuiDataGrid-row:hover': {
+                            background: alpha(theme.palette.primary.main, 0.02),
+                        },
+                    }}
+                    pagination
+                    paginationMode="server"
+                    rowCount={data?.total || 0}
+                    paginationModel={{
+                        page: Math.floor((filters.skip || 0) / (filters.limit || 50)),
+                        pageSize: filters.limit || 50,
+                    }}
+                    onPaginationModelChange={(model) => {
+                        const newSkip = model.page * model.pageSize;
+                        setFilters(prev => ({ 
+                            ...prev, 
+                            skip: newSkip,
+                            limit: model.pageSize
+                        }));
+                    }}
+                    pageSizeOptions={[25, 50, 100, 200]}
+                />
             </Paper>
         </Box>
     );
