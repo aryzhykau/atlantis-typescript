@@ -85,7 +85,7 @@ export function SideBar({width, isCollapsed = false, onToggle}: SideBarProps) {
         <Box sx={{ 
             p: isCollapsed ? 2 : 3, 
             background: gradients.primary,
-            borderRadius: '0 0 24px 0',
+            borderRadius: '0 10px 24px 0',
             color: 'white',
             position: 'relative',
             overflow: 'hidden',

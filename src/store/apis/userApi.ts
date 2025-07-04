@@ -9,7 +9,13 @@ export const userApi = baseApi.injectEndpoints({
                 method: 'GET',
             }),
         }),
+        getUsers: builder.query<IUser[], void>({
+            query: () => ({
+                url: '/users',
+                method: 'GET',
+            }),
+        }),
     }),
 });
 
-export const { useGetCurrentUserQuery } = userApi;
+export const { useGetCurrentUserQuery, useGetUsersQuery } = userApi;

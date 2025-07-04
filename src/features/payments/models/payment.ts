@@ -17,3 +17,42 @@ export interface IPaymentGet extends IPayment {
 export interface IPaymentListGetResponse {
     payments: IPaymentGet[];
 }
+
+export interface IPaymentHistoryFilter {
+    skip?: number;
+    limit?: number;
+    client_id?: number;
+    created_by_id?: number;
+    operation_type?: string;
+    amount_min?: number;
+    amount_max?: number;
+    date_from?: string;
+    date_to?: string;
+}
+
+export interface IPaymentHistoryItem {
+    id: number;
+    client_id: number;
+    payment_id: number | null;
+    invoice_id: number | null;
+    operation_type: string;
+    amount: number;
+    balance_before: number;
+    balance_after: number;
+    description: string | null;
+    created_at: string;
+    created_by_id: number;
+    client_first_name: string;
+    client_last_name: string;
+    created_by_first_name: string;
+    created_by_last_name: string;
+    payment_description: string | null;
+}
+
+export interface IPaymentHistoryResponse {
+    items: IPaymentHistoryItem[];
+    skip: number;
+    limit: number;
+    total: number;
+    has_more: boolean;
+}

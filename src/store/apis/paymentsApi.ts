@@ -36,8 +36,14 @@ export const PaymentsApi = baseApi.injectEndpoints({
                 method: 'DELETE',
             }),
         }),
-
+        getPaymentHistory: builder.mutation<import("../../features/payments/models/payment").IPaymentHistoryResponse, import("../../features/payments/models/payment").IPaymentHistoryFilter>({
+            query: (filters) => ({
+                url: '/payments/history',
+                method: 'POST',
+                body: filters,
+            }),
+        }),
     }),
 });
 
-export const { useCreatePaymentMutation, useGetClientPaymentsQuery, useUpdatePaymentMutation, useCancelPaymentMutation } = PaymentsApi;
+export const { useCreatePaymentMutation, useGetClientPaymentsQuery, useUpdatePaymentMutation, useCancelPaymentMutation, useGetPaymentHistoryMutation } = PaymentsApi;
