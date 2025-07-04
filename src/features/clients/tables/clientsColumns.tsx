@@ -1,25 +1,28 @@
 import {GridColDef} from "@mui/x-data-grid";
 import ClientBalanceCell from "../components/ClientBalanceCell.tsx";
 import {Box, Link, Tooltip} from "@mui/material";
+import dayjs from "dayjs";
 const fieldWidth = 150;
 
 
 
-const dateFormater = ( value: never ) => {
+const dateFormater = ( value: string | null ) => {
 
-    if (value === undefined || value === null) {
-        return "Не указана дата";
+    if (value === undefined || value === null || value === "") {
+        return "Не указана";
     }
 
-    const date = new Date(value);
+    try {
+        const date = dayjs(value);
+        
+        if (!date.isValid()) {
+            return "Неверная дата";
+        }
 
-    if (isNaN(date.getTime())) return "Неверная дата"; // Если дата некорректная
-
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-
-    return `${day}.${month}.${year}`;
+        return date.format("DD.MM.YYYY");
+    } catch (error) {
+        return "Неверная дата";
+    }
 }
 
 
@@ -74,7 +77,7 @@ export const clientColums: GridColDef[] = [
         sortable: false,
     },
     {
-        field: "birth_date",
+        field: "date_of_birth",
         headerName: "Дата рождения",
         width: 100,
         sortable: false,
