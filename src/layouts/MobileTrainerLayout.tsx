@@ -92,7 +92,7 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
       {/* Основной контент */}
       <Box sx={{ 
         flex: 1, 
-        pb: 10, // Увеличиваем отступ для нижнего меню
+        overflow: 'hidden', // Предотвращаем скролл основного контейнера
         pt: 'env(safe-area-inset-top)',
         px: 'env(safe-area-inset-left)',
       }}>
