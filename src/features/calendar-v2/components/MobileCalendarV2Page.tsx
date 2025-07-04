@@ -503,7 +503,7 @@ const MobileCalendarV2Page: React.FC = () => {
 
   // Для шаблонов запрашиваем только тренировки на текущий день
   const currentDayNumber = useMemo(() => {
-    return currentDate.isoWeekday(); // 1 = Monday, 2 = Tuesday, ..., 7 = Sunday
+    return currentDate.day() === 0 ? 7 : currentDate.day(); // 1 = Monday, 2 = Tuesday, ..., 7 = Sunday
   }, [currentDate]);
 
   const {

@@ -13,6 +13,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import dayjs, { Dayjs } from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
 import 'dayjs/locale/ru';
 import CalendarShell from './CalendarShell';
 import CalendarSearchBar, { CalendarFilters } from './CalendarSearchBar';
@@ -22,6 +23,9 @@ import {
   createFilterOptionsFromRealTrainings,
   mergeFilterOptions 
 } from '../utils/filterUtils';
+
+// Настраиваем dayjs для работы с ISO неделями (понедельник - воскресенье)
+dayjs.extend(isoWeek);
 
 dayjs.locale('ru');
 

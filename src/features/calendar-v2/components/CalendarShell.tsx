@@ -4,6 +4,7 @@ import { alpha } from '@mui/material/styles';
 import { DndProvider, useDragLayer } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import dayjs, { Dayjs } from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
 import { CalendarViewMode } from './CalendarV2Page'; // Предполагается, что типы там же
 import { TrainingTemplate, TrainingTemplateCreate } from '../models/trainingTemplate';
 import { RealTraining, RealTrainingCreate } from '../models/realTraining';
@@ -28,6 +29,9 @@ import DraggableTrainingChip from './DraggableTrainingChip';
 import DroppableSlotComponent from './DroppableSlot';
 import { debugLog } from '../utils/debug';
 import { useAltKey } from '../hooks/useAltKey';
+
+// Настраиваем dayjs для работы с ISO неделями (понедельник - воскресенье)
+dayjs.extend(isoWeek);
 
 // Определим объединенный тип для тренировок для удобства
 export type CalendarEvent = TrainingTemplate | RealTraining;
@@ -250,6 +254,7 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
   const isTablet = useMediaQuery(theme.breakpoints.down('lg')); // Планшет
   
   const daysOfWeek = useMemo(() => {
+    // Используем isoWeek для начала недели с понедельника
     const startOfWeek = currentDate.startOf('isoWeek');
     return Array.from({ length: 7 }).map((_, i) => startOfWeek.add(i, 'day'));
   }, [currentDate]);
@@ -326,7 +331,7 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
       if (isDuplicate) {
         // Логика дублирования
         if (isTrainingTemplate(event)) {
-          const dayNumber = targetDay.isoWeekday(); // 1-7 (1 - понедельник)
+          const dayNumber = targetDay.day() === 0 ? 7 : targetDay.day(); // 1-7 (1 - понедельник)
           
           // Извлекаем студентов из оригинального шаблона
           const originalStudents = event.assigned_students || [];
@@ -406,7 +411,7 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
       } else {
         // Логика перемещения (существующая)
         if (isTrainingTemplate(event)) {
-          const dayNumber = targetDay.isoWeekday(); // 1-7 (1 - понедельник)
+          const dayNumber = targetDay.day() === 0 ? 7 : targetDay.day(); // 1-7 (1 - понедельник)
           
           await moveTrainingTemplate({
             id: event.id,
@@ -446,9 +451,9 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
     if (viewMode === 'scheduleTemplate') {
       filteredEvents = eventsToDisplay.filter(event => {
         if (isTrainingTemplate(event)) {
-          // day_number: 1-7 (1 - Пн), day.isoWeekday(): 1-7 (1 - Пн)
+          // day_number: 1-7 (1 - Пн), day.day(): 0-6 (0 - Вс), поэтому +1 для соответствия
           const eventStartTime = event.start_time.substring(0, 5); // "HH:MM"
-          const matches = event.day_number === day.isoWeekday() && eventStartTime === time;
+          const matches = event.day_number === (day.day() === 0 ? 7 : day.day()) && eventStartTime === time;
           
           if (matches) {
             debugLog(`📍 Слот ${slotKey}: найден шаблон #${event.id} "${event.training_type?.name}"`);

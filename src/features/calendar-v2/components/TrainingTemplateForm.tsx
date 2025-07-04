@@ -104,7 +104,7 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
       const templateData: TrainingTemplateCreate = {
         training_type_id: values.trainingType.id,
         responsible_trainer_id: values.responsibleTrainer.id,
-        day_number: selectedDate.isoWeekday(),
+        day_number: selectedDate.day() === 0 ? 7 : selectedDate.day(),
         start_time: `${selectedTime}:00`,
       };
 
@@ -237,7 +237,7 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                             🕐 {selectedTime}
                           </Typography>
                           <Chip 
-                            label={`День недели: ${selectedDate.isoWeekday()}`}
+                            label={`День недели: ${selectedDate.day() === 0 ? 7 : selectedDate.day()}`}
                             size="small" 
                             sx={styles.timeChip}
                           />
