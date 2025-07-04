@@ -1,14 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Button, Typography, CircularProgress, Alert, TextField, Paper, FormControlLabel, Switch, InputAdornment, alpha } from '@mui/material';
+import { Box, Button, Typography, TextField, Paper, FormControlLabel, Switch, InputAdornment, alpha, Dialog, DialogContent } from '@mui/material';
+import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Link as RouterLink } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import { useGetTrainersQuery, useCreateTrainerMutation, useUpdateTrainerMutation, useDeleteTrainerMutation, useUpdateTrainerStatusMutation } from '../../../store/apis/trainersApi';
 import { ITrainerResponse, ITrainerCreatePayload, ITrainerUpdatePayload, IStatusUpdatePayload } from '../models/trainer';
 import { TrainerForm } from './TrainerForm'; 
-import { useSnackbar } from '../../../hooks/useSnackBar';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
-import { useTheme } from '@mui/material';
+import Alert from '@mui/material/Alert';
+import { useTheme } from '@mui/material/styles';
 
 export function TrainersListPage() {
     const { data: trainersListResponse, isLoading, isError, error } = useGetTrainersQuery();
@@ -17,7 +18,6 @@ export function TrainersListPage() {
     const [deleteTrainerMutation, { isLoading: isDeleting }] = useDeleteTrainerMutation();
     const [updateTrainerStatus, { isLoading: isUpdatingStatus, originalArgs: updatingStatusArgs }] = useUpdateTrainerStatusMutation();
 
-    const { displaySnackbar } = useSnackbar();
     const gradients = useGradients();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
@@ -52,16 +52,13 @@ export function TrainersListPage() {
         try {
             if (isEditMode && id) {
                 await updateTrainer({ trainerId: id, trainerData: values as ITrainerUpdatePayload }).unwrap();
-                displaySnackbar('Тренер успешно обновлен', 'success');
             } else {
                 await createTrainer(values as ITrainerCreatePayload).unwrap();
-                displaySnackbar('Тренер успешно создан', 'success');
             }
             handleCloseModal();
         } catch (err: any) {
             console.error("Ошибка при сохранении тренера: ", err);
             const errorMessage = err?.data?.detail || (isEditMode ? 'Ошибка обновления тренера' : 'Ошибка создания тренера');
-            displaySnackbar(errorMessage, 'error');
         }
     };
 
@@ -79,12 +76,9 @@ export function TrainersListPage() {
         if (!trainerToDelete) return;
         try {
             await deleteTrainerMutation({ trainerId: trainerToDelete.id }).unwrap();
-            displaySnackbar(`Тренер ${trainerToDelete.first_name} ${trainerToDelete.last_name} успешно удален`, 'success');
-            handleCloseDeleteDialog();
         } catch (err: any) {
             console.error("Ошибка при удалении тренера: ", err);
             const errorMessage = err?.data?.detail || 'Ошибка удаления тренера';
-            displaySnackbar(errorMessage, 'error');
         }
     };
 
@@ -92,11 +86,9 @@ export function TrainersListPage() {
         const newStatus: IStatusUpdatePayload = { is_active: !trainer.is_active };
         try {
             await updateTrainerStatus({ trainerId: trainer.id, statusData: newStatus }).unwrap();
-            displaySnackbar(`Статус тренера ${trainer.first_name} ${trainer.last_name} успешно изменен`, 'success');
         } catch (err: any) {
             console.error("Ошибка при изменении статуса тренера: ", err);
             const errorMessage = err?.data?.detail || 'Ошибка изменения статуса';
-            displaySnackbar(errorMessage, 'error');
         }
     };
 
@@ -318,6 +310,77 @@ export function TrainersListPage() {
                     }}
                 />
             </Box>
+
+            {/* Модальное окно для создания/редактирования тренера */}
+            {isModalOpen && (
+                <Dialog
+                    open={isModalOpen}
+                    onClose={handleCloseModal}
+                    maxWidth="sm"
+                    fullWidth
+                    PaperProps={{
+                        sx: {
+                            borderRadius: 3,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            overflow: 'hidden',
+                        }
+                    }}
+                >
+                    {/* Градиентный заголовок модального окна */}
+                    <Box
+                        sx={{
+                            p: 3,
+                            background: gradients.primary,
+                            color: 'white',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0, left: 0, right: 0, bottom: 0,
+                                background: 'url("data:image/svg+xml,%3Csvg width=\\"60\\" height=\\"60\\" viewBox=\\"0 0 60 60\\" xmlns=\\"http://www.w3.org/2000/svg\\"%3E%3Cg fill=\\"none\\" fill-rule=\\"evenodd\\"%3E%3Cg fill=\\"%23ffffff\\" fill-opacity=\\"0.1\\"%3E%3Ccircle cx=\\"30\\" cy=\\"30\\" r=\\"2\\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                                opacity: isDark ? 0.18 : 0.3,
+                            }
+                        }}
+                    >
+                        <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Typography variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                                <AddIcon sx={{ fontSize: 28, mr: 1 }} />
+                                {isEditMode ? 'Редактировать тренера' : 'Добавить тренера'}
+                            </Typography>
+                            <Button
+                                aria-label="Закрыть"
+                                onClick={handleCloseModal}
+                                sx={{
+                                    color: 'white',
+                                    minWidth: 0,
+                                    p: 1.2,
+                                    ml: 2,
+                                    borderRadius: 2,
+                                    '&:hover': {
+                                        background: alpha('#ffffff', 0.15),
+                                    }
+                                }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                            </Button>
+                        </Box>
+                    </Box>
+                    {/* Контент модального окна */}
+                    <DialogContent sx={{ p: 3, '&:first-of-type': { pt: 0 }, background: isDark ? 'rgba(40,40,50,0.45)' : 'rgba(255,255,255,0.7)', backdropFilter: 'blur(16px)' }}>
+                        <TrainerForm
+                            title={isEditMode ? 'Редактировать тренера' : 'Добавить тренера'}
+                            initialValues={editingTrainer || undefined}
+                            onSubmit={handleFormSubmit}
+                            onClose={handleCloseModal}
+                            isEdit={isEditMode}
+                            isLoading={isCreating || isUpdating}
+                            stickyActions
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
         </Box>
     );
 } 

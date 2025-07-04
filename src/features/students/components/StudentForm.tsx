@@ -142,7 +142,7 @@ export const StudentForm: React.FC<StudentFormProps> = ({ initialValues, onSubmi
                             </Typography>
                             <Grid container spacing={3}>
                                 <Grid item xs={12}>
-                                    <StyledField
+                                    <Field
                                         name="client_id"
                                         label="Родитель"
                                         icon={<FamilyRestroomIcon />}
@@ -165,12 +165,12 @@ export const StudentForm: React.FC<StudentFormProps> = ({ initialValues, onSubmi
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <StyledField
+                                    <Field
                                         name="first_name"
                                         label="Имя"
                                         icon={<PersonIcon />}
                                         color="primary"
-                                        component={FormikTextField}
+                                        component={TextField}
                                         fullWidth
                                         required
                                         error={touched.first_name && !!errors.first_name}
@@ -178,12 +178,12 @@ export const StudentForm: React.FC<StudentFormProps> = ({ initialValues, onSubmi
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <StyledField
+                                    <Field
                                         name="last_name"
                                         label="Фамилия"
                                         icon={<PersonIcon />}
                                         color="primary"
-                                        component={FormikTextField}
+                                        component={TextField}
                                         fullWidth
                                         required
                                         error={touched.last_name && !!errors.last_name}
@@ -191,7 +191,7 @@ export const StudentForm: React.FC<StudentFormProps> = ({ initialValues, onSubmi
                                     />
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <StyledField
+                                    <Field
                                         name="date_of_birth"
                                         label="Дата рождения"
                                         icon={<CakeIcon />}

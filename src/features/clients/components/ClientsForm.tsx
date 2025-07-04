@@ -282,327 +282,60 @@ export function ClientsForm({title, initialValues = defaultValues, isEdit = fals
                 <Form>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                         {/* Основная информация */}
-                        <Box>
-                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
-                                Основная информация
-                            </Typography>
-                            <Grid container spacing={3}>
-                                <Grid item xs={12} sm={6}>
-                                    <StyledField
-                                        name="first_name"
-                                        label="Имя"
-                                        icon={<PersonIcon />}
-                                        color="primary"
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <StyledField
-                                        name="last_name"
-                                        label="Фамилия"
-                                        icon={<PersonIcon />}
-                                        color="primary"
-                                    />
-                                </Grid>
+                        <Grid container spacing={1} sx={{ mb: 1 }}>
+                            <Grid item xs={12} sm={6}>
+                                <Field name="first_name" label="Имя" component={TextField} fullWidth required variant="outlined" size="small" />
                             </Grid>
-                        </Box>
+                            <Grid item xs={12} sm={6}>
+                                <Field name="last_name" label="Фамилия" component={TextField} fullWidth required variant="outlined" size="small" />
+                            </Grid>
+                        </Grid>
 
                         {/* Контактная информация */}
-                        <Box>
-                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
-                                Контактная информация
-                            </Typography>
-                            <Grid container spacing={3}>
-                                <Grid item xs={12} sm={6}>
-                                    <StyledField
-                                        name="email"
-                                        label="Email"
-                                        icon={<EmailIcon />}
-                                        color="success"
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <StyledField
-                                        name="phone"
-                                        label="Телефон"
-                                        icon={<PhoneIcon />}
-                                        color="info"
-                                        helperText="Формат: 0987654321"
-                                    />
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <StyledField
-                                        name="whatsapp_number"
-                                        label="WhatsApp"
-                                        icon={<WhatsAppIcon />}
-                                        color="warning"
-                                        helperText="Номер WhatsApp, если отличается от основного телефона"
-                                    />
-                                </Grid>
+                        <Grid container spacing={1} sx={{ mb: 1 }}>
+                            <Grid item xs={12} sm={6}>
+                                <Field name="email" label="Email" component={TextField} fullWidth required variant="outlined" size="small" />
                             </Grid>
-                        </Box>
+                            <Grid item xs={12} sm={6}>
+                                <Field name="phone" label="Телефон" component={TextField} fullWidth required helperText="Формат: 0987654321" variant="outlined" size="small" />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <Field name="whatsapp_number" label="WhatsApp" component={TextField} fullWidth helperText="Номер WhatsApp, если отличается от основного телефона" variant="outlined" size="small" />
+                            </Grid>
+                        </Grid>
 
-                        {/* Дата рождения */}
-                        <Box>
-                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
-                                Личная информация
-                            </Typography>
-                            <StyledField
-                                name="date_of_birth"
-                                label="Дата рождения"
-                                icon={<CakeIcon />}
-                                color="warning"
-                                component={DatePicker}
-                                views={["year", "month", "date"]}
-                                textField={{helperText: "Укажите дату рождения"}}
-                                inputFormat="dd.MM.yyyy"
-                                InputLabelProps={{shrink: true}}
-                            />
-                        </Box>
+                        {/* Личная информация */}
+                        <Field name="date_of_birth" label="Дата рождения" component={DatePicker} views={["year", "month", "date"]} textField={{helperText: "Укажите дату рождения"}} inputFormat="dd.MM.yyyy" InputLabelProps={{shrink: true}} fullWidth required size="small" sx={{ mb: 1 }} />
 
-                        {/* Поля is_student и students отображаются только при создании */}
+                        {/* Статус студента и дети клиента (только при создании) */}
                         {!isEdit && (
                             <>
-                                {/* Статус студента */}
-                                <Box>
-                                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
-                                        Статус
-                                    </Typography>
-                                    <Paper
-                                        elevation={0}
-                                        sx={{
-                                            p: 2,
-                                            borderRadius: 3,
-                                            border: '1px solid',
-                                            borderColor: 'divider',
-                                            background: theme.palette.background.paper,
-                                        }}
-                                    >
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                            <Box
-                                                sx={{
-                                                    p: 1,
-                                                    borderRadius: 2,
-                                                    background: gradients.info,
-                                                    color: 'white',
-                                                    mr: 2,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    minWidth: 40,
-                                                    height: 40,
-                                                }}
-                                            >
-                                                <SchoolIcon />
-                                            </Box>
-                                            <Typography 
-                                                variant="caption" 
-                                                sx={{ 
-                                                    color: 'text.secondary',
-                                                    fontWeight: 500,
-                                                    textTransform: 'uppercase',
-                                                    letterSpacing: 0.5
-                                                }}
-                                            >
-                                                Статус клиента
-                                            </Typography>
-                                        </Box>
-                                        <Box sx={{ pl: 6 }}>
-                                            <FormControlLabel
-                                                control={
-                                                    <Field
-                                                        name="is_student"
-                                                        type="checkbox"
-                                                        as={Checkbox}
-                                                        sx={{
-                                                            color: theme.palette.info.main,
-                                                            '&.Mui-checked': {
-                                                                color: theme.palette.info.main,
-                                                            },
-                                                        }}
-                                                    />
-                                                }
-                                                label="Сам посещает тренировки"
-                                                sx={{ 
-                                                    '& .MuiFormControlLabel-label': {
-                                                        fontWeight: 500,
-                                                    }
-                                                }}
-                                            />
-                                        </Box>
-                                    </Paper>
+                                <Box sx={{ mb: 1 }}>
+                                    <Field name="is_student" type="checkbox" component={Checkbox} /> Сам посещает тренировки
                                 </Box>
-
-                                {/* Дети клиента */}
-                                <Box>
-                                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
-                                        Дети клиента
-                                    </Typography>
-                                    <FieldArray
-                                        name="students"
-                                        render={(arrayHelpers) => (
-                                            <Paper
-                                                elevation={0}
-                                                sx={{
-                                                    p: 3,
-                                                    borderRadius: 3,
-                                                    border: '1px solid',
-                                                    borderColor: 'divider',
-                                                    background: theme.palette.background.paper,
-                                                }}
-                                            >
-                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                                                    <Box
-                                                        sx={{
-                                                            p: 1,
-                                                            borderRadius: 2,
-                                                            background: gradients.success,
-                                                            color: 'white',
-                                                            mr: 2,
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            minWidth: 40,
-                                                            height: 40,
-                                                        }}
-                                                    >
-                                                        <FamilyRestroomIcon />
-                                                    </Box>
-                                                    <Typography 
-                                                        variant="caption" 
-                                                        sx={{ 
-                                                            color: 'text.secondary',
-                                                            fontWeight: 500,
-                                                            textTransform: 'uppercase',
-                                                            letterSpacing: 0.5
-                                                        }}
-                                                    >
-                                                        Дети клиента
-                                                    </Typography>
-                                                    <IconButton 
-                                                        size="small"
-                                                        onClick={() => arrayHelpers.push<IStudentFormShape>({
-                                                            first_name: "",
-                                                            last_name: values.last_name, 
-                                                            date_of_birth: null, 
-                                                        })}
-                                                        sx={{
-                                                            ml: 'auto',
-                                                            background: gradients.success,
-                                                            color: 'white',
-                                                            '&:hover': {
-                                                                background: alpha(theme.palette.success.main, 0.8),
-                                                            }
-                                                        }}
-                                                    >
-                                                        <AddIcon fontSize="small"/>
-                                                    </IconButton>
-                                                </Box>
-                                                
-                                                <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                                    {arrayHelpers.form.values.students && arrayHelpers.form.values.students.length > 0 ? (
-                                                        arrayHelpers.form.values.students?.map((_student: IStudentFormShape, index: number) => (
-                                                            <Paper
-                                                                key={index}
-                                                                elevation={0}
-                                                                sx={{
-                                                                    p: 2,
-                                                                    mb: 2,
-                                                                    borderRadius: 3,
-                                                                    border: '1px solid',
-                                                                    borderColor: 'divider',
-                                                                    background: alpha(theme.palette.success.main, 0.05),
-                                                                    transition: 'all 0.3s ease',
-                                                                    '&:hover': {
-                                                                        boxShadow: theme.shadows[4],
-                                                                        borderColor: alpha(theme.palette.success.main, 0.3),
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                                        Ребенок #{index + 1}
-                                                                    </Typography>
-                                                                    <Button 
-                                                                        variant="outlined" 
-                                                                        color="error" 
-                                                                        size="small"
-                                                                        onClick={() => arrayHelpers.remove(index)}
-                                                                        sx={{ textTransform: 'none' }}
-                                                                    >
-                                                                        Удалить
-                                                                    </Button>
-                                                                </Box>
-                                                                <Grid container spacing={2}>
-                                                                    <Grid item xs={12} sm={6}>
-                                                                        <Field
-                                                                            name={`students[${index}].first_name`}
-                                                                            label="Имя"
-                                                                            component={TextField}
-                                                                            variant="outlined"
-                                                                            fullWidth
-                                                                            sx={{
-                                                                                '& .MuiOutlinedInput-root': {
-                                                                                    borderRadius: 2,
-                                                                                },
-                                                                            }}
-                                                                        />
-                                                                    </Grid>
-                                                                    <Grid item xs={12} sm={6}>
-                                                                        <Field
-                                                                            name={`students[${index}].last_name`}
-                                                                            label="Фамилия"
-                                                                            component={TextField}
-                                                                            variant="outlined"
-                                                                            fullWidth
-                                                                            sx={{
-                                                                                '& .MuiOutlinedInput-root': {
-                                                                                    borderRadius: 2,
-                                                                                },
-                                                                            }}
-                                                                        />
-                                                                    </Grid>
-                                                                    <Grid item xs={12}>
-                                                                        <Field
-                                                                            name={`students[${index}].date_of_birth`}
-                                                                            label="Дата рождения"
-                                                                            component={DatePicker}
-                                                                            variant="outlined"
-                                                                            fullWidth
-                                                                            views={["year", "month", "date"]}
-                                                                            textField={{helperText: "Укажите дату рождения"}}
-                                                                            inputFormat="dd.MM.yyyy"
-                                                                            InputLabelProps={{shrink: true}}
-                                                                            sx={{
-                                                                                '& .MuiOutlinedInput-root': {
-                                                                                    borderRadius: 2,
-                                                                                },
-                                                                            }}
-                                                                        />
-                                                                    </Grid>
-                                                                </Grid>
-                                                            </Paper>
-                                                        ))
-                                                    ) : (
-                                                        <Box sx={{ 
-                                                            textAlign: 'center', 
-                                                            py: 4,
-                                                            color: 'text.secondary',
-                                                            fontStyle: 'italic'
-                                                        }}>
-                                                            <FamilyRestroomIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
-                                                            <Typography variant="body2">
-                                                                Нет добавленных детей
-                                                            </Typography>
-                                                            <Typography variant="caption">
-                                                                Нажмите кнопку "+" чтобы добавить ребенка
-                                                            </Typography>
-                                                        </Box>
-                                                    )}
-                                                </Box>
-                                            </Paper>
-                                        )}
-                                    />
-                                </Box>
+                                <FieldArray name="students" render={arrayHelpers => (
+                                    <Box>
+                                        {arrayHelpers.form.values.students && arrayHelpers.form.values.students.length > 0 && arrayHelpers.form.values.students.map((student: any, index: number) => (
+                                            <Grid container spacing={1} alignItems="center" key={index} sx={{ mb: 0.5 }}>
+                                                <Grid item xs={12} sm={3}>
+                                                    <Field name={`students[${index}].first_name`} label="Имя" component={TextField} fullWidth variant="outlined" size="small" />
+                                                </Grid>
+                                                <Grid item xs={12} sm={3}>
+                                                    <Field name={`students[${index}].last_name`} label="Фамилия" component={TextField} fullWidth variant="outlined" size="small" />
+                                                </Grid>
+                                                <Grid item xs={12} sm={4}>
+                                                    <Field name={`students[${index}].date_of_birth`} label="Дата рождения" component={DatePicker} views={["year", "month", "date"]} textField={{helperText: ""}} inputFormat="dd.MM.yyyy" InputLabelProps={{shrink: true}} fullWidth size="small" />
+                                                </Grid>
+                                                <Grid item xs={12} sm={2}>
+                                                    <Button variant="outlined" color="error" size="small" onClick={() => arrayHelpers.remove(index)} sx={{ minWidth: 0, px: 0.5 }}>✕</Button>
+                                                </Grid>
+                                            </Grid>
+                                        ))}
+                                        <Button variant="outlined" size="small" onClick={() => arrayHelpers.push({ first_name: '', last_name: '', date_of_birth: null })} sx={{ mt: 0.5, minWidth: 0, px: 1 }}>
+                                            + Добавить ребёнка
+                                        </Button>
+                                    </Box>
+                                )} />
                             </>
                         )}
 

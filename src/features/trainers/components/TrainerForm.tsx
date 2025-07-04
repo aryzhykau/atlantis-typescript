@@ -1,11 +1,20 @@
 import * as yup from "yup";
 import { Form, Formik, Field } from "formik";
-import { Box, Button, Typography, IconButton, CircularProgress } from "@mui/material";
+import { Box, Button, Typography, IconButton, CircularProgress, Paper } from "@mui/material";
 import { TextField, CheckboxWithLabel } from "formik-mui";
 import { DatePicker } from "formik-mui-x-date-pickers";
 import { ITrainerCreatePayload, ITrainerUpdatePayload, ITrainerResponse } from "../models/trainer.ts";
 import dayjs from 'dayjs';
 import CloseIcon from '@mui/icons-material/Close';
+import PersonIcon from '@mui/icons-material/Person';
+import CakeIcon from '@mui/icons-material/Cake';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import PaidIcon from '@mui/icons-material/Paid';
+import { useTheme, alpha } from '@mui/material/styles';
+import { useGradients } from '../../trainer-mobile/hooks/useGradients';
+import AddIcon from '@mui/icons-material/Add';
 
 // Начальные значения для формы СОЗДАНИЯ тренера (поля как в ITrainerCreatePayload)
 const defaultCreateValues: ITrainerCreatePayload = {
@@ -36,6 +45,7 @@ interface TrainerFormProps {
     onClose: () => void;
     isEdit?: boolean;
     isLoading?: boolean;
+    stickyActions?: boolean;
 }
 
 export function TrainerForm({
@@ -45,7 +55,10 @@ export function TrainerForm({
     onClose,
     isEdit = false,
     isLoading = false,
+    stickyActions = false,
 }: TrainerFormProps) {
+    const theme = useTheme();
+    const gradients = useGradients();
 
     const validationSchema = yup.object({
         first_name: yup.string().required("Имя обязательно").min(2, "Минимум 2 символа").max(50, "Максимум 50 символов"),
@@ -111,42 +124,33 @@ export function TrainerForm({
             onSubmit={handleFormSubmit}
             enableReinitialize 
         >
-            {() => (
+            {({ errors, touched }) => (
                 <Form>
-                    <Box
-                        display="flex"
-                        flexDirection="column"
-                        gap={2}
-                        padding={3}
-                        position="relative"
-                    >
-                        <IconButton
-                            onClick={onClose}
-                            sx={{ position: "absolute", top: 8, right: 8 }}
-                        >
-                            <CloseIcon />
-                        </IconButton>
-                        
-                        <Typography variant="h5" textAlign="center" gutterBottom>{title}</Typography>
-                        
-                        <Typography variant="subtitle1" sx={{ mt: 1 }}>Персональные данные</Typography>
-                        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                    <Box sx={{ p: 3, pt: 1, display: 'flex', flexDirection: 'column', gap: 3, borderRadius: 3, }}>
+                        {/* Персональные данные */}
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}>Персональные данные</Typography>
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
                             <Field
                                 name="first_name"
                                 label="Имя"
                                 component={TextField}
-                                variant="outlined"
                                 fullWidth
+                                required
+                                error={touched.first_name && !!errors.first_name}
+                                helperText={touched.first_name && errors.first_name}
+                                variant="outlined"
                             />
                             <Field
                                 name="last_name"
                                 label="Фамилия"
                                 component={TextField}
-                                variant="outlined"
                                 fullWidth
+                                required
+                                error={touched.last_name && !!errors.last_name}
+                                helperText={touched.last_name && errors.last_name}
+                                variant="outlined"
                             />
                         </Box>
-
                         <Field
                             name="date_of_birth"
                             label="Дата рождения"
@@ -155,35 +159,45 @@ export function TrainerForm({
                             textField={{ helperText: "Укажите дату рождения" }}
                             InputLabelProps={{ shrink: true }}
                             fullWidth
+                            required
+                            error={touched.date_of_birth && !!errors.date_of_birth}
+                            helperText={touched.date_of_birth && errors.date_of_birth}
                         />
-
-                        <Typography variant="subtitle1" sx={{ mt: 2 }}>Контактная информация</Typography>
+                        {/* Контактная информация */}
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: 'text.primary', mt: 2 }}>Контактная информация</Typography>
                         <Field
                             name="email"
                             label="E-mail"
                             type="email"
                             component={TextField}
-                            variant="outlined"
                             fullWidth
+                            required
+                            error={touched.email && !!errors.email}
+                            helperText={touched.email && errors.email}
+                            variant="outlined"
                         />
                         <Field
                             name="phone"
                             label="Телефон"
                             component={TextField}
-                            variant="outlined"
                             fullWidth
+                            required
                             helperText="Формат: +79********* или 89********* (10-15 цифр)"
+                            error={touched.phone && !!errors.phone}
+                            variant="outlined"
                         />
-
-                        <Typography variant="subtitle1" sx={{ mt: 2 }}>Информация о зарплате</Typography>
-                        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} alignItems={{sm: "center"}} gap={2}>
-                             <Field
+                        {/* Информация о зарплате */}
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: 'text.primary', mt: 2 }}>Информация о зарплате</Typography>
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: { sm: 'center' } }}>
+                            <Field
                                 name="salary"
                                 label="Размер зарплаты"
                                 type="number"
                                 component={TextField}
-                                variant="outlined"
                                 fullWidth
+                                error={touched.salary && !!errors.salary}
+                                helperText={touched.salary && errors.salary}
+                                variant="outlined"
                                 InputProps={{ inputProps: { min: 0 } }}
                             />
                             <Field
@@ -191,21 +205,39 @@ export function TrainerForm({
                                 type="checkbox"
                                 component={CheckboxWithLabel}
                                 Label={{ label: "Фиксированная зарплата" }}
-                                sx={{ mt: {xs: 1, sm: 0}, width: {xs: '100%', sm: 'auto'} }}
+                                sx={{ mt: { xs: 1, sm: 0 }, width: { xs: '100%', sm: 'auto' } }}
                             />
-                           
                         </Box>
-
-                        <Button
-                            sx={{ mt: 3, height: 50 }}
-                            type="submit"
-                            variant="contained"
-                            color="primary"
-                            disabled={isLoading}
-                            fullWidth
+                        {/* Кнопки */}
+                        <Box
+                            sx={stickyActions ? {
+                                position: 'sticky',
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                zIndex: 10,
+                                pt: 2,
+                                pb: 2,
+                                mt: 4,
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                gap: 2,
+                                borderTop: '1px solid',
+                                borderColor: 'divider',
+                            } : {
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                mt: 4,
+                                gap: 2,
+                            }}
                         >
-                            {isLoading ? <CircularProgress size={24} color="inherit" /> : (isEdit ? "Сохранить изменения" : "Создать тренера")}
-                        </Button>
+                            <Button onClick={onClose} disabled={isLoading} variant="outlined" sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 500 }}>
+                                Отмена
+                            </Button>
+                            <Button type="submit" variant="contained" disabled={isLoading} sx={{ fontWeight: 600, textTransform: 'none', borderRadius: 2, px: 4, py: 1.5 }}>
+                                {isLoading ? <CircularProgress size={20} sx={{ color: 'white' }} /> : 'Сохранить'}
+                            </Button>
+                        </Box>
                     </Box>
                 </Form>
             )}
