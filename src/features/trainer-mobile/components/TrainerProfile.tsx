@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -12,6 +12,10 @@ import {
   ListItemText,
   useTheme,
   alpha,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Person,
@@ -31,7 +35,8 @@ import { useAuth } from '../../../hooks/useAuth';
 export const TrainerProfile: React.FC = () => {
   const theme = useTheme();
   const gradients = useGradients();
-  const { logout } = useAuth();
+  const { doLogout } = useAuth();
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   // Получаем текущего пользователя (тренера)
   const { data: user, isLoading: isLoadingUser } = useGetCurrentUserQuery();
@@ -58,13 +63,22 @@ export const TrainerProfile: React.FC = () => {
   }
 
   const handleLogout = () => {
-    logout();
+    setLogoutDialogOpen(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    doLogout();
+    setLogoutDialogOpen(false);
+  };
+
+  const handleLogoutCancel = () => {
+    setLogoutDialogOpen(false);
   };
 
   return (
     <Box sx={{ 
       p: 2, 
-      pb: 4,
+      pb: 10,
       background: theme.palette.background.default, 
       minHeight: '100%',
     }}>
@@ -199,21 +213,21 @@ export const TrainerProfile: React.FC = () => {
           </Typography>
         </Box>
         <List>
-          <ListItem button>
+          <ListItem>
             <ListItemIcon>
               <Notifications sx={{ color: theme.palette.primary.main }} />
             </ListItemIcon>
             <ListItemText primary="Уведомления" />
           </ListItem>
           <Divider />
-          <ListItem button>
+          <ListItem>
             <ListItemIcon>
               <Security sx={{ color: theme.palette.primary.main }} />
             </ListItemIcon>
             <ListItemText primary="Безопасность" />
           </ListItem>
           <Divider />
-          <ListItem button>
+          <ListItem>
             <ListItemIcon>
               <Settings sx={{ color: theme.palette.primary.main }} />
             </ListItemIcon>
@@ -234,7 +248,7 @@ export const TrainerProfile: React.FC = () => {
         }}
       >
         <List>
-          <ListItem button onClick={handleLogout}>
+          <ListItem onClick={handleLogout}>
             <ListItemIcon>
               <Logout sx={{ color: theme.palette.error.main }} />
             </ListItemIcon>
@@ -245,6 +259,36 @@ export const TrainerProfile: React.FC = () => {
           </ListItem>
         </List>
       </Paper>
+
+      {/* Диалог подтверждения логаута */}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={handleLogoutCancel}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          Выйти из системы?
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Вы уверены, что хотите выйти из системы? Все несохраненные данные будут потеряны.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 1 }}>
+          <Button onClick={handleLogoutCancel} color="inherit">
+            Отмена
+          </Button>
+          <Button 
+            onClick={handleLogoutConfirm} 
+            variant="contained" 
+            color="error"
+            autoFocus
+          >
+            Выйти
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }; 

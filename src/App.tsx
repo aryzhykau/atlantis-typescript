@@ -13,6 +13,7 @@ import { ClientPage } from "./features/clients/components/ClientPage/ClientPage.
 import { StudentPage } from './features/students/components/StudentPage.tsx';
 import { TrainerPage } from './features/trainers/components/TrainerPage';
 import { TrainerMobileApp } from './features/trainer-mobile/components/TrainerMobileApp';
+import { useGetCurrentUserQuery } from './store/apis/userApi';
 
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import useMobile from "./hooks/useMobile.tsx";
@@ -25,6 +26,8 @@ function App() {
 
     const isMobile = useMobile();
     const {isAuthenticated} = useAuth();
+    const {data: user} = useGetCurrentUserQuery(undefined, { skip: !isAuthenticated });
+    
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -33,7 +36,10 @@ function App() {
                       <BrowserRouter>
                           <Routes>
                               <Route path={"/"} element={!isAuthenticated ? <LoginPage/> : <Navigate to="/home"/>}/>
-                              <Route path={"/home"} element={!isAuthenticated ? <Navigate to="/"/> : <HomePage />}>
+                              <Route path={"/home"} element={
+                                  !isAuthenticated ? <Navigate to="/"/> : 
+                                  (user?.role === 'TRAINER' ? <Navigate to="/trainer-mobile"/> : <HomePage />)
+                              }>
                                   <Route index element={MenuItems[0].page}/>
                                   {
                                       MenuItems.map((item: IMenuItems): ReactNode => {
@@ -65,7 +71,10 @@ function App() {
                                       })
                                   }
                               </Route>
-                              <Route path="/trainer-mobile/*" element={<TrainerMobileApp />} />
+                              <Route path="/trainer-mobile/*" element={
+                                  !isAuthenticated ? <Navigate to="/"/> : 
+                                  (user?.role === 'TRAINER' ? <TrainerMobileApp /> : <Navigate to="/home"/>)
+                              } />
                           </Routes>
                       </BrowserRouter>
                   </LocalizationProvider>

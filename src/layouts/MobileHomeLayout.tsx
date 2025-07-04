@@ -1,11 +1,29 @@
-import {Box, Typography, IconButton, Drawer, } from "@mui/material";
+import {Box, Typography, IconButton, Drawer, Dialog, DialogTitle, DialogContent, DialogActions, Button} from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
+import {Logout} from '@mui/icons-material';
 import {useState} from "react";
 import {MobileSideBar} from "../components/sideBar/MobileSidebar.tsx";
+import {useAuth} from "../hooks/useAuth.tsx";
 
 export function MobileHomeLayout({children}:{children: React.ReactNode}) {
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+    const { doLogout } = useAuth();
+    
     const toggleDrawer = (value: boolean) => setDrawerOpen(value);
+
+    const handleLogoutClick = () => {
+        setLogoutDialogOpen(true);
+    };
+
+    const handleLogoutConfirm = () => {
+        doLogout();
+        setLogoutDialogOpen(false);
+    };
+
+    const handleLogoutCancel = () => {
+        setLogoutDialogOpen(false);
+    };
 
     return (
         <>
@@ -44,11 +62,54 @@ export function MobileHomeLayout({children}:{children: React.ReactNode}) {
                     </Box>
                 </Drawer>
             </Box>
+            <Box sx={{position: 'absolute', top: 20, right: 20}}>
+                <IconButton
+                    color="inherit"
+                    onClick={handleLogoutClick}
+                    sx={{ 
+                        color: 'error.main',
+                        '&:hover': {
+                            backgroundColor: 'error.light + 20',
+                        }
+                    }}
+                >
+                    <Logout />
+                </IconButton>
+            </Box>
         </Box>
         <Box>
             {children}
         </Box>
 
+        {/* Диалог подтверждения логаута */}
+        <Dialog
+            open={logoutDialogOpen}
+            onClose={handleLogoutCancel}
+            maxWidth="xs"
+            fullWidth
+        >
+            <DialogTitle sx={{ pb: 1 }}>
+                Выйти из системы?
+            </DialogTitle>
+            <DialogContent>
+                <Typography variant="body2" color="text.secondary">
+                    Вы уверены, что хотите выйти из системы? Все несохраненные данные будут потеряны.
+                </Typography>
+            </DialogContent>
+            <DialogActions sx={{ p: 2, pt: 1 }}>
+                <Button onClick={handleLogoutCancel} color="inherit">
+                    Отмена
+                </Button>
+                <Button 
+                    onClick={handleLogoutConfirm} 
+                    variant="contained" 
+                    color="error"
+                    autoFocus
+                >
+                    Выйти
+                </Button>
+            </DialogActions>
+        </Dialog>
         </>
     )
 }

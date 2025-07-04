@@ -100,7 +100,7 @@ export const TrainerStats: React.FC = () => {
   return (
     <Box sx={{ 
       p: 2, 
-      pb: 4,
+      pb: 10,
       background: theme.palette.background.default, 
       minHeight: '100%',
     }}>
