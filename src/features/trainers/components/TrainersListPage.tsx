@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Button, Typography, CircularProgress, Alert, TextField, Select, MenuItem, FormControl, InputLabel, Switch, IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Grid, Paper, Chip, Link as MuiLink } from '@mui/material';
-import { DataGrid, GridColDef, GridRenderCellParams, GridActionsCellItem } from '@mui/x-data-grid';
+import { Box, Button, Typography, CircularProgress, Alert, TextField, Paper, FormControlLabel, Switch, InputAdornment, alpha } from '@mui/material';
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Link as RouterLink } from 'react-router-dom';
-import { AddCircleOutline, Edit, Delete } from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
 import { useGetTrainersQuery, useCreateTrainerMutation, useUpdateTrainerMutation, useDeleteTrainerMutation, useUpdateTrainerStatusMutation } from '../../../store/apis/trainersApi';
 import { ITrainerResponse, ITrainerCreatePayload, ITrainerUpdatePayload, IStatusUpdatePayload } from '../models/trainer';
 import { TrainerForm } from './TrainerForm'; 
 import { useSnackbar } from '../../../hooks/useSnackBar';
+import { useGradients } from '../../trainer-mobile/hooks/useGradients';
+import { useTheme } from '@mui/material';
 
 export function TrainersListPage() {
     const { data: trainersListResponse, isLoading, isError, error } = useGetTrainersQuery();
@@ -16,13 +18,16 @@ export function TrainersListPage() {
     const [updateTrainerStatus, { isLoading: isUpdatingStatus, originalArgs: updatingStatusArgs }] = useUpdateTrainerStatusMutation();
 
     const { displaySnackbar } = useSnackbar();
+    const gradients = useGradients();
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTrainer, setEditingTrainer] = useState<Partial<ITrainerResponse> | null>(null);
     const [isEditMode, setIsEditMode] = useState(false);
 
     const [searchText, setSearchText] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+    const [showOnlyActive, setShowOnlyActive] = useState(true);
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [trainerToDelete, setTrainerToDelete] = useState<ITrainerResponse | null>(null);
@@ -99,8 +104,8 @@ export function TrainersListPage() {
         if (!trainersListResponse?.trainers) return [];
         let trainers = [...trainersListResponse.trainers];
 
-        if (statusFilter !== 'all') {
-            trainers = trainers.filter(trainer => trainer.is_active === (statusFilter === 'active'));
+        if (showOnlyActive) {
+            trainers = trainers.filter(trainer => trainer.is_active === true);
         }
 
         if (searchText) {
@@ -113,7 +118,7 @@ export function TrainersListPage() {
             );
         }
         return trainers.sort((a, b) => a.id - b.id); 
-    }, [trainersListResponse, searchText, statusFilter]);
+    }, [trainersListResponse, searchText, showOnlyActive]);
 
     const columns: GridColDef<ITrainerResponse>[] = [
         {
@@ -121,9 +126,7 @@ export function TrainersListPage() {
             headerName: 'ID',
             width: 90,
             renderCell: (params: GridRenderCellParams<ITrainerResponse>) => (
-                <MuiLink component={RouterLink} to={`/home/trainers/${params.row.id}`}>
-                    {params.value}
-                </MuiLink>
+                <RouterLink to={`/home/trainers/${params.row.id}`} style={{ color: theme.palette.primary.main, textDecoration: 'none', fontWeight: 500 }}>{params.value}</RouterLink>
             ),
         },
         {
@@ -149,11 +152,11 @@ export function TrainersListPage() {
             width: 130,
             renderCell: (params: GridRenderCellParams<ITrainerResponse, ITrainerResponse['is_fixed_salary']>) => {
                 if (params.value === true) {
-                    return <Chip label="Да" color="success" size="small" variant="outlined" />;
+                    return <span style={{ color: theme.palette.success.main, fontWeight: 600 }}>Да</span>;
                 } else if (params.value === false) {
-                    return <Chip label="Нет" color="default" size="small" variant="outlined" />;
+                    return <span style={{ color: theme.palette.text.secondary }}>Нет</span>;
                 }
-                return <Chip label="-" size="small" variant="outlined" />;
+                return <span style={{ color: theme.palette.text.disabled }}>-</span>;
             },
         }
     ];
@@ -168,76 +171,153 @@ export function TrainersListPage() {
     }
 
     return (
-        <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, height: 'calc(100vh - 64px - 32px)', width: '100%' }}> 
-            <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
-                <Grid item xs={12} md={4} lg={5}>
-                    <TextField
-                        fullWidth
-                        variant="outlined"
-                        label="Поиск тренера"
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        size="small"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3} lg={3}>
-                    <FormControl fullWidth variant="outlined" size="small">
-                        <InputLabel>Статус</InputLabel>
-                        <Select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-                            label="Статус"
-                        >
-                            <MenuItem value="all">Все</MenuItem>
-                            <MenuItem value="active">Активные</MenuItem>
-                            <MenuItem value="inactive">Неактивные</MenuItem>
-                        </Select>
-                    </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6} md={5} lg={4} sx={{ display: 'flex', justifyContent: {xs: 'flex-start', sm: 'flex-end'} }}>
-                    <Button
-                        variant="contained"
-                        startIcon={<AddCircleOutline />}
-                        onClick={() => handleOpenModal()}
-                    >
-                        Добавить тренера
-                    </Button>
-                </Grid>
-            </Grid>
+        <Box sx={{ width: '100%' }}>
+            {/* Фильтры и поиск в отдельной карточке */}
+            <Paper
+                elevation={0}
+                sx={{
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    background: gradients.primary,
+                    color: 'white',
+                    mb: 3,
+                    p: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    flexWrap: 'wrap',
+                    boxShadow: isDark ? '0 2px 8px 0 rgba(0,0,0,0.25)' : '0 2px 8px 0 rgba(80,0,120,0.08)',
+                }}
+            >
+                <Typography variant="h5" sx={{ fontWeight: 700, color: 'white', mr: 2 }}>
+                    Тренеры
+                </Typography>
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={showOnlyActive}
+                            onChange={e => setShowOnlyActive(e.target.checked)}
+                            sx={{
+                                '& .MuiSwitch-switchBase': {
+                                    color: 'white',
+                                },
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: theme.palette.success.light,
+                                },
+                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: theme.palette.success.light,
+                                    opacity: 1,
+                                },
+                                '& .MuiSwitch-track': {
+                                    backgroundColor: 'rgba(255,255,255,0.3)',
+                                    opacity: 1,
+                                },
+                            }}
+                        />
+                    }
+                    label={<Typography variant="body2" sx={{ fontWeight: 600, color: 'white', textShadow: '0 1px 4px rgba(80,0,120,0.25)' }}>Только активные</Typography>}
+                    sx={{ mr: 2 }}
+                />
+                <TextField
+                    id="search-trainer"
+                    placeholder="Поиск тренера..."
+                    type="search"
+                    variant="outlined"
+                    value={searchText}
+                    onChange={e => setSearchText(e.target.value)}
+                    size="small"
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <AddIcon sx={{ color: 'white', opacity: 0 }} />
+                            </InputAdornment>
+                        ),
+                        sx: {
+                            borderRadius: 2,
+                            background: alpha('#fff', 0.12),
+                            color: 'white',
+                            '& .MuiInputBase-input': { color: 'white' },
+                        }
+                    }}
+                    sx={{ minWidth: 280, maxWidth: 340, input: { color: 'white' },
+                        '& .MuiOutlinedInput-notchedOutline': { borderColor: alpha('#fff', 0.3) },
+                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#fff' },
+                        '& .MuiInputAdornment-root svg': { color: 'white' },
+                    }}
+                />
+                <Box sx={{ flexGrow: 1 }} />
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => handleOpenModal()}
+                    sx={{
+                        background: 'white',
+                        color: theme.palette.primary.main,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        px: 3,
+                        boxShadow: 'none',
+                        borderRadius: 2,
+                        '&:hover': {
+                            background: alpha('#ffffff', isDark ? 0.7 : 0.9),
+                        }
+                    }}
+                >
+                    Добавить тренера
+                </Button>
+            </Paper>
 
-            <Box sx={{ width: '100%' }}>
+            {/* Таблица без внешнего Paper и заголовка */}
+            <Box sx={{ width: '100%', p: 0 }}>
                 <DataGrid
-                    rows={filteredTrainers}
+                    rows={filteredTrainers || []}
+                    loading={isLoading}
                     columns={columns}
-                    pageSizeOptions={[10, 25, 50, 100]}
+                    pageSizeOptions={[10]}
                     initialState={{
                         pagination: {
-                            paginationModel: { pageSize: 10, page: 0 },
+                            paginationModel: {
+                                pageSize: 10,
+                            },
                         },
                     }}
-                    loading={isLoading || isCreating || isUpdating || isDeleting || isUpdatingStatus}
                     disableRowSelectionOnClick
                     sx={{
-                        
+                        borderRadius: 3,
+                        background: isDark ? alpha(theme.palette.background.paper, 0.85) : 'white',
+                        fontSize: '1rem',
+                        color: theme.palette.text.primary,
+                        boxShadow: isDark ? '0 2px 8px 0 rgba(0,0,0,0.18)' : '0 2px 8px 0 rgba(80,0,120,0.06)',
+                        '& .MuiDataGrid-columnHeaders': {
+                            background: alpha(theme.palette.primary.main, isDark ? 0.13 : 0.07),
+                            fontWeight: 700,
+                            fontSize: '1.05rem',
+                            color: theme.palette.primary.main,
+                        },
+                        '& .MuiDataGrid-row': {
+                            transition: 'background 0.2s',
+                        },
                         '& .MuiDataGrid-row:hover': {
-                            backgroundColor: (theme) => theme.palette.background.paper,
+                            background: alpha(theme.palette.primary.main, isDark ? 0.13 : 0.07),
+                        },
+                        '& .MuiDataGrid-cell': {
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                        },
+                        '& .MuiDataGrid-footerContainer': {
+                            background: 'transparent',
+                        },
+                        '& .MuiDataGrid-selectedRowCount': {
+                            display: 'none',
+                        },
+                        '& .MuiDataGrid-actionsCell': {
+                            display: 'flex',
+                            gap: 1,
                         },
                     }}
                 />
-            </Box>   
-
-            <Dialog open={isModalOpen} onClose={handleCloseModal} maxWidth="sm" fullWidth PaperProps={{ sx: { m: 1, borderRadius: 2 } }}>
-                <DialogContent sx={{ p: 0, '&:first-of-type': { pt: 0 } }}> 
-                    <TrainerForm
-                        title={isEditMode ? "Редактировать тренера" : "Добавить тренера"}
-                        initialValues={editingTrainer || undefined} 
-                        onSubmit={handleFormSubmit}
-                        onClose={handleCloseModal}
-                        isEdit={isEditMode}
-                        isLoading={isCreating || isUpdating}
-                    />
-                </DialogContent>
-            </Dialog>
+            </Box>
         </Box>
     );
 } 
