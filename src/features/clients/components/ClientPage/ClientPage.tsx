@@ -1,4 +1,4 @@
-import { Box, Typography, CircularProgress, Grid, Tabs, Tab, IconButton, Button, Select, MenuItem, SelectChangeEvent, Modal } from "@mui/material";
+import { Box, Typography, CircularProgress, Grid, Tabs, Tab, IconButton, Button, Select, MenuItem, SelectChangeEvent, Modal, Paper, alpha } from "@mui/material";
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -24,6 +24,14 @@ import { ClientPaymentsDataCard } from "./ClientPaymentsDataCard";
 import { ClientsForm } from "../ClientsForm";
 import { IClientUserFormValues, IClientUserGet, ClientUpdate } from "../../models/client";
 import dayjs, { Dayjs } from "dayjs";
+import { useGradients } from "../../../trainer-mobile/hooks/useGradients";
+import { useTheme } from "@mui/material";
+
+// Иконки для статистики
+import PeopleIcon from '@mui/icons-material/People';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import PaymentIcon from '@mui/icons-material/Payment';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 
 // Imports for StudentForm
 import { StudentForm } from "../../../students/components/StudentForm";
@@ -83,6 +91,97 @@ const baseInitialStudentValuesClientPage: StudentFormValuesClientPage = {
     date_of_birth: null,
 };
 
+// Компонент статистической карточки
+interface StatCardProps {
+    icon: React.ReactNode;
+    value: string | number;
+    label: string;
+    gradient: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ icon, value, label, gradient }) => {
+    return (
+        <Paper
+            elevation={0}
+            sx={{
+                p: 2,
+                background: gradient,
+                borderRadius: 3,
+                color: 'white',
+                textAlign: 'center',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 8,
+                }
+            }}
+        >
+            <Box sx={{ mb: 1 }}>
+                {icon}
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+                {value}
+            </Typography>
+            <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 500 }}>
+                {label}
+            </Typography>
+        </Paper>
+    );
+};
+
+// Компонент статистики клиента
+interface ClientStatsProps {
+    studentsCount: number;
+    invoicesCount: number;
+    paymentsCount: number;
+    balance: number;
+}
+
+const ClientStats: React.FC<ClientStatsProps> = ({ studentsCount, invoicesCount, paymentsCount, balance }) => {
+    const gradients = useGradients();
+    
+    return (
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={6} sm={3}>
+                <StatCard
+                    icon={<PeopleIcon sx={{ fontSize: 32 }} />}
+                    value={studentsCount}
+                    label="Студентов"
+                    gradient={gradients.primary}
+                />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+                <StatCard
+                    icon={<ReceiptIcon sx={{ fontSize: 32 }} />}
+                    value={invoicesCount}
+                    label="Инвойсов"
+                    gradient={gradients.info}
+                />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+                <StatCard
+                    icon={<PaymentIcon sx={{ fontSize: 32 }} />}
+                    value={paymentsCount}
+                    label="Платежей"
+                    gradient={gradients.success}
+                />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+                <StatCard
+                    icon={<AccountBalanceIcon sx={{ fontSize: 32 }} />}
+                    value={`${balance.toLocaleString()} ₽`}
+                    label="Баланс"
+                    gradient={gradients.warning}
+                />
+            </Grid>
+        </Grid>
+    );
+};
+
 const modalStyle = {
     position: 'absolute' as 'absolute',
     top: '50%',
@@ -91,10 +190,12 @@ const modalStyle = {
     width: { xs: '90%', md: '50%' }, 
     bgcolor: 'background.paper',
     boxShadow: 24,
-    p: 4,
+    p: 0,
     maxHeight: '90vh',
     overflowY: 'auto',
-    borderRadius: 2,
+    borderRadius: 3,
+    border: '1px solid',
+    borderColor: 'divider',
 };
 
 export function ClientPage() {
@@ -102,6 +203,8 @@ export function ClientPage() {
     const navigate = useNavigate();
     const { displaySnackbar } = useSnackbar();
     const { getClientStudents } = useClients();
+    const theme = useTheme();
+    const gradients = useGradients();
     
     const [selectedInvoiceStatus, setSelectedInvoiceStatus] = useState<InvoiceStatus | null>(null);
     const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>("all");
@@ -337,29 +440,124 @@ export function ClientPage() {
     if (isLoadingClient) return <CircularProgress />;
     if (isErrorClient || !client) return <Typography>Ошибка загрузки данных клиента.</Typography>;
 
+    // Вычисляем статистику
+    const studentsCount = studentsList?.length || 0;
+    const invoicesCount = invoices?.items?.length || 0;
+    const paymentsCount = payments?.length || 0;
+    const balance = client.balance || 0;
+
     return (
         <Box sx={{ p: 3 }}>
-            <IconButton onClick={handleBackClick} sx={{ mb: 2 }}>
-                <ArrowBackIcon />
-            </IconButton>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h4" component="h1" gutterBottom sx={{ flexGrow: 1 }}>
-                    Карточка клиента: {client.first_name} {client.last_name}
-                </Typography>
-                <IconButton onClick={handleOpenEditModal} color="primary">
-                    <EditIcon />
-                </IconButton>
-            </Box>
+            {/* Градиентный заголовок */}
+            <Paper
+                elevation={0}
+                sx={{
+                    mb: 3,
+                    p: 3,
+                    background: gradients.primary,
+                    borderRadius: 3,
+                    color: 'white',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                        opacity: 0.3,
+                    }
+                }}
+            >
+                <Box sx={{ position: 'relative', zIndex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <IconButton 
+                            onClick={handleBackClick} 
+                            sx={{ 
+                                color: 'white',
+                                mr: 2,
+                                '&:hover': {
+                                    background: alpha('#ffffff', 0.2),
+                                }
+                            }}
+                        >
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Box sx={{ flexGrow: 1 }}>
+                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, display: 'flex', alignItems: 'center' }}>
+                                👤 {client.first_name} {client.last_name}
+                            </Typography>
+                            <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 300 }}>
+                                Карточка клиента #{client.id}
+                            </Typography>
+                        </Box>
+                        <IconButton 
+                            onClick={handleOpenEditModal} 
+                            sx={{
+                                color: 'white',
+                                '&:hover': {
+                                    background: alpha('#ffffff', 0.2),
+                                }
+                            }}
+                        >
+                            <EditIcon />
+                        </IconButton>
+                    </Box>
+                </Box>
+            </Paper>
 
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <Tabs value={activeTab} onChange={handleTabChange} aria-label="Client details tabs">
-                    <Tab label="Обзор" {...a11yProps(0)} />
-                    <Tab label="Инвойсы" {...a11yProps(1)} />
-                    <Tab label="Платежи" {...a11yProps(2)} />
-                    <Tab label="Ученики" {...a11yProps(3)} />
-                    <Tab label="Абонементы" {...a11yProps(4)} />
+            {/* Статистика клиента */}
+            <ClientStats
+                studentsCount={studentsCount}
+                invoicesCount={invoicesCount}
+                paymentsCount={paymentsCount}
+                balance={balance}
+            />
+
+            {/* Стилизованные табы */}
+            <Paper
+                elevation={0}
+                sx={{
+                    mb: 3,
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    overflow: 'hidden',
+                }}
+            >
+                <Tabs 
+                    value={activeTab} 
+                    onChange={handleTabChange} 
+                    aria-label="Client details tabs"
+                    sx={{
+                        background: alpha(theme.palette.primary.main, 0.05),
+                        '& .MuiTab-root': {
+                            minHeight: 64,
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            textTransform: 'none',
+                            color: 'text.secondary',
+                            '&.Mui-selected': {
+                                color: theme.palette.primary.main,
+                                background: theme.palette.background.paper,
+                            },
+                            '&:hover': {
+                                background: alpha(theme.palette.primary.main, 0.1),
+                                color: theme.palette.primary.main,
+                            }
+                        },
+                        '& .MuiTabs-indicator': {
+                            background: gradients.primary,
+                            height: 3,
+                        }
+                    }}
+                >
+                    <Tab label="📊 Обзор" {...a11yProps(0)} />
+                    <Tab label="📄 Инвойсы" {...a11yProps(1)} />
+                    <Tab label="💳 Платежи" {...a11yProps(2)} />
+                    <Tab label="👥 Ученики" {...a11yProps(3)} />
+                    <Tab label="🎫 Абонементы" {...a11yProps(4)} />
                 </Tabs>
-            </Box>
+            </Paper>
 
             <TabPanel value={activeTab} index={0}>
                 <Grid container spacing={2} alignItems="stretch">
@@ -434,18 +632,42 @@ export function ClientPage() {
                 aria-labelledby="edit-client-modal-title"
             >
                 <Box sx={modalStyle}>
-                    <Typography id="edit-client-modal-title" variant="h6" component="h2" sx={{mb:2}}>
-                        Редактировать данные клиента
-                    </Typography>
-                    {initialFormValues && client && (
-                        <ClientsForm
-                            title="Редактировать данные клиента"
-                            initialValues={initialFormValues}
-                            isEdit={true}
-                            clientId={client.id}
-                            onClose={handleCloseEditModal}
-                        />
-                    )}
+                    {/* Градиентный заголовок модального окна */}
+                    <Box
+                        sx={{
+                            p: 3,
+                            background: gradients.primary,
+                            color: 'white',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0, left: 0, right: 0, bottom: 0,
+                                background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                                opacity: 0.3,
+                            }
+                        }}
+                    >
+                        <Box sx={{ position: 'relative', zIndex: 1 }}>
+                            <Typography id="edit-client-modal-title" variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                                ✏️ Редактировать данные клиента
+                            </Typography>
+                        </Box>
+                    </Box>
+                    
+                    {/* Контент модального окна */}
+                    <Box sx={{ p: 3 }}>
+                        {initialFormValues && client && (
+                            <ClientsForm
+                                title="Редактировать данные клиента"
+                                initialValues={initialFormValues}
+                                isEdit={true}
+                                clientId={client.id}
+                                onClose={handleCloseEditModal}
+                            />
+                        )}
+                    </Box>
                 </Box>
             </Modal>
 
@@ -455,15 +677,42 @@ export function ClientPage() {
                 aria-labelledby="add-student-to-client-modal-title"
             >
                 <Box sx={modalStyle}>
-                    <Typography id="add-student-to-client-modal-title" variant="h6" component="h2" sx={{mb:2}}>
-                        Добавить студента клиенту: {client?.first_name} {client?.last_name}
-                    </Typography>
-                    <StudentForm
-                        initialValues={studentFormInitialValues}
-                        onSubmit={handleCreateStudentSubmit}
-                        onClose={handleCloseAddStudentModal}
-                        isLoading={isCreatingStudent}
-                    />
+                    {/* Градиентный заголовок модального окна */}
+                    <Box
+                        sx={{
+                            p: 3,
+                            background: gradients.success,
+                            color: 'white',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0, left: 0, right: 0, bottom: 0,
+                                background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                                opacity: 0.3,
+                            }
+                        }}
+                    >
+                        <Box sx={{ position: 'relative', zIndex: 1 }}>
+                            <Typography id="add-student-to-client-modal-title" variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                                👤 Добавить студента клиенту
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.9, mt: 1 }}>
+                                {client?.first_name} {client?.last_name}
+                            </Typography>
+                        </Box>
+                    </Box>
+                    
+                    {/* Контент модального окна */}
+                    <Box sx={{ p: 3 }}>
+                        <StudentForm
+                            initialValues={studentFormInitialValues}
+                            onSubmit={handleCreateStudentSubmit}
+                            onClose={handleCloseAddStudentModal}
+                            isLoading={isCreatingStudent}
+                        />
+                    </Box>
                 </Box>
             </Modal>
 
@@ -472,18 +721,77 @@ export function ClientPage() {
                 onClose={handleCloseCancelPaymentModal}
                 aria-labelledby="alert-dialog-cancel-payment-title"
                 aria-describedby="alert-dialog-cancel-payment-description"
+                PaperProps={{
+                    sx: {
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        overflow: 'hidden',
+                    }
+                }}
             >
-                <DialogTitle id="alert-dialog-cancel-payment-title">
-                    {"Подтверждение отмены платежа"}
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText id="alert-dialog-cancel-payment-description">
+                {/* Градиентный заголовок диалога */}
+                <Box
+                    sx={{
+                        p: 3,
+                        background: gradients.warning,
+                        color: 'white',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                            opacity: 0.3,
+                        }
+                    }}
+                >
+                    <Box sx={{ position: 'relative', zIndex: 1 }}>
+                        <Typography id="alert-dialog-cancel-payment-title" variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                            ⚠️ Подтверждение отмены платежа
+                        </Typography>
+                    </Box>
+                </Box>
+                
+                <DialogContent sx={{ p: 3 }}>
+                    <DialogContentText id="alert-dialog-cancel-payment-description" sx={{ fontSize: '1rem', lineHeight: 1.6 }}>
                         Вы уверены, что хотите отменить этот платеж? Это действие не может быть отменено.
                     </DialogContentText>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseCancelPaymentModal} disabled={isCancellingPayment}>Отмена</Button>
-                    <Button onClick={confirmCancelPayment} color="error" autoFocus disabled={isCancellingPayment}>
+                <DialogActions sx={{ p: 3, pt: 0 }}>
+                    <Button 
+                        onClick={handleCloseCancelPaymentModal} 
+                        disabled={isCancellingPayment}
+                        sx={{ 
+                            borderRadius: 2,
+                            px: 3,
+                            py: 1,
+                            textTransform: 'none',
+                            fontWeight: 600
+                        }}
+                    >
+                        Отмена
+                    </Button>
+                    <Button 
+                        onClick={confirmCancelPayment} 
+                        color="error" 
+                        autoFocus 
+                        disabled={isCancellingPayment}
+                        sx={{ 
+                            borderRadius: 2,
+                            px: 3,
+                            py: 1,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            background: gradients.warning,
+                            '&:hover': {
+                                background: theme.palette.mode === 'dark' 
+                                    ? 'linear-gradient(135deg, #e67e22 0%, #f39c12 100%)'
+                                    : 'linear-gradient(135deg, #fee140 0%, #fa709a 100%)',
+                            }
+                        }}
+                    >
                         {isCancellingPayment ? <CircularProgress size={24} /> : "Подтвердить отмену"}
                     </Button>
                 </DialogActions>
