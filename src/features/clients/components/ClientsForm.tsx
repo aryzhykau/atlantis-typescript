@@ -2,10 +2,24 @@ import * as yup from "yup";
 import {useClients} from "../hooks/clientManagementHooks.ts";
 import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
 import {Field, FieldArray, Form, Formik, FormikProps} from "formik";
-import {Box, Button, Checkbox, Divider, FormControlLabel, IconButton, Typography} from "@mui/material";
+import {
+    Box, 
+    Button, 
+    Checkbox, 
+    Divider, 
+    FormControlLabel, 
+    IconButton, 
+    Typography,
+    Paper,
+    alpha,
+    CircularProgress,
+    Grid
+} from "@mui/material";
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
+import { useGradients } from '../../trainer-mobile/hooks/useGradients';
+import { useTheme } from '@mui/material';
 
 import {DatePicker} from "formik-mui-x-date-pickers";
 import {TextField} from "formik-mui";
@@ -13,16 +27,23 @@ import { IClientUserFormValues, ClientUpdate, IClientCreatePayload } from "../mo
 import * as Yup from "yup";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
+import PersonIcon from "@mui/icons-material/Person";
+import EmailIcon from "@mui/icons-material/Email";
+import PhoneIcon from "@mui/icons-material/Phone";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import CakeIcon from "@mui/icons-material/Cake";
+import SchoolIcon from "@mui/icons-material/School";
+import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 // Новый интерфейс для формы студента
 export interface IStudentFormShape {
-    id?: number; // id может понадобиться, если мы решим редактировать студентов внутри этой формы
+    id?: number;
     first_name: string;
     last_name: string;
-    date_of_birth: Date | null | dayjs.Dayjs; // Используем Date | null для DatePicker
+    date_of_birth: Date | null | dayjs.Dayjs;
 }
 
 const defaultValues : IClientUserFormValues = {
@@ -33,9 +54,8 @@ const defaultValues : IClientUserFormValues = {
     date_of_birth: null,
     whatsapp_number: "",
     is_student: false,
-    students: [] // Теперь это IStudentFormShape[]
+    students: []
 };
-
 
 interface ClientsFormProps {
     title?: string;
@@ -45,9 +65,117 @@ interface ClientsFormProps {
     clientId?: number | null;
 }
 
-export function ClientsForm({title, initialValues = defaultValues,  isEdit = false, clientId = null, onClose }: ClientsFormProps) {
+// Компонент для красивого поля ввода
+interface StyledFieldProps {
+    name: string;
+    label: string;
+    icon: React.ReactNode;
+    color?: 'primary' | 'success' | 'warning' | 'info';
+    helperText?: string;
+    fullWidth?: boolean;
+    component?: any;
+    variant?: string;
+    views?: string[];
+    textField?: any;
+    inputFormat?: string;
+    InputLabelProps?: any;
+    sx?: any;
+}
+
+const StyledField: React.FC<StyledFieldProps> = ({ 
+    name, 
+    label, 
+    icon, 
+    color = 'primary', 
+    helperText,
+    fullWidth = true,
+    component = TextField,
+    variant = "outlined",
+    ...props 
+}) => {
+    const theme = useTheme();
+    const gradients = useGradients();
+    
+    return (
+        <Paper
+            elevation={0}
+            sx={{
+                p: 2,
+                borderRadius: 3,
+                border: '1px solid',
+                borderColor: 'divider',
+                background: theme.palette.background.paper,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                    boxShadow: theme.shadows[4],
+                    borderColor: alpha(theme.palette[color].main, 0.3),
+                    background: alpha(theme.palette[color].main, 0.02),
+                }
+            }}
+        >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box
+                    sx={{
+                        p: 1,
+                        borderRadius: 2,
+                        background: gradients[color],
+                        color: 'white',
+                        mr: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minWidth: 40,
+                        height: 40,
+                    }}
+                >
+                    {icon}
+                </Box>
+                <Typography 
+                    variant="caption" 
+                    sx={{ 
+                        color: 'text.secondary',
+                        fontWeight: 500,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5
+                    }}
+                >
+                    {label}
+                </Typography>
+            </Box>
+            <Box sx={{ pl: 6 }}>
+                <Field
+                    name={name}
+                    component={component}
+                    variant={variant}
+                    fullWidth={fullWidth}
+                    helperText={helperText}
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: 2,
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: theme.palette[color].main,
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: theme.palette[color].main,
+                                borderWidth: 2,
+                            },
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                            color: theme.palette[color].main,
+                        },
+                    }}
+                    {...props}
+                />
+            </Box>
+        </Paper>
+    );
+};
+
+export function ClientsForm({title, initialValues = defaultValues, isEdit = false, clientId = null, onClose }: ClientsFormProps) {
     const {createClient, updateClient, refetchClients} = useClients()
     const {displaySnackbar} = useSnackbar();
+    const theme = useTheme();
+    const gradients = useGradients();
 
     const validationSchema = yup.object({
         first_name: yup.string().required("Имя обязательно"),
@@ -65,7 +193,6 @@ export function ClientsForm({title, initialValues = defaultValues,  isEdit = fal
             })
         ).notRequired()
     });
-
 
     const handleSubmit = async (values: IClientUserFormValues, {resetForm}: {resetForm: () =>  void}) => {
         try {
@@ -146,225 +273,375 @@ export function ClientsForm({title, initialValues = defaultValues,  isEdit = fal
     }
 
     return (
-        <>
-            <Formik
-                initialValues={isEdit ? initialValues : defaultValues}
-                validationSchema={validationSchema}
-                onSubmit={handleSubmit}
-            >
-                {({isSubmitting, values}: FormikProps<IClientUserFormValues>) => (
-                    <Form>
-                        {/* Кнопка закрытия */}
-                        <IconButton 
-                            onClick={onClose}
-                            sx={{ 
-                                position: "absolute", 
-                                top: 16, 
-                                right: 16
-                            }}
-                        >
-                            <CloseIcon />
-                        </IconButton>
-                        <Box
-                            display="flex"
-                            flexDirection="column"
-                            gap={2}
-                            padding={3}
-                            bgcolor="paper"
-                            borderRadius={2}
-                        >
-                            {/* Заголовок */}
-                            <Typography variant="h4" textAlign="center">{title || "Форма клиента"}</Typography>
-                            <Divider/>
-                            <Box display="flex" gap={2} sx = {{my: "8px"}}>
-                                <Field
-                                    name="first_name"
-                                    label="Имя"
-                                    component={TextField}
-                                    variant="outlined"
-                                    fullWidth
-                                />
-                                <Field
-                                    name="last_name"
-                                    label="Фамилия"
-                                    component={TextField}
-                                    variant="outlined"
-                                    fullWidth
-                                />
-                            </Box>
-                            <Box display="flex" gap={2} sx = {{my: "8px"}}>
-                                <Field
-                                    name="email"
-                                    label="Email"
-                                    component={TextField}
-                                    variant="outlined"
-                                    fullWidth
-                                />
-                                <Field
-                                    name="phone"
-                                    label="Телефон"
-                                    component={TextField}
-                                    variant="outlined"
-                                    fullWidth
-                                />
-                            </Box>
-                            <Box display="flex" gap={2} >
-                                <Field
-                                    name="whatsapp_number"
-                                    label="WhatsApp (номер)"
-                                    component={TextField}
-                                    variant="outlined"
-                                    fullWidth
-                                    helperText="Номер WhatsApp, если отличается от основного телефона"
-                                />
-                            </Box>
+        <Formik
+            initialValues={isEdit ? initialValues : defaultValues}
+            validationSchema={validationSchema}
+            onSubmit={handleSubmit}
+        >
+            {({isSubmitting, values}: FormikProps<IClientUserFormValues>) => (
+                <Form>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        {/* Основная информация */}
+                        <Box>
+                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
+                                Основная информация
+                            </Typography>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} sm={6}>
+                                    <StyledField
+                                        name="first_name"
+                                        label="Имя"
+                                        icon={<PersonIcon />}
+                                        color="primary"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <StyledField
+                                        name="last_name"
+                                        label="Фамилия"
+                                        icon={<PersonIcon />}
+                                        color="primary"
+                                    />
+                                </Grid>
+                            </Grid>
+                        </Box>
 
-                            {/* Поля is_student и students отображаются только при isEdit === false (создание) */}
-                            {!isEdit && (
-                                <>
-                                    <Box display="flex"  alignItems={"flex-start"} gap={5} >
-                                        <Field
-                                            name="date_of_birth"
-                                            label="Дата рождения"
-                                            component={DatePicker}
-                                            variant="outlined"
-                                            fullWidth
-                                            views = {["year", "month", "date"]}
-                                            textField = {{helperText: "Укажите дату рождения"}}
-                                            inputFormat="dd.MM.yyyy"
-                                            InputLabelProps={{shrink: true}}
-                                            sx={{width: "50%"}}
-                                        />
-                                        <FormControlLabel
-                                            control={
-                                                <Field
-                                                    name="is_student"
-                                                    type="checkbox"
-                                                    as={Checkbox}
-                                                    color="primary"
-                                                />
-                                            }
-                                            label="Cам посещает тренировки?"
-                                            sx={{width: "50%"}}
-                                        />
-                                    </Box>
-                                    <Box>
-                                        <Box>
-                                            <FieldArray
-                                                name={"students"}
-                                                render={(arrayHelpers) => (
-                                                    <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column'}}>
-                                                        <Box display="flex" gap={1} alignItems={"center"} sx = {{mb: 1, flexShrink: 0}}>
-                                                            <Typography variant="subtitle2">Дети клиента:</Typography>
-                                                            <IconButton 
-                                                                size="small"
-                                                                onClick={() => arrayHelpers.push<IStudentFormShape>({
-                                                                    first_name: "",
-                                                                    last_name: values.last_name, 
-                                                                    date_of_birth: null, 
-                                                                })}
-                                                                title="Добавить ребенка"
-                                                            >
-                                                                <AddIcon  sx = {{color: "primary.main"}} fontSize="small"/>
-                                                            </IconButton>
-                                                        </Box>
-                                                        <Box 
-                                                            p={1} 
-                                                            sx={{
-                                                                border: '1px dashed',
-                                                                borderColor: 'divider',
-                                                                borderRadius: 1, 
-                                                                maxHeight: '203px',
-                                                                overflowY: 'auto',
-                                                                minHeight: '50px',
-                                                                flexGrow: 1,
-                                                            }}
-                                                        >
-                                                            {arrayHelpers.form.values.students && arrayHelpers.form.values.students.length > 0 ? (
-                                                                arrayHelpers.form.values.students?.map((_student: IStudentFormShape, index: number) => (
-                                                                    <Box key={index} mb={1} p={1} sx={{border: '1px solid', borderColor: 'action.hover', borderRadius: 1}}>
-                                                                        <Box display="flex" gap={1.5} alignItems={"center"} sx = {{mb: 0.5}}>
-                                                                            <Field
-                                                                                name={`students[${index}].first_name`}
-                                                                                label="Имя"
-                                                                                component={TextField}
-                                                                                variant="outlined"
-                                                                                fullWidth
-                                                                            />
-                                                                            <Field
-                                                                                name={`students[${index}].last_name`}
-                                                                                label="Фамилия"
-                                                                                component={TextField}
-                                                                                variant="outlined"
-                                                                                fullWidth
-                                                                            />
-                                                                        </Box>
-                                                                        <Box display="flex" gap={2} alignItems={"center"} justifyContent={"space-between"} sx = {{my: "8px"}}>
-                                                                            <Field
-                                                                                name={`students[${index}].date_of_birth`}
-                                                                                label="Дата рождения"
-                                                                                component={DatePicker}
-                                                                                variant="outlined"
-                                                                                fullWidth
-                                                                                views = {["year", "month", "date"]}
-                                                                                textField = {{helperText: "Укажите дату рождения"}}
-                                                                                inputFormat="dd.MM.yyyy"
-                                                                                InputLabelProps={{shrink: true}}
-                                                                                sx={{width: "50%"}}
-                                                                            />
-            
-                                                                            <Button variant={"outlined"} color={"error"} onClick={() => {arrayHelpers.remove(index)}}>
-                                                                                Убрать ученика
-                                                                            </Button>
-                                                                        </Box>
-                                                                        <Divider sx = {{my: 1}}/>
-                                                                    </Box>
-                                                                ))
-                                                            ) : (
-                                                                <Typography variant="body2" color="text.secondary" textAlign="center" sx={{py: 1, fontStyle: 'italic'}}>
-                                                                    Нет добавленных детей
-                                                                </Typography>
-                                                            )}
-                                                        </Box>
-                                                    </Box>
-                                                )}
+                        {/* Контактная информация */}
+                        <Box>
+                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
+                                Контактная информация
+                            </Typography>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} sm={6}>
+                                    <StyledField
+                                        name="email"
+                                        label="Email"
+                                        icon={<EmailIcon />}
+                                        color="success"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <StyledField
+                                        name="phone"
+                                        label="Телефон"
+                                        icon={<PhoneIcon />}
+                                        color="info"
+                                        helperText="Формат: 0987654321"
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <StyledField
+                                        name="whatsapp_number"
+                                        label="WhatsApp"
+                                        icon={<WhatsAppIcon />}
+                                        color="warning"
+                                        helperText="Номер WhatsApp, если отличается от основного телефона"
+                                    />
+                                </Grid>
+                            </Grid>
+                        </Box>
+
+                        {/* Дата рождения */}
+                        <Box>
+                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
+                                Личная информация
+                            </Typography>
+                            <StyledField
+                                name="date_of_birth"
+                                label="Дата рождения"
+                                icon={<CakeIcon />}
+                                color="warning"
+                                component={DatePicker}
+                                views={["year", "month", "date"]}
+                                textField={{helperText: "Укажите дату рождения"}}
+                                inputFormat="dd.MM.yyyy"
+                                InputLabelProps={{shrink: true}}
+                            />
+                        </Box>
+
+                        {/* Поля is_student и students отображаются только при создании */}
+                        {!isEdit && (
+                            <>
+                                {/* Статус студента */}
+                                <Box>
+                                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
+                                        Статус
+                                    </Typography>
+                                    <Paper
+                                        elevation={0}
+                                        sx={{
+                                            p: 2,
+                                            borderRadius: 3,
+                                            border: '1px solid',
+                                            borderColor: 'divider',
+                                            background: theme.palette.background.paper,
+                                        }}
+                                    >
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                            <Box
+                                                sx={{
+                                                    p: 1,
+                                                    borderRadius: 2,
+                                                    background: gradients.info,
+                                                    color: 'white',
+                                                    mr: 2,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    minWidth: 40,
+                                                    height: 40,
+                                                }}
+                                            >
+                                                <SchoolIcon />
+                                            </Box>
+                                            <Typography 
+                                                variant="caption" 
+                                                sx={{ 
+                                                    color: 'text.secondary',
+                                                    fontWeight: 500,
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: 0.5
+                                                }}
+                                            >
+                                                Статус клиента
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ pl: 6 }}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Field
+                                                        name="is_student"
+                                                        type="checkbox"
+                                                        as={Checkbox}
+                                                        sx={{
+                                                            color: theme.palette.info.main,
+                                                            '&.Mui-checked': {
+                                                                color: theme.palette.info.main,
+                                                            },
+                                                        }}
+                                                    />
+                                                }
+                                                label="Сам посещает тренировки"
+                                                sx={{ 
+                                                    '& .MuiFormControlLabel-label': {
+                                                        fontWeight: 500,
+                                                    }
+                                                }}
                                             />
                                         </Box>
-                                    </Box>
-                                </>
-                            )}
+                                    </Paper>
+                                </Box>
 
-                            {/* Поле date_of_birth должно быть видимо всегда, если isEdit === true, но is_student и students скрыты */}
-                            {isEdit && (
-                                <Box display="flex"  alignItems={"flex-start"} gap={5} sx = {{my: "8px"}}>
-                                    <Field
-                                        name="date_of_birth"
-                                        label="Дата рождения"
-                                        component={DatePicker}
-                                        variant="outlined"
-                                        fullWidth
-                                        views = {["year", "month", "date"]}
-                                        textField = {{helperText: "Укажите дату рождения"}}
-                                        inputFormat="dd.MM.yyyy"
-                                        InputLabelProps={{shrink: true}}
+                                {/* Дети клиента */}
+                                <Box>
+                                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
+                                        Дети клиента
+                                    </Typography>
+                                    <FieldArray
+                                        name="students"
+                                        render={(arrayHelpers) => (
+                                            <Paper
+                                                elevation={0}
+                                                sx={{
+                                                    p: 3,
+                                                    borderRadius: 3,
+                                                    border: '1px solid',
+                                                    borderColor: 'divider',
+                                                    background: theme.palette.background.paper,
+                                                }}
+                                            >
+                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                                                    <Box
+                                                        sx={{
+                                                            p: 1,
+                                                            borderRadius: 2,
+                                                            background: gradients.success,
+                                                            color: 'white',
+                                                            mr: 2,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            minWidth: 40,
+                                                            height: 40,
+                                                        }}
+                                                    >
+                                                        <FamilyRestroomIcon />
+                                                    </Box>
+                                                    <Typography 
+                                                        variant="caption" 
+                                                        sx={{ 
+                                                            color: 'text.secondary',
+                                                            fontWeight: 500,
+                                                            textTransform: 'uppercase',
+                                                            letterSpacing: 0.5
+                                                        }}
+                                                    >
+                                                        Дети клиента
+                                                    </Typography>
+                                                    <IconButton 
+                                                        size="small"
+                                                        onClick={() => arrayHelpers.push<IStudentFormShape>({
+                                                            first_name: "",
+                                                            last_name: values.last_name, 
+                                                            date_of_birth: null, 
+                                                        })}
+                                                        sx={{
+                                                            ml: 'auto',
+                                                            background: gradients.success,
+                                                            color: 'white',
+                                                            '&:hover': {
+                                                                background: alpha(theme.palette.success.main, 0.8),
+                                                            }
+                                                        }}
+                                                    >
+                                                        <AddIcon fontSize="small"/>
+                                                    </IconButton>
+                                                </Box>
+                                                
+                                                <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                                    {arrayHelpers.form.values.students && arrayHelpers.form.values.students.length > 0 ? (
+                                                        arrayHelpers.form.values.students?.map((_student: IStudentFormShape, index: number) => (
+                                                            <Paper
+                                                                key={index}
+                                                                elevation={0}
+                                                                sx={{
+                                                                    p: 2,
+                                                                    mb: 2,
+                                                                    borderRadius: 3,
+                                                                    border: '1px solid',
+                                                                    borderColor: 'divider',
+                                                                    background: alpha(theme.palette.success.main, 0.05),
+                                                                    transition: 'all 0.3s ease',
+                                                                    '&:hover': {
+                                                                        boxShadow: theme.shadows[4],
+                                                                        borderColor: alpha(theme.palette.success.main, 0.3),
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                                                        Ребенок #{index + 1}
+                                                                    </Typography>
+                                                                    <Button 
+                                                                        variant="outlined" 
+                                                                        color="error" 
+                                                                        size="small"
+                                                                        onClick={() => arrayHelpers.remove(index)}
+                                                                        sx={{ textTransform: 'none' }}
+                                                                    >
+                                                                        Удалить
+                                                                    </Button>
+                                                                </Box>
+                                                                <Grid container spacing={2}>
+                                                                    <Grid item xs={12} sm={6}>
+                                                                        <Field
+                                                                            name={`students[${index}].first_name`}
+                                                                            label="Имя"
+                                                                            component={TextField}
+                                                                            variant="outlined"
+                                                                            fullWidth
+                                                                            sx={{
+                                                                                '& .MuiOutlinedInput-root': {
+                                                                                    borderRadius: 2,
+                                                                                },
+                                                                            }}
+                                                                        />
+                                                                    </Grid>
+                                                                    <Grid item xs={12} sm={6}>
+                                                                        <Field
+                                                                            name={`students[${index}].last_name`}
+                                                                            label="Фамилия"
+                                                                            component={TextField}
+                                                                            variant="outlined"
+                                                                            fullWidth
+                                                                            sx={{
+                                                                                '& .MuiOutlinedInput-root': {
+                                                                                    borderRadius: 2,
+                                                                                },
+                                                                            }}
+                                                                        />
+                                                                    </Grid>
+                                                                    <Grid item xs={12}>
+                                                                        <Field
+                                                                            name={`students[${index}].date_of_birth`}
+                                                                            label="Дата рождения"
+                                                                            component={DatePicker}
+                                                                            variant="outlined"
+                                                                            fullWidth
+                                                                            views={["year", "month", "date"]}
+                                                                            textField={{helperText: "Укажите дату рождения"}}
+                                                                            inputFormat="dd.MM.yyyy"
+                                                                            InputLabelProps={{shrink: true}}
+                                                                            sx={{
+                                                                                '& .MuiOutlinedInput-root': {
+                                                                                    borderRadius: 2,
+                                                                                },
+                                                                            }}
+                                                                        />
+                                                                    </Grid>
+                                                                </Grid>
+                                                            </Paper>
+                                                        ))
+                                                    ) : (
+                                                        <Box sx={{ 
+                                                            textAlign: 'center', 
+                                                            py: 4,
+                                                            color: 'text.secondary',
+                                                            fontStyle: 'italic'
+                                                        }}>
+                                                            <FamilyRestroomIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
+                                                            <Typography variant="body2">
+                                                                Нет добавленных детей
+                                                            </Typography>
+                                                            <Typography variant="caption">
+                                                                Нажмите кнопку "+" чтобы добавить ребенка
+                                                            </Typography>
+                                                        </Box>
+                                                    )}
+                                                </Box>
+                                            </Paper>
+                                        )}
                                     />
                                 </Box>
-                            )}
+                            </>
+                        )}
 
-                            {/* Кнопка */}
+                        {/* Кнопка сохранения */}
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                             <Button
-                                sx={{ mt: 2, height: 50 ,width: "50%", mx: "auto" }}
                                 type="submit"
                                 variant="contained"
-                                color="primary"
                                 disabled={isSubmitting}
+                                sx={{
+                                    background: gradients.primary,
+                                    color: 'white',
+                                    fontWeight: 600,
+                                    textTransform: 'none',
+                                    px: 4,
+                                    py: 1.5,
+                                    borderRadius: 3,
+                                    fontSize: '1.1rem',
+                                    '&:hover': {
+                                        background: alpha(theme.palette.primary.main, 0.8),
+                                    },
+                                    '&:disabled': {
+                                        background: theme.palette.action.disabled,
+                                    }
+                                }}
                             >
-                                Сохранить
+                                {isSubmitting ? (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <CircularProgress size={20} sx={{ color: 'white' }} />
+                                        Сохранение...
+                                    </Box>
+                                ) : (
+                                    isEdit ? 'Обновить клиента' : 'Создать клиента'
+                                )}
                             </Button>
                         </Box>
-                    </Form>
-                )}
-            </Formik>
-        </>
+                    </Box>
+                </Form>
+            )}
+        </Formik>
     );
 }

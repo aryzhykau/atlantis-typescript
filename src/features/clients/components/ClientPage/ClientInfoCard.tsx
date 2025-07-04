@@ -208,18 +208,6 @@ export const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ client, onClient
                                 Основная информация
                             </Typography>
                         </Box>
-                        <Tooltip title="Редактировать">
-                            <IconButton
-                                sx={{
-                                    color: 'white',
-                                    '&:hover': {
-                                        background: alpha('#ffffff', 0.2),
-                                    }
-                                }}
-                            >
-                                <EditIcon />
-                            </IconButton>
-                        </Tooltip>
                     </Box>
                     
                     {/* Статус клиента */}
