@@ -10,13 +10,15 @@ import { TrainerForm } from './TrainerForm';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
+import { useSnackbar } from '../../../hooks/useSnackBar';
 
 export function TrainersListPage() {
     const { data: trainersListResponse, isLoading, isError, error } = useGetTrainersQuery();
     const [createTrainer, { isLoading: isCreating }] = useCreateTrainerMutation();
     const [updateTrainer, { isLoading: isUpdating }] = useUpdateTrainerMutation();
     const [deleteTrainerMutation, { isLoading: isDeleting }] = useDeleteTrainerMutation();
-    const [updateTrainerStatus, { isLoading: isUpdatingStatus, originalArgs: updatingStatusArgs }] = useUpdateTrainerStatusMutation();
+    const [updateTrainerStatus] = useUpdateTrainerStatusMutation();
+    const { displaySnackbar } = useSnackbar();
 
     const gradients = useGradients();
     const theme = useTheme();
@@ -52,13 +54,16 @@ export function TrainersListPage() {
         try {
             if (isEditMode && id) {
                 await updateTrainer({ trainerId: id, trainerData: values as ITrainerUpdatePayload }).unwrap();
+                displaySnackbar('Тренер успешно обновлен', 'success');
             } else {
                 await createTrainer(values as ITrainerCreatePayload).unwrap();
+                displaySnackbar('Тренер успешно создан', 'success');
             }
             handleCloseModal();
         } catch (err: any) {
             console.error("Ошибка при сохранении тренера: ", err);
             const errorMessage = err?.data?.detail || (isEditMode ? 'Ошибка обновления тренера' : 'Ошибка создания тренера');
+            displaySnackbar(errorMessage, 'error');
         }
     };
 
@@ -76,9 +81,12 @@ export function TrainersListPage() {
         if (!trainerToDelete) return;
         try {
             await deleteTrainerMutation({ trainerId: trainerToDelete.id }).unwrap();
+            displaySnackbar(`Тренер ${trainerToDelete.first_name} ${trainerToDelete.last_name} успешно удалён`, 'success');
+            handleCloseDeleteDialog();
         } catch (err: any) {
             console.error("Ошибка при удалении тренера: ", err);
             const errorMessage = err?.data?.detail || 'Ошибка удаления тренера';
+            displaySnackbar(errorMessage, 'error');
         }
     };
 
@@ -86,9 +94,11 @@ export function TrainersListPage() {
         const newStatus: IStatusUpdatePayload = { is_active: !trainer.is_active };
         try {
             await updateTrainerStatus({ trainerId: trainer.id, statusData: newStatus }).unwrap();
+            displaySnackbar(`Статус тренера ${trainer.first_name} ${trainer.last_name} успешно изменён`, 'success');
         } catch (err: any) {
             console.error("Ошибка при изменении статуса тренера: ", err);
             const errorMessage = err?.data?.detail || 'Ошибка изменения статуса';
+            displaySnackbar(errorMessage, 'error');
         }
     };
 

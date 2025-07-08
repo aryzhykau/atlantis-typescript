@@ -6,6 +6,8 @@ import {
     IStatusUpdatePayload // Используем этот общий интерфейс для обновления статуса
 } from "../../features/trainers/models/trainer.ts";
 import { baseApi } from "./api.ts";
+import { IPaymentHistoryResponse, IPaymentHistoryFilter } from "../../features/payments/models/payment";
+import { IPaymentListResponse, IPaymentFilter } from "../../features/payments/models/payment";
 
 export const trainersApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -55,6 +57,48 @@ export const trainersApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, { trainerId }) => [{ type: 'Trainer', id: trainerId }, { type: 'Trainer', id: 'LIST' }],
         }),
+        getTrainerPayments: builder.query<IPaymentHistoryResponse, { trainerId: number; filters?: IPaymentHistoryFilter & { period?: string; description_search?: string } }>({
+            query: ({ trainerId, filters = {} }) => ({
+                url: `/trainers/${trainerId}/payments`,
+                method: 'GET',
+                params: {
+                    ...(filters.period && { period: filters.period }),
+                    ...(filters.client_id && { client_id: filters.client_id }),
+                    ...(filters.amount_min !== undefined && { amount_min: filters.amount_min }),
+                    ...(filters.amount_max !== undefined && { amount_max: filters.amount_max }),
+                    ...(filters.date_from && { date_from: filters.date_from }),
+                    ...(filters.date_to && { date_to: filters.date_to }),
+                    ...(filters.description_search && { description_search: filters.description_search }),
+                    skip: filters.skip || 0,
+                    limit: filters.limit || 50,
+                },
+            }),
+            providesTags: (result, error, { trainerId }) => [
+                { type: 'Payment', id: trainerId },
+                { type: 'Payment', id: 'LIST' }
+            ],
+        }),
+        getTrainerRegisteredPayments: builder.query<IPaymentListResponse, { trainerId: number; filters?: IPaymentFilter }>({
+            query: ({ trainerId, filters = {} }) => ({
+                url: `/trainers/${trainerId}/registered-payments`,
+                method: 'GET',
+                params: {
+                    ...(filters.period && { period: filters.period }),
+                    ...(filters.client_id && { client_id: filters.client_id }),
+                    ...(filters.amount_min !== undefined && { amount_min: filters.amount_min }),
+                    ...(filters.amount_max !== undefined && { amount_max: filters.amount_max }),
+                    ...(filters.date_from && { date_from: filters.date_from }),
+                    ...(filters.date_to && { date_to: filters.date_to }),
+                    ...(filters.description_search && { description_search: filters.description_search }),
+                    skip: filters.skip || 0,
+                    limit: filters.limit || 50,
+                },
+            }),
+            providesTags: (result, error, { trainerId }) => [
+                { type: 'Payment', id: trainerId },
+                { type: 'Payment', id: 'LIST' }
+            ],
+        }),
     }),
 });
 
@@ -65,4 +109,6 @@ export const {
     useUpdateTrainerMutation,
     useDeleteTrainerMutation,
     useUpdateTrainerStatusMutation, // Добавлен новый хук
+    useGetTrainerPaymentsQuery,
+    useGetTrainerRegisteredPaymentsQuery,
 } = trainersApi;

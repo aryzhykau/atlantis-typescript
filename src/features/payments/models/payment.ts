@@ -56,3 +56,23 @@ export interface IPaymentHistoryResponse {
     total: number;
     has_more: boolean;
 }
+
+export interface IPaymentFilter {
+    skip?: number;
+    limit?: number;
+    client_id?: number;
+    amount_min?: number;
+    amount_max?: number;
+    date_from?: string;
+    date_to?: string;
+    description_search?: string;
+    period?: string;
+}
+
+export interface IPaymentListResponse {
+    payments: IPaymentGet[];
+    total: number;
+    skip: number;
+    limit: number;
+    has_more: boolean;
+}

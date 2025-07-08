@@ -23,6 +23,7 @@ import { ITrainerUpdatePayload, IStatusUpdatePayload, ITrainerResponse } from '.
 import dayjs from 'dayjs';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import { useTheme } from '@mui/material';
+import TrainerPaymentsTab from './TrainerPaymentsTab';
 
 // Иконки для статистики
 import PersonIcon from '@mui/icons-material/Person';
@@ -350,6 +351,7 @@ export function TrainerPage() {
                 >
                     <Tab label="📊 Обзор" {...a11yProps(0)} />
                     <Tab label="🏋️ Тренировки" {...a11yProps(1)} />
+                    <Tab label="💰 Платежи" {...a11yProps(2)} />
                 </Tabs>
             </Paper>
 
@@ -368,6 +370,10 @@ export function TrainerPage() {
 
             <TabPanel value={activeTab} index={1}>
                 <Typography>Информация о тренировках будет здесь.</Typography>
+            </TabPanel>
+
+            <TabPanel value={activeTab} index={2}>
+                <TrainerPaymentsTab trainerId={trainer.id} />
             </TabPanel>
 
             {editingTrainerData && (
