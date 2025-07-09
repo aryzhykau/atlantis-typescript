@@ -23,7 +23,7 @@ export const trainersApi = baseApi.injectEndpoints({
         }),
         getTrainerById: builder.query<ITrainerResponse, number>({
             query: (trainerId) => `/trainers/${trainerId}`,
-            providesTags: (result, error, trainerId) => [{ type: 'Trainer', id: trainerId }],
+            providesTags: (_, __, trainerId) => [{ type: 'Trainer', id: trainerId }],
         }),
         createTrainer: builder.mutation<ITrainerResponse, ITrainerCreatePayload>({
             query: (trainerData) => ({
@@ -39,7 +39,7 @@ export const trainersApi = baseApi.injectEndpoints({
                 method: 'PATCH', // Изменено с PUT на PATCH согласно openapi.json
                 body: trainerData,
             }),
-            invalidatesTags: (result, error, { trainerId }) => [{ type: 'Trainer', id: trainerId }, { type: 'Trainer', id: 'LIST' }],
+            invalidatesTags: (_, __, { trainerId }) => [{ type: 'Trainer', id: trainerId }, { type: 'Trainer', id: 'LIST' }],
         }),
         deleteTrainer: builder.mutation<ITrainerResponse, { trainerId: number }>({
             query: ({ trainerId }) => ({
@@ -47,7 +47,7 @@ export const trainersApi = baseApi.injectEndpoints({
                 method: 'DELETE',
             }),
             // Ответ ITrainerResponse согласно openapi.json
-            invalidatesTags: (result, error, { trainerId }) => [{ type: 'Trainer', id: trainerId }, { type: 'Trainer', id: 'LIST' }],
+            invalidatesTags: (_, __, { trainerId }) => [{ type: 'Trainer', id: trainerId }, { type: 'Trainer', id: 'LIST' }],
         }),
         updateTrainerStatus: builder.mutation<ITrainerResponse, { trainerId: number; statusData: IStatusUpdatePayload }>({
             query: ({ trainerId, statusData }) => ({
@@ -55,7 +55,7 @@ export const trainersApi = baseApi.injectEndpoints({
                 method: 'PATCH',
                 body: statusData,
             }),
-            invalidatesTags: (result, error, { trainerId }) => [{ type: 'Trainer', id: trainerId }, { type: 'Trainer', id: 'LIST' }],
+            invalidatesTags: (_, __, { trainerId }) => [{ type: 'Trainer', id: trainerId }, { type: 'Trainer', id: 'LIST' }],
         }),
         getTrainerPayments: builder.query<IPaymentHistoryResponse, { trainerId: number; filters?: IPaymentHistoryFilter & { period?: string; description_search?: string } }>({
             query: ({ trainerId, filters = {} }) => ({
@@ -73,7 +73,7 @@ export const trainersApi = baseApi.injectEndpoints({
                     limit: filters.limit || 50,
                 },
             }),
-            providesTags: (result, error, { trainerId }) => [
+            providesTags: (_, __, { trainerId }) => [
                 { type: 'Payment', id: trainerId },
                 { type: 'Payment', id: 'LIST' }
             ],
@@ -94,7 +94,7 @@ export const trainersApi = baseApi.injectEndpoints({
                     limit: filters.limit || 50,
                 },
             }),
-            providesTags: (result, error, { trainerId }) => [
+            providesTags: (_, __, { trainerId }) => [
                 { type: 'Payment', id: trainerId },
                 { type: 'Payment', id: 'LIST' }
             ],
