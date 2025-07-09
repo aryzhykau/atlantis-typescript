@@ -22,15 +22,15 @@ export const TrainingsApi = baseApi.injectEndpoints({
                         ...training,
                         created_at: dayjs(training.created_at).tz(dayjs.tz.guess()).format(),
                         training_datetime: dayjs(training.training_datetime).tz(dayjs.tz.guess()).format(),
-                        students: training.students.map(student => {
+                        students: training.students?.map(student => {
                             return {
                                 ...student,
-                                student: {
+                                student: student.student ? {
                                     ...student.student,
-                                    birth_date: dayjs(student.student.birth_date).tz(dayjs.tz.guess()).format()
-                                }
+                                    birth_date: student.student.birth_date ? dayjs(student.student.birth_date).tz(dayjs.tz.guess()).format() : undefined
+                                } : undefined
                             }
-                        })
+                        }) || []
                     };
                 });
                 console.log(newResp);
