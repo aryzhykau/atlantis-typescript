@@ -81,7 +81,7 @@ const CalendarSearchBar: React.FC<CalendarSearchBarProps> = ({
     });
   };
 
-  const handleFilterChange = (event: any, newValue: FilterOption[]) => {
+  const handleFilterChange = (_: any, newValue: FilterOption[]) => {
     const newFilters = {
       ...filters,
       trainerIds: newValue.filter(o => o.type === 'trainer').map(o => o.id),
@@ -214,8 +214,8 @@ const CalendarSearchBar: React.FC<CalendarSearchBarProps> = ({
                 }}
               />
             )}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
+            renderTags={(value, _) =>
+              value.map((option, _) => (
                 <Chip
                   key={`${option.type}-${option.id}`}
                   label={option.label}

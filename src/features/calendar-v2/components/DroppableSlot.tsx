@@ -33,8 +33,7 @@ const DroppableSlot: React.FC<DroppableSlotProps> = memo(({
   onClick,
   sx = {},
   onDrop,
-  isAltPressed,
-  getCurrentAltState,
+
   forceResetAltState,
 }) => {
   // Получаем состояние Alt как пропы
@@ -42,7 +41,7 @@ const DroppableSlot: React.FC<DroppableSlotProps> = memo(({
   const [{ isOver, canDrop, dragItem }, drop] = useDrop<DragItem, void, { isOver: boolean; canDrop: boolean; dragItem: DragItem | null }>({
     accept: 'TRAINING',
     // Убираем hover спам для чистоты логов
-    drop: (item, monitor) => {
+    drop: (item, _) => {
       if (onDrop) {
         // Используем isDuplicate из самого item (определяется в момент начала drag)
         const isDuplicate = item.isDuplicate || false;

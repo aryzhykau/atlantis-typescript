@@ -1,5 +1,5 @@
-import { Box, Card, CardContent, Typography, Divider, Grid, Paper, Theme } from "@mui/material";
-import { Children, ReactNode } from "react";
+import { Box, Card, CardContent, Typography, Divider, Paper } from "@mui/material";
+import { ReactNode } from "react";
 
 // Интерфейс для элемента данных карточки
 export interface IInfoCardItem {
@@ -23,7 +23,7 @@ export interface InfoCardProps {
     height?: string;
 }
 
-export const InfoCard = ({ children, title, items, gridSize = { xs: 12, md: 4 }, height }: InfoCardProps) => {
+export const InfoCard = ({ children, title, items, height }: InfoCardProps) => {
     return (
        
             <Paper elevation={3} sx={{ height: height || "100%" }}>

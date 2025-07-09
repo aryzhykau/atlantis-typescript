@@ -20,7 +20,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
 import PhoneIcon from '@mui/icons-material/Phone';
-import WarningIcon from '@mui/icons-material/Warning';
+
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -29,12 +29,11 @@ import dayjs from 'dayjs';
 import { 
     useGetRealTrainingByIdQuery, 
     useDeleteRealTrainingMutation, 
-    useUpdateRealTrainingMutation, 
-    useCreateRealTrainingMutation,
+    
     useCancelStudentFromTrainingMutation
 } from '../../../store/apis/calendarApi-v2';
 import { calendarApiV2 } from '../../../store/apis/calendarApi-v2';
-import { RealTrainingUpdate, RealTrainingCreate, StudentCancellationRequest } from '../models/realTraining';
+import { StudentCancellationRequest } from '../models/realTraining';
 import { useSnackbar } from '../../../hooks/useSnackBar';
 
 interface RealTrainingModalProps {
@@ -57,8 +56,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
   // Мутации
   const [cancelStudentFromTraining, { isLoading: isCancellingStudent }] = useCancelStudentFromTrainingMutation();
   const [deleteRealTraining, { isLoading: isDeletingReal }] = useDeleteRealTrainingMutation();
-  const [updateRealTraining, { isLoading: isUpdatingReal }] = useUpdateRealTrainingMutation();
-  const [createRealTraining, { isLoading: isCreatingReal }] = useCreateRealTrainingMutation();
+
   
   const { data: realTrainingData, isLoading: isLoadingReal } = useGetRealTrainingByIdQuery(
     trainingId || 0, 
@@ -69,8 +67,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
 
   // Состояния
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isDuplicating, setIsDuplicating] = useState(false);
+
   
   // Состояние для диалога отмены
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -80,29 +77,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
       notification_time: toDatetimeLocal(new Date().toISOString()),
   });
 
-  const [editFormData, setEditFormData] = useState<{
-    trainerId: number | null;
-    trainingDate: string;
-    startTime: string;
-  }>({
-    trainerId: null,
-    trainingDate: '',
-    startTime: '',
-  });
-
-  const [duplicateFormData, setDuplicateFormData] = useState<{
-    trainerId: number | null;
-    trainingDate: string;
-    startTime: string;
-  }>({
-    trainerId: null,
-    trainingDate: '',
-    startTime: '',
-  });
-
   const isDeletingTraining = isDeletingReal;
-  const isUpdatingTraining = isUpdatingReal;
-  const isCreatingTraining = isCreatingReal;
 
   const isStudentCancelled = (status?: string) => {
     return status === 'CANCELLED_SAFE' || status === 'CANCELLED_PENALTY';
@@ -110,22 +85,9 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
 
   useEffect(() => {
     if (realTrainingData) {
-      const baseData = {
-        trainerId: realTrainingData.trainer?.id || null,
-        trainingDate: realTrainingData.training_date,
-        startTime: realTrainingData.start_time || '',
-      };
-      setEditFormData(baseData);
+      // Removed unused baseData variable
       
-      const currentHour = parseInt(realTrainingData.start_time?.substring(0,2) || '0');
-      const newHour = Math.min(currentHour + 1, 22);
-      const newTime = `${newHour.toString().padStart(2, '0')}:00:00`;
-      
-      setDuplicateFormData({
-        ...baseData,
-        startTime: newTime,
-        trainingDate: dayjs(realTrainingData.training_date).add(1, 'day').format('YYYY-MM-DD'),
-      });
+      // Removed unused duplicateFormData logic
     }
   }, [realTrainingData]);
 
@@ -381,10 +343,10 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5, textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-              {isEditing ? '✏️ Редактирование тренировки' : isDuplicating ? '📋 Дублирование тренировки' : realTrainingData.training_type?.name || 'Тренировка'}
+              {realTrainingData.training_type?.name || 'Тренировка'}
             </Typography>
             <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.9rem' }}>
-              {isEditing ? 'Внесите изменения и нажмите "Сохранить"' : isDuplicating ? 'Настройте параметры и нажмите "Создать копию"' : `Тренировка • ${dayjs(realTrainingData.training_date).format('D MMMM YYYY')} в ${realTrainingData.start_time.substring(0,5)}`}
+              {`Тренировка • ${dayjs(realTrainingData.training_date).format('D MMMM YYYY')} в ${realTrainingData.start_time.substring(0,5)}`}
             </Typography>
           </Box>
           <IconButton onClick={onClose} sx={{ color: '#ffffff', backgroundColor: alpha('#ffffff', 0.1), backdropFilter: 'blur(10px)', '&:hover': { backgroundColor: alpha('#ffffff', 0.2), transform: 'scale(1.1)' }, transition: 'all 0.2s ease' }}>

@@ -6,7 +6,7 @@ import {
   Chip,
   Paper,
   InputAdornment,
-  Grid,
+
   Typography,
   useTheme,
   alpha,
@@ -22,7 +22,7 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { FilterList, Euro, Person, ExpandMore, ExpandLess, Clear } from '@mui/icons-material';
+import { FilterList, Euro, ExpandMore, ExpandLess, Clear } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import { IPaymentHistoryFilter } from '../models/payment';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';

@@ -7,11 +7,7 @@ import {
   IconButton,
   Typography,
   Box,
-  List,
-  ListItem,
-  ListItemText,
-  Chip,
-  Divider,
+
   useTheme,
   Link,
   Button,
@@ -19,16 +15,13 @@ import {
   CircularProgress,
   TextField,
   Autocomplete,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
+
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
-import EventNoteIcon from '@mui/icons-material/EventNote';
+
 import PhoneIcon from '@mui/icons-material/Phone';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -43,7 +36,6 @@ import {
 } from '../../../store/apis/calendarApi-v2';
 import { calendarApiV2 } from '../../../store/apis/calendarApi-v2';
 import { useGetStudentsQuery } from '../../../store/apis/studentsApi';
-import { useGetTrainingTypesQuery } from '../../../store/apis/trainingTypesApi';
 import { useGetTrainersQuery } from '../../../store/apis/trainersApi';
 import { TrainingStudentTemplateCreate } from '../models/trainingStudentTemplate';
 import { TrainingTemplateUpdate, TrainingTemplateCreate } from '../models/trainingTemplate';
@@ -56,10 +48,7 @@ interface TrainingTemplateModalProps {
 }
 
 // Helper to format date and time for the input fields
-const toDatetimeLocal = (isoString: string) => {
-    const date = dayjs(isoString);
-    return date.format('YYYY-MM-DDTHH:mm');
-};
+
 
 const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onClose, templateId }) => {
   const theme = useTheme();
@@ -67,18 +56,18 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
   const { displaySnackbar } = useSnackbar();
 
   // Мутации
-  const [deleteTrainingStudentTemplate, { isLoading: isDeletingStudent, error: deleteStudentError }] = 
+  const [deleteTrainingStudentTemplate, { isLoading: isDeletingStudent }] =
     useDeleteTrainingStudentTemplateMutation();
-  const [createTrainingStudentTemplate, { error: addStudentError }] = useCreateTrainingStudentTemplateMutation();
+
+  const [createTrainingStudentTemplate] = useCreateTrainingStudentTemplateMutation();
   const [deleteTrainingTemplate, { isLoading: isDeletingTemplate }] = useDeleteTrainingTemplateMutation();
   const [updateTrainingTemplate, { isLoading: isUpdatingTemplate }] = useUpdateTrainingTemplateMutation();
   const [createTrainingTemplate, { isLoading: isCreatingTemplate }] = useCreateTrainingTemplateMutation();
   
-  const { data: allStudents } = useGetStudentsQuery();
-  const { data: trainingTypesData } = useGetTrainingTypesQuery({});
+  const { data: students } = useGetStudentsQuery();
   const { data: trainersData } = useGetTrainersQuery();
   
-  const trainingTypes = trainingTypesData || [];
+
   const trainers = trainersData?.trainers || [];
   
   const { data: templateData, isLoading: isLoadingTemplate } = useGetTrainingTemplateByIdQuery(
@@ -349,7 +338,7 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
 
   const borderColor = templateData.training_type?.color || theme.palette.divider;
   const assignedStudentIds = templateData.assigned_students?.map(s => s.student.id) || [];
-  const availableStudents = allStudents?.filter(student => !assignedStudentIds.includes(student.id)) || [];
+  const availableStudents = students?.filter(student => !assignedStudentIds.includes(student.id)) || [];
 
   return (
     <>

@@ -9,9 +9,7 @@ import {
   Stack,
   Card,
   CardContent,
-  List,
-  ListItem,
-  Divider,
+
   Chip,
   CircularProgress,
   Collapse,
@@ -180,7 +178,7 @@ interface TrainingCardProps {
   time: string;
 }
 
-const TrainingCard: React.FC<TrainingCardProps> = ({ training, day, time }) => {
+const TrainingCard: React.FC<TrainingCardProps> = ({ training, time }) => {
   const [expanded, setExpanded] = React.useState(false);
   
   // Форматируем время из HH:MM:SS в HH:MM
@@ -477,7 +475,7 @@ const MobileCalendarV2Page: React.FC = () => {
   };
 
   const handleViewModeChange = (
-    event: React.SyntheticEvent,
+    _: React.SyntheticEvent,
     newValue: CalendarViewMode,
   ) => {
     setViewMode(newValue);

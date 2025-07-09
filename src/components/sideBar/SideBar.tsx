@@ -1,4 +1,4 @@
-import {Box, List, ListItem, ListItemButton, ListItemIcon, Paper, Toolbar, Typography, useTheme, alpha, IconButton, Tooltip} from "@mui/material";
+import {Box, List, ListItem, ListItemButton, ListItemIcon, Paper, Typography, useTheme, alpha, IconButton, Tooltip} from "@mui/material";
 import {MenuItems} from "../../globalConstants/mainMenu.tsx";
 import {Link} from "react-router-dom";
 import {IMenuItems} from "../../models/mainMenu.ts";

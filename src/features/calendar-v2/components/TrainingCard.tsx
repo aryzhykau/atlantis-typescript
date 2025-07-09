@@ -1,17 +1,10 @@
 import React from 'react';
-import { Paper, Typography, Box, IconButton, useTheme, Divider } from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import dayjs from 'dayjs'; // Нужен для hexToRgb, если он останется здесь
+import { Box, Typography, IconButton, Paper } from '@mui/material';
+import { useTheme, alpha } from '@mui/material/styles';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import SportsIcon from '@mui/icons-material/Sports';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'; // Иконка для кнопки "развернуть"
-// import AccessTimeIcon from '@mui/icons-material/AccessTime'; // Убираем иконку времени
-import { CalendarEvent, isRealTraining, isTrainingTemplate } from './CalendarShell'; // Предполагаем, что CalendarEvent останется в CalendarShell или будет вынесен
-// import { TrainingTemplate } from '../models/trainingTemplate'; // Если CalendarEvent не будет импортироваться
-// import { RealTraining } from '../models/realTraining'; // Если CalendarEvent не будет импортироваться
-
-// Если CalendarEvent не импортируется из CalendarShell, нужно будет его определить здесь:
-// export type CalendarEvent = TrainingTemplate | RealTraining;
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { CalendarEvent, isRealTraining, isTrainingTemplate } from './CalendarShell';
 
 interface TrainingCardProps {
   event: CalendarEvent;
@@ -20,26 +13,6 @@ interface TrainingCardProps {
   showExpandButton?: boolean;
   onExpandClick?: (eventData: CalendarEvent) => void;
 }
-
-// Утилита для преобразования hex в rgb, вынесем для чистоты
-const hexToRgb = (hex: string) => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
-  } : null;
-};
-
-// Функция для определения контрастного цвета текста
-const getContrastColor = (hexColor: string): string => {
-  const rgb = hexToRgb(hexColor);
-  if (!rgb) return '#000000';
-  
-  // Используем формулу яркости для определения контрастности
-  const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
-  return brightness > 140 ? '#000000' : '#ffffff';
-};
 
 const TrainingCard: React.FC<TrainingCardProps> = ({ event, variant = 'full', isInPopover = false, showExpandButton = false, onExpandClick }) => {
   const theme = useTheme();
@@ -251,7 +224,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ event, variant = 'full', is
 
             {isInPopover && studentNames.length > 0 && (
               <>
-                <Divider sx={{my: 0.5, borderColor: alpha(textColor, 0.2)}}/>
+                {/* <Divider sx={{my: 0.5, borderColor: alpha(textColor, 0.2)}}/> */}
                 <Box sx={{ fontSize: '0.7rem', color: 'inherit', mt: 0.5, width: '100%' }}>
                   <Typography variant="body2" sx={{mb:0.5, fontWeight:'medium', color: 'inherit'}}>Участники ({studentNames.length}):</Typography>
                   <Box sx={{maxHeight: '60px', overflowY: 'auto'}}>

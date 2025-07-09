@@ -3,9 +3,9 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
+
 import { useParams, useNavigate } from "react-router-dom";
-import { useGetClientQuery, useUpdateClientMutation } from "../../../../store/apis/clientsApi";
+import { useGetClientQuery } from "../../../../store/apis/clientsApi";
 import { useSnackbar } from "../../../../hooks/useSnackBar";
 import React, { useEffect, useState } from "react";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -14,7 +14,7 @@ import { useClients } from "../../hooks/clientManagementHooks";
 import { ClientInfoCard } from "./ClientInfoCard";
 import { FinancialInfoCard } from "./FinancialInfoCard";
 import { StudentsDataCard } from "./StudentsDataCard";
-import { IStudent } from "../../../students/models/student.ts";
+
 import { ClientInvoicesDataCard } from "./ClientInvoicesDataCard";
 import { useGetClientInvoicesQuery } from "../../../../store/apis/invoices";
 import { InvoiceStatus } from "../../../invoices/models/invoice";
@@ -22,7 +22,7 @@ import { useCancelPaymentMutation, useGetClientPaymentsQuery } from "../../../..
 import { useInvalidateQueries } from "../../../../hooks/useInvalidateQueries";
 import { ClientPaymentsDataCard } from "./ClientPaymentsDataCard";
 import { ClientsForm } from "../ClientsForm";
-import { IClientUserFormValues, IClientUserGet, ClientUpdate } from "../../models/client";
+import { IClientUserFormValues } from "../../models/client";
 import dayjs, { Dayjs } from "dayjs";
 import { useGradients } from "../../../trainer-mobile/hooks/useGradients";
 import { useTheme } from "@mui/material";
@@ -82,6 +82,7 @@ interface StudentFormValuesClientPage {
     first_name: string;
     last_name: string;
     date_of_birth: Dayjs | null;
+    client_id: number | null;
 }
 
 // Базовые начальные значения для формы добавления студента к клиенту
@@ -89,6 +90,7 @@ const baseInitialStudentValuesClientPage: StudentFormValuesClientPage = {
     first_name: '',
     last_name: '',
     date_of_birth: null,
+    client_id: null,
 };
 
 // Компонент статистической карточки
@@ -220,10 +222,9 @@ export function ClientPage() {
 
     // Mutation for creating a student
     const [createStudent, { isLoading: isCreatingStudent }] = useCreateStudentMutation();
-    // Mutation for updating a client
-    const [updateClientMutation, { isLoading: isUpdatingClient }] = useUpdateClientMutation();
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+
+    const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
     };
 
@@ -352,6 +353,7 @@ export function ClientPage() {
                 first_name: '',
                 last_name: client.last_name,
                 date_of_birth: null,
+                client_id: client.id,
             });
         } else {
             setStudentFormInitialValues(baseInitialStudentValuesClientPage);

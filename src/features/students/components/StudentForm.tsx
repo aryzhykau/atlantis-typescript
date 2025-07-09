@@ -3,13 +3,13 @@ import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
-import { Box, Button, CircularProgress, Grid, Typography, Paper, Autocomplete, TextField } from '@mui/material';
+import { Box, Button, CircularProgress, Grid, Typography, Autocomplete, TextField } from '@mui/material';
 import { IStudentUpdatePayload } from '../models/student';
 import PersonIcon from '@mui/icons-material/Person';
 import CakeIcon from '@mui/icons-material/Cake';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
-import { useTheme } from '@mui/material';
+
 import { useGetClientsQuery } from '../../../store/apis/clientsApi';
 import { IClientUserGet } from '../../clients/models/client';
 
@@ -35,15 +35,6 @@ const validationSchema = Yup.object({
 });
 
 type StyledFieldColor = 'primary' | 'success' | 'warning' | 'info';
-
-interface StyledFieldProps {
-    name: string;
-    label: string;
-    icon: React.ReactNode;
-    color?: StyledFieldColor;
-    [key: string]: any;
-}
-
 
 
 export const StudentForm: React.FC<StudentFormProps> = ({ initialValues, onSubmit, onClose, isLoading }) => {

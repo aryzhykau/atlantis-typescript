@@ -5,7 +5,7 @@ import {
 } from '../../../store/apis/clientsApi.ts';
 import {IClientUserGet} from '../models/client.ts';
 import {useEffect, useState} from "react";
-import { IStudent } from '../../students/models/student.ts';
+
 
 export const useClients = () => {
     // Получение списка клиентов

@@ -6,11 +6,6 @@ import {
     Box, 
     Button, 
     Checkbox, 
-    Divider, 
-    FormControlLabel, 
-    IconButton, 
-    Typography,
-    Paper,
     alpha,
     CircularProgress,
     Grid
@@ -25,15 +20,7 @@ import {DatePicker} from "formik-mui-x-date-pickers";
 import {TextField} from "formik-mui";
 import { IClientUserFormValues, ClientUpdate, IClientCreatePayload } from "../models/client.ts";
 import * as Yup from "yup";
-import AddIcon from "@mui/icons-material/Add";
-import CloseIcon from "@mui/icons-material/Close";
-import PersonIcon from "@mui/icons-material/Person";
-import EmailIcon from "@mui/icons-material/Email";
-import PhoneIcon from "@mui/icons-material/Phone";
-import WhatsAppIcon from "@mui/icons-material/WhatsApp";
-import CakeIcon from "@mui/icons-material/Cake";
-import SchoolIcon from "@mui/icons-material/School";
-import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
+
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -66,112 +53,9 @@ interface ClientsFormProps {
 }
 
 // Компонент для красивого поля ввода
-interface StyledFieldProps {
-    name: string;
-    label: string;
-    icon: React.ReactNode;
-    color?: 'primary' | 'success' | 'warning' | 'info';
-    helperText?: string;
-    fullWidth?: boolean;
-    component?: any;
-    variant?: string;
-    views?: string[];
-    textField?: any;
-    inputFormat?: string;
-    InputLabelProps?: any;
-    sx?: any;
-}
 
-const StyledField: React.FC<StyledFieldProps> = ({ 
-    name, 
-    label, 
-    icon, 
-    color = 'primary', 
-    helperText,
-    fullWidth = true,
-    component = TextField,
-    variant = "outlined",
-    ...props 
-}) => {
-    const theme = useTheme();
-    const gradients = useGradients();
-    
-    return (
-        <Paper
-            elevation={0}
-            sx={{
-                p: 2,
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                background: theme.palette.background.paper,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                    boxShadow: theme.shadows[4],
-                    borderColor: alpha(theme.palette[color].main, 0.3),
-                    background: alpha(theme.palette[color].main, 0.02),
-                }
-            }}
-        >
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Box
-                    sx={{
-                        p: 1,
-                        borderRadius: 2,
-                        background: gradients[color],
-                        color: 'white',
-                        mr: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minWidth: 40,
-                        height: 40,
-                    }}
-                >
-                    {icon}
-                </Box>
-                <Typography 
-                    variant="caption" 
-                    sx={{ 
-                        color: 'text.secondary',
-                        fontWeight: 500,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5
-                    }}
-                >
-                    {label}
-                </Typography>
-            </Box>
-            <Box sx={{ pl: 6 }}>
-                <Field
-                    name={name}
-                    component={component}
-                    variant={variant}
-                    fullWidth={fullWidth}
-                    helperText={helperText}
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: theme.palette[color].main,
-                            },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                borderColor: theme.palette[color].main,
-                                borderWidth: 2,
-                            },
-                        },
-                        '& .MuiInputLabel-root.Mui-focused': {
-                            color: theme.palette[color].main,
-                        },
-                    }}
-                    {...props}
-                />
-            </Box>
-        </Paper>
-    );
-};
 
-export function ClientsForm({title, initialValues = defaultValues, isEdit = false, clientId = null, onClose }: ClientsFormProps) {
+export function ClientsForm({initialValues = defaultValues, isEdit = false, clientId = null, onClose }: ClientsFormProps) {
     const {createClient, updateClient, refetchClients} = useClients()
     const {displaySnackbar} = useSnackbar();
     const theme = useTheme();
@@ -278,7 +162,7 @@ export function ClientsForm({title, initialValues = defaultValues, isEdit = fals
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
         >
-            {({isSubmitting, values}: FormikProps<IClientUserFormValues>) => (
+            {({isSubmitting}: FormikProps<IClientUserFormValues>) => (
                 <Form>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                         {/* Основная информация */}
@@ -315,7 +199,7 @@ export function ClientsForm({title, initialValues = defaultValues, isEdit = fals
                                 </Box>
                                 <FieldArray name="students" render={arrayHelpers => (
                                     <Box>
-                                        {arrayHelpers.form.values.students && arrayHelpers.form.values.students.length > 0 && arrayHelpers.form.values.students.map((student: any, index: number) => (
+                                        {arrayHelpers.form.values.students && arrayHelpers.form.values.students.length > 0 && arrayHelpers.form.values.students.map((_: any, index: number) => (
                                             <Grid container spacing={1} alignItems="center" key={index} sx={{ mb: 0.5 }}>
                                                 <Grid item xs={12} sm={3}>
                                                     <Field name={`students[${index}].first_name`} label="Имя" component={TextField} fullWidth variant="outlined" size="small" />

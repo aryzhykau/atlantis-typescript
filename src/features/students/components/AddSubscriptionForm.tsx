@@ -1,7 +1,7 @@
 import React from 'react';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import { Select as FormikSelect, CheckboxWithLabel } from 'formik-mui'; // CheckboxWithLabel может не подойти, посмотрим
+import { Select as FormikSelect } from 'formik-mui';
 import {
     Dialog,
     DialogTitle,
@@ -13,7 +13,7 @@ import {
     FormControl,
     InputLabel,
     FormHelperText,
-    Box,
+
     Checkbox, // Используем обычный Checkbox и FormControlLabel
     FormControlLabel,
     IconButton

@@ -8,8 +8,7 @@ import {
   IconButton,
   Stack,
 } from '@mui/material';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import dayjs, { Dayjs } from 'dayjs';
@@ -21,7 +20,7 @@ import {
   filterEvents, 
   createFilterOptionsFromTemplates, 
   createFilterOptionsFromRealTrainings,
-  mergeFilterOptions 
+ 
 } from '../utils/filterUtils';
 
 // Настраиваем dayjs для работы с ISO неделями (понедельник - воскресенье)
@@ -108,7 +107,7 @@ const CalendarV2Page: React.FC = () => {
   };
 
   const handleViewModeChange = (
-    event: React.SyntheticEvent,
+    _: React.SyntheticEvent,
     newValue: CalendarViewMode,
   ) => {
     setViewMode(newValue);

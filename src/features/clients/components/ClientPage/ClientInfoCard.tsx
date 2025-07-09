@@ -1,22 +1,21 @@
 import React from "react";
 import { 
-    Chip, 
-    Link, 
-    Switch, 
     Box, 
-    Typography, 
     Paper, 
-    IconButton,
+    Typography, 
+    Chip, 
+    useTheme, 
     alpha,
-    Fade,
-    Tooltip
+    Link,
+    Switch,
+ 
 } from "@mui/material";
 import { IClientUserGet } from "../../models/client";
 import dayjs from "dayjs";
 import { useUpdateClientStatusMutation } from "../../../../store/apis/clientsApi";
 import { useSnackbar } from "../../../../hooks/useSnackBar";
 import { useGradients } from "../../../trainer-mobile/hooks/useGradients";
-import { useTheme } from "@mui/material";
+
 
 // Иконки
 import EmailIcon from '@mui/icons-material/Email';
@@ -27,8 +26,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import EditIcon from '@mui/icons-material/Edit';
-import InfoIcon from '@mui/icons-material/Info';
+
 
 interface ClientInfoCardProps {
     client: IClientUserGet;

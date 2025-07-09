@@ -63,12 +63,11 @@ interface SelectedSlotInfo {
 // Мемоизированный компонент для Training Chip (вынесен отдельно для оптимизации)
 const TrainingChip = memo<{ 
   event: CalendarEvent; 
-  index: number; 
   isMobile: boolean; 
   isTablet: boolean;
   onEventClick: (event: CalendarEvent) => void;
   isDragActive?: boolean;
-}>(({ event, index, isMobile, isTablet, onEventClick, isDragActive = false }) => {
+}>(({ event, isMobile, isTablet, onEventClick, isDragActive = false }) => {
   const theme = useTheme();
   
   // Мемоизируем тяжелые вычисления
@@ -499,7 +498,7 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
   
   // Убрали hoveredSlot состояние для улучшения производительности - используем чистый CSS hover
 
-  const handleSlotClick = useCallback((event: React.MouseEvent<HTMLElement>, day: Dayjs, time: string, eventsInSlot: CalendarEvent[]) => {
+  const handleSlotClick = useCallback((_event: React.MouseEvent<HTMLElement>, day: Dayjs, time: string, _eventsInSlot: CalendarEvent[]) => {
     // В режиме шаблонов всегда разрешаем создание новых тренировок (независимо от количества существующих)
     if (viewMode === 'scheduleTemplate') {
       setSelectedSlotInfo({ date: day, time });
@@ -629,8 +628,8 @@ interface CalendarContentProps {
 // Внутренний компонент для работы с drag & drop контекстом
 const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
   const {
-    currentDate, viewMode, templatesData, actualData, isLoading, error,
-    eventsToDisplay, getEventsForSlot, handleTrainingDrop, handleSlotClick,
+    viewMode, templatesData, actualData, isLoading, error,
+    getEventsForSlot, handleTrainingDrop, handleSlotClick,
     handleOpenDetailModal, handleCloseDetailModal, handleCloseForm,
     responsiveStyles, selectedSlotInfo, isFormOpen, isDetailModalOpen,
     selectedEventId, selectedEventType, daysOfWeek, timeSlots,
@@ -911,7 +910,7 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
                         overflow: 'visible',
                         paddingRight: viewMode === 'scheduleTemplate' ? '28px' : '0px', // Место для кнопки "+"
                       }}>
-                        {visibleEvents.map((eventItem, index) => (
+                        {visibleEvents.map((eventItem, _) => (
                           <DraggableTrainingChip
                             key={eventItem.id}
                             event={eventItem}
@@ -920,7 +919,6 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
                           >
                             <TrainingChip 
                               event={eventItem} 
-                              index={index} 
                               isMobile={isMobile}
                               isTablet={isTablet}
                               onEventClick={handleOpenDetailModal}

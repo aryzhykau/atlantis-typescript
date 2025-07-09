@@ -1,4 +1,4 @@
-import React, { memo, useRef, useState } from 'react';
+import React, { memo, useRef } from 'react';
 import { useDrag } from 'react-dnd';
 import { CalendarEvent } from './CalendarShell';
 import { Dayjs } from 'dayjs';

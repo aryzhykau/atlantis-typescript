@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, memo } from 'react';
+import React, { useMemo, memo } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, CircularProgress, 
   TextField as MuiTextField, Typography, AutocompleteRenderInputParams, Chip, IconButton, Box,
@@ -15,7 +15,6 @@ import PersonIcon from '@mui/icons-material/Person';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import GroupIcon from '@mui/icons-material/Group';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import dayjs, { Dayjs } from 'dayjs';
 import { Formik, Form, Field, FormikHelpers, FieldArray } from 'formik';
 import * as Yup from 'yup';
 import { TrainingTemplateCreate, TrainingTemplate } from '../models/trainingTemplate';
@@ -31,6 +30,7 @@ import { ITrainingType } from '../../training-types/models/trainingType';
 import { ITrainerResponse } from '../../trainers/models/trainer';
 import { IStudent } from '../../students/models/student';
 import { useSnackbar } from '../../../hooks/useSnackBar';
+import { Dayjs } from 'dayjs';
 
 interface TrainingTemplateFormProps {
   open: boolean;
@@ -158,7 +158,7 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
           onSubmit={handleSubmit}
           enableReinitialize={false}
         >
-          {({ values, isSubmitting, dirty, isValid, setFieldValue }) => {
+          {({ values, isSubmitting, dirty, isValid }) => {
             // Мемоизируем borderColor чтобы избежать пересчета при каждом рендере
             const borderColor = useMemo(() => 
               values.trainingType?.color || theme.palette.primary.main, 
@@ -377,7 +377,7 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                             
                               {values.studentAssignments && values.studentAssignments.length > 0 ? (
                               <Box sx={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                {values.studentAssignments.map((assignment, index) => (
+                                {values.studentAssignments.map((_, index) => (
                                   <Paper 
                                     key={index} 
                                     sx={styles.paperStyles}

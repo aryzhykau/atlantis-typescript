@@ -1,7 +1,7 @@
 import {GridColDef} from "@mui/x-data-grid";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
-import {IClientGet} from "../../clients/models/client.ts";
+import {IClientUserGet} from "../../clients/models/client.ts";
 
 
 const dateFormater = ( value: never ) => {
@@ -43,7 +43,7 @@ const typeFormatter = (value: never) => {
     }
 }
 
-const userFormatter = (value : IClientGet) => {
+const userFormatter = (value : IClientUserGet) => {
     return value.first_name + " " + value.last_name;
 }
 

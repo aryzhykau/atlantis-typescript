@@ -2,10 +2,10 @@ import { Box, TextField, Button, Paper, Typography, InputAdornment, alpha, FormC
 import { DataGrid, GridRenderCellParams, GridCellParams } from "@mui/x-data-grid";
 import { clientColums } from "../tables/clientsColumns";
 import { useClients } from "../hooks/clientManagementHooks";
-import { useSnackbar } from "../../../hooks/useSnackBar";
+
 import { IClientUserFormValues } from "../models/client";
 import Actions from "../../../components/datagrid/Actions";
-import PersonIcon from '@mui/icons-material/Person';
+
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
@@ -25,8 +25,7 @@ export function ClientsDataGrid({
     onEditClient, 
     onDeleteClient 
 }: ClientsDataGridProps) {
-    const { clients, displayClients, setDisplayClients, isLoadingClients, refetchClients } = useClients();
-    const { displaySnackbar } = useSnackbar();
+    const { clients, displayClients, setDisplayClients, isLoadingClients } = useClients();
     const gradients = useGradients();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';

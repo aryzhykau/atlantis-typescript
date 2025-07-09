@@ -1,6 +1,6 @@
 import { useGetTrainingTemplatesQuery } from '../../../store/apis/calendarApi-v2';
 
-export const useTrainings = (trainerId?: number, startWeek?: string, endWeek?: string) => {
+export const useTrainings = (_?: number, __?: string, ___?: string) => {
   const { data: trainings, isLoading, error } = useGetTrainingTemplatesQuery({});
 
   // Группируем тренировки по датам

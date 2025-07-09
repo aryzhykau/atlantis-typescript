@@ -8,7 +8,7 @@ import { IPayment } from "../../../payments/models/payment";
 import * as Yup from "yup";
 import { TextField } from "formik-mui";
 import CloseIcon from "@mui/icons-material/Close";
-import { useGetClientInvoicesQuery } from "../../../../store/apis/invoices";
+
 interface AddPaymentFormProps {
   initialValues: IPayment;
   client_name: string;

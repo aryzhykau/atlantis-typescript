@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { DataGrid, GridColDef, GridValueGetter } from '@mui/x-data-grid';
-import { Box, Paper, Typography, TextField, Button, Grid, FormControl, InputLabel, Select, MenuItem, useTheme, alpha, Chip, Autocomplete } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { Box, Paper, Typography, useTheme, alpha, Chip } from '@mui/material';
+
+
 import dayjs from 'dayjs';
 import { useGetPaymentHistoryQuery } from '../../../store/apis/paymentsApi';
-import { IPaymentHistoryFilter, IPaymentHistoryItem } from '../models/payment';
-import { TrendingUp, FilterList, Refresh, Payment, Cancel, Receipt } from '@mui/icons-material';
+import { IPaymentHistoryFilter } from '../models/payment';
+import { TrendingUp, Refresh, Payment, Cancel, Receipt } from '@mui/icons-material';
 import { useGetClientsQuery } from '../../../store/apis/clientsApi';
 import { useGetUsersQuery } from '../../../store/apis/userApi';
 import PaymentHistoryFiltersBar from './PaymentHistoryFiltersBar';
@@ -25,16 +24,7 @@ const PaymentHistoryDataGrid: React.FC = () => {
     const { data: clients = [] } = useGetClientsQuery();
     const { data: users = [] } = useGetUsersQuery();
     
-    // Опции для автокомплитов
-    const clientOptions = clients.map(client => ({
-        label: `${client.first_name} ${client.last_name}`,
-        id: client.id
-    }));
 
-    const userOptions = users.map(user => ({
-        label: `${user.first_name} ${user.last_name}`,
-        id: user.id
-    }));
 
     // Отладка данных
     useEffect(() => {
@@ -306,9 +296,9 @@ const PaymentHistoryDataGrid: React.FC = () => {
                         page: Math.floor((filters.skip || 0) / (filters.limit || 50)),
                         pageSize: filters.limit || 50,
                     }}
-                    onPaginationModelChange={(model) => {
+                    onPaginationModelChange={(model: { page: number; pageSize: number }) => {
                         const newSkip = model.page * model.pageSize;
-                        setFilters(prev => ({ 
+                        setFilters((prev: IPaymentHistoryFilter) => ({ 
                             ...prev, 
                             skip: newSkip,
                             limit: model.pageSize

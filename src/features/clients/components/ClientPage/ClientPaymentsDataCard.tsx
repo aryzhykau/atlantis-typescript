@@ -1,9 +1,9 @@
-import { Button, Chip, CircularProgress, Typography } from "@mui/material";
+import { Chip, CircularProgress, Typography } from "@mui/material";
 import { IconButton } from "@mui/material";
 import DoNotDisturbAltIcon from '@mui/icons-material/DoNotDisturbAlt';
 import { Box } from "@mui/material";
 import { IPaymentGet } from "../../../payments/models/payment";
-import { DataGrid, GridRenderCellParams, GridValueFormatter } from "@mui/x-data-grid";
+import { DataGrid, GridRenderCellParams } from "@mui/x-data-grid";
 import dayjs from "dayjs";
 
 interface ClientPaymentsDataCardProps {
