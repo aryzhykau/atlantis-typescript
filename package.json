@@ -21,6 +21,7 @@
     "@react-oauth/google": "^0.12.1",
     "@reduxjs/toolkit": "^2.6.0",
     "@tailwindcss/vite": "^4.0.9",
+    "@testing-library/jest-dom": "^6.6.3",
     "@types/react-color": "^3.0.13",
     "color": "^5.0.0",
     "dayjs": "^1.11.13",

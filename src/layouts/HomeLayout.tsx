@@ -1,10 +1,10 @@
-import {Box, Toolbar, Typography, Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, useTheme, alpha, Tooltip} from "@mui/material";
+import {Box, Toolbar, Typography, Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, useTheme, alpha} from "@mui/material";
 import {IUser} from "../models/user.ts";
 import {MenuItems} from "../globalConstants/mainMenu.tsx";
 import {SideBar} from "../components/sideBar/SideBar.tsx";
 import {useLocation} from "react-router-dom";
 import {IMenuItems} from "../models/mainMenu.ts";
-import {Logout, ChevronLeft, ChevronRight} from "@mui/icons-material";
+import {Logout} from "@mui/icons-material";
 import {useAuth} from "../hooks/useAuth.tsx";
 import {useState, useEffect} from "react";
 import useMobile from "../hooks/useMobile.tsx";

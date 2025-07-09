@@ -33,7 +33,7 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
 
   const currentPage = getCurrentPage();
 
-  const handleNavigation = (event: React.SyntheticEvent, newValue: number) => {
+  const handleNavigation = (_: React.SyntheticEvent, newValue: number) => {
     switch (newValue) {
       case 0:
         navigate('/trainer-mobile/payments');
