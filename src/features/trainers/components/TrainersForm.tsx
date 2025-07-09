@@ -1,183 +1,233 @@
 import * as yup from "yup";
-import {useTrainers} from "../hooks/trainerManagementHooks.ts";
-import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
-import { Field, Form, Formik} from "formik";
-import {Box, Button, Divider, Typography} from "@mui/material";
+import { Form, Formik, Field } from "formik";
+import { Box, Button, Typography, IconButton, Divider } from "@mui/material";
+import { TextField, CheckboxWithLabel } from "formik-mui";
+import { DatePicker } from "formik-mui-x-date-pickers";
+import { ITrainerCreatePayload, ITrainerUpdatePayload, ITrainerResponse } from "../models/trainer.ts";
 
+import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
+import CloseIcon from '@mui/icons-material/Close';
 
-import {TextField, CheckboxWithLabel} from "formik-mui";
-import {AnySchema} from "yup";
-import {ITrainer} from "../models/trainer.ts";
+// Настраиваем dayjs для работы с временными зонами
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
-
-const defaultValues = {
+// Начальные значения для формы СОЗДАНИЯ тренера
+const defaultCreateValues: ITrainerCreatePayload = {
     first_name: "",
     last_name: "",
+    date_of_birth: "",
     email: "",
     phone: "",
     salary: null,
-    fixed_salary: false
+    is_fixed_salary: false,
 };
 
-interface TrainersFormProps {
+// Типы для значений формы внутри Formik
+interface TrainerFormValues {
+    first_name: string;
+    last_name: string;
+    date_of_birth: dayjs.Dayjs | null;
+    email: string;
+    phone: string;
+    salary: number | null | undefined;
+    is_fixed_salary: boolean | null | undefined;
+}
+
+interface TrainerFormProps {
     title?: string;
-    initialValues?: ITrainer;
+    initialValues?: Partial<ITrainerResponse>; 
+    onSubmit: (values: ITrainerCreatePayload | ITrainerUpdatePayload, id?: number) => Promise<void>;
     onClose: () => void;
     isEdit?: boolean;
-    trainerId?: number | null;
-}
-interface TrainerField {
-    name: string; // Field name (key in form values)
-    label: string; // User-facing label
-    validation?: yup.AnySchema; // Optional Yup validation schema
-    type?: string; // Field type (e.g., "text", "email", etc.)
-    isCheckbox?: boolean; // Whether the field is a checkbox
-    group?: string; // Group name for fields (e.g., "contactsGroup")
+    isLoading?: boolean;
+    stickyActions?: boolean;
 }
 
+export function TrainerForm({
+    title = "Добавить тренера",
+    initialValues,
+    onSubmit,
+    onClose,
+    isEdit = false,
+}: TrainerFormProps) {
 
-export function TrainersForm({title, onClose, initialValues = defaultValues,  isEdit = false, trainerId = null, }: TrainersFormProps) {
+    const validationSchema = yup.object({
+        first_name: yup.string().required("Имя обязательно").min(2, "Минимум 2 символа").max(50, "Максимум 50 символов"),
+        last_name: yup.string().required("Фамилия обязательна").min(2, "Минимум 2 символа").max(50, "Максимум 50 символов"),
+        email: yup.string().email("Введите корректный email").required("Email обязателен"),
+        phone: yup.string().required("Телефон обязателен").min(10, "Минимум 10 символов").max(15, "Максимум 15 символов"),
+        date_of_birth: yup.date().nullable().required("Дата рождения обязательна"),
+        salary: yup.number().nullable().min(0, "Зарплата не может быть отрицательной"),
+        is_fixed_salary: yup.boolean().nullable(),
+    });
 
+    const formikInitialValues: TrainerFormValues = isEdit && initialValues
+        ? {
+            first_name: initialValues.first_name || "",
+            last_name: initialValues.last_name || "",
+            email: initialValues.email || "",
+            phone: initialValues.phone || "",
+            date_of_birth: initialValues.date_of_birth ? dayjs(initialValues.date_of_birth) : null,
+            salary: initialValues.salary,
+            is_fixed_salary: initialValues.is_fixed_salary,
+          }
+        : {
+            first_name: defaultCreateValues.first_name,
+            last_name: defaultCreateValues.last_name,
+            date_of_birth: null,
+            email: defaultCreateValues.email,
+            phone: defaultCreateValues.phone,
+            salary: defaultCreateValues.salary,
+            is_fixed_salary: defaultCreateValues.is_fixed_salary,
+          };
 
-
-
-    const {createTrainer, updateTrainer, refetchTrainers} = useTrainers()
-    const {displaySnackbar} = useSnackbar();
-
-
-    const trainerFields = [
-        { name: "first_name", label: "Имя", validation: yup.string().required("Имя обязательно"), group: "nameGroup" },
-        { name: "last_name", label: "Фамилия", validation: yup.string().required("Фамилия обязательна"), group: "nameGroup" }, // Группируем с first_name
-        { name: "email", label: "E-mail", type: "email", validation: yup.string().email("Введите корректный email").required("Email обязателен"), group: "contactsGroup" },
-        { name: "phone", label: "Телефон", validation: yup.string().matches(/^[0-9]{10}$/, "Введите корректный номер").required("Телефон обязателен"), group: "contactsGroup" },
-        { name: "fixed_salary", label: "Фиксированная заплата", isCheckbox: true }, // Группируем с phone
-        { name: "salary", label: "Размер зарплаты" },
-
-    ];
-
-
-    const validationSchema = yup.object(
-        trainerFields.reduce<Record<string, AnySchema>>((acc, field) => {
-            if (field.validation) {
-                acc[field.name] = field.validation;
+    const handleFormSubmit = async (values: TrainerFormValues) => {
+        // Готовим данные для отправки, где date_of_birth - строка
+        const payload: Partial<ITrainerCreatePayload | ITrainerUpdatePayload> = {
+            ...values,
+            date_of_birth: values.date_of_birth ? dayjs(values.date_of_birth).format('YYYY-MM-DD') : undefined,
+            salary: values.salary === undefined ? null : values.salary,
+            is_fixed_salary: values.is_fixed_salary === undefined ? false : (values.is_fixed_salary === null ? false : values.is_fixed_salary),
+        };
+        
+        // Удаляем ключи со значением undefined, чтобы они не отправлялись (важно для PATCH)
+        Object.keys(payload).forEach(key => {
+            if (payload[key as keyof typeof payload] === undefined) {
+                delete payload[key as keyof typeof payload];
             }
-            return acc;
-        }, {})
-    );
+        });
 
-
-    const handleSubmit = async (values: ITrainer ,{resetForm} : {resetForm: () => void}) => {
-        try {
-            console.log(values);
-            const fullData: ITrainer = {...values, role: "TRAINER" }
-            if (isEdit) {
-                if (trainerId === null) throw new Error()
-                await updateTrainer({trainerId: trainerId, trainerData: fullData}).unwrap();
-                displaySnackbar("Тренер обновлен", "success");
-            } else {
-                const createData = {...fullData, active: true}
-                console.log(fullData);
-                await createTrainer({trainerData: createData}).unwrap();
-                displaySnackbar("Тренер создан", "success");
+        if (isEdit && initialValues?.id) {
+            await onSubmit(payload as ITrainerUpdatePayload, initialValues.id);
+        } else {
+            // Для создания, все обязательные поля должны быть, date_of_birth не может быть undefined
+            if (!payload.date_of_birth) {
+                payload.date_of_birth = dayjs().format('YYYY-MM-DD');
             }
-            refetchTrainers();
-            resetForm();
-            onClose();
-        } catch (error: unknown) {
-            const errorMessage =
-                typeof error === "object" &&
-                error !== null &&
-                "data" in error &&
-                "detail" in (error as { data: { detail?: string } }).data
-                    ? (error as { data: { detail?: string } }).data.detail ?? "Что то пошло не так"
-                    : "Что то пошло не так";
-
-            displaySnackbar(errorMessage, "error");
+            await onSubmit(payload as ITrainerCreatePayload);
         }
-    }
-
+    };
 
     return (
-        <>
-            <Formik
-                initialValues={isEdit ? initialValues : defaultValues}
-                validationSchema={validationSchema}
-                onSubmit={handleSubmit}
-            >
-                {({isSubmitting}) => (
-                    <Form>
-                        <Box
-                            display="flex"
-                            flexDirection="column"
-                            gap={2}
-                            padding={3}
-                            bgcolor="paper"
-                            borderRadius={2}
+        <Formik
+            initialValues={formikInitialValues}
+            validationSchema={validationSchema}
+            onSubmit={handleFormSubmit}
+            enableReinitialize 
+        >
+            {({ isSubmitting }: any) => (
+                <Form>
+                    <Box
+                        display="flex"
+                        flexDirection="column"
+                        gap={2}
+                        padding={3}
+                        bgcolor="paper"
+                        borderRadius={2}
+                        position="relative"
+                    >
+                        {/* Кнопка закрытия */}
+                        <IconButton 
+                            onClick={onClose}
+                            sx={{ 
+                                position: "absolute", 
+                                top: 16, 
+                                right: 16
+                            }}
                         >
-                            {/* Заголовок */}
-                            <Typography variant="h4" textAlign="center">{title || "Форма клиента"}</Typography>
-                            <Divider sx = {{my: "16px"}}/>
-                            {/* Поля из trainerFields */}
-                            {Object.entries(
-                                trainerFields.reduce<Record<string, TrainerField[]>>((groups, field) => {
-                                    if (field.group) {
-                                        // Если группа существует, добавляем поле в соответствующую группу
-                                        groups[field.group] = groups[field.group] || [];
-                                        groups[field.group].push(field);
-                                    } else {
-                                        // Поля без группы
-                                        groups[field.name] = [field];
-                                    }
-                                    return groups;
-                                }, {})
-                            ).map(([key, groupFields]: [string, TrainerField[]]) => (
-                                groupFields.length > 1 ? (
-                                    // Если группа содержит более 1 поля, показываем их на одной строке
-                                    <Box key={key} display="flex" gap={2}>
-                                        {groupFields.map((field: TrainerField) => (
-
-                                                <Field
-                                                    key={field.name}
-                                                    type = {field.isCheckbox ? "checkbox": null}
-                                                    component={field.isCheckbox ? CheckboxWithLabel : TextField}
-                                                    name={field.name}
-                                                    label={field.isCheckbox ? {label: field.label} : field.label}
-                                                    fullWidth
-                                                    sx = {{width: "100%"}}
-                                                />
-                                            ))}
-
-                                    </Box>
-                                ) : (
-                                    // Если это поле вне группы, рендерим его как одиночное
-                                    <Field
-                                        key={groupFields[0].name}
-                                        type = {groupFields[0].isCheckbox ? "checkbox": null}
-                                        component={groupFields[0].isCheckbox ? CheckboxWithLabel : TextField}
-                                        name={groupFields[0].name}
-                                        Label={groupFields[0].isCheckbox ? {label: groupFields[0].label} : null}
-                                        label={!groupFields[0].isCheckbox ? groupFields[0].label : null}
-                                        fullWidth
-
-                                    />
-                                )
-                            ))}
-
-
-                            {/* Кнопка */}
-                            <Button
-                                sx={{ mt: 2, height: 50 ,width: "50%", mx: "auto" }}
-                                type="submit"
-                                variant="contained"
-                                color="primary"
-                                disabled={isSubmitting}
-                            >
-                                Сохранить
-                            </Button>
+                            <CloseIcon />
+                        </IconButton>
+                        
+                        {/* Заголовок */}
+                        <Typography variant="h4" textAlign="center">{title}</Typography>
+                        <Divider sx={{ my: "16px" }}/>
+                        
+                        {/* Персональные данные */}
+                        <Typography variant="subtitle1">Персональные данные</Typography>
+                        <Box display="flex" gap={2}>
+                            <Field
+                                name="first_name"
+                                label="Имя"
+                                component={TextField}
+                                variant="outlined"
+                                fullWidth
+                            />
+                            <Field
+                                name="last_name"
+                                label="Фамилия"
+                                component={TextField}
+                                variant="outlined"
+                                fullWidth
+                            />
                         </Box>
-                    </Form>
-                )}
-            </Formik>
-        </>
+
+                        <Field
+                            name="date_of_birth"
+                            label="Дата рождения"
+                            component={DatePicker}
+                            variant="outlined"
+                            fullWidth
+                            views={["year", "month", "day"]}
+                            textField={{helperText: "Укажите дату рождения"}}
+                            inputFormat="dd.MM.yyyy"
+                            InputLabelProps={{shrink: true}}
+                        />
+
+                        {/* Контактная информация */}
+                        <Typography variant="subtitle1">Контактная информация</Typography>
+                        <Box display="flex" gap={2}>
+                            <Field
+                                name="email"
+                                label="E-mail"
+                                type="email"
+                                component={TextField}
+                                variant="outlined"
+                                fullWidth
+                            />
+                            <Field
+                                name="phone"
+                                label="Телефон"
+                                component={TextField}
+                                variant="outlined"
+                                fullWidth
+                            />
+                        </Box>
+
+                        {/* Информация о зарплате */}
+                        <Typography variant="subtitle1">Информация о зарплате</Typography>
+                        <Box display="flex" alignItems="center" gap={2}>
+                            <Field
+                                name="is_fixed_salary"
+                                type="checkbox"
+                                component={CheckboxWithLabel}
+                                Label={{label: "Фиксированная зарплата"}}
+                            />
+                            <Field
+                                name="salary"
+                                label="Размер зарплаты"
+                                type="number"
+                                component={TextField}
+                                variant="outlined"
+                                fullWidth
+                            />
+                        </Box>
+
+                        {/* Кнопка сохранения */}
+                        <Button
+                            sx={{ mt: 3, height: 50, width: "50%", mx: "auto" }}
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            disabled={isSubmitting}
+                        >
+                            Сохранить
+                        </Button>
+                    </Box>
+                </Form>
+            )}
+        </Formik>
     );
 }

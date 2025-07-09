@@ -15,7 +15,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import PhoneIcon from "@mui/icons-material/Phone";
 import EmailIcon from "@mui/icons-material/Email";
 import dayjs from "dayjs";
-import { IClientGet } from "../models/client.ts";
+import { IClientUserGet } from "../../clients/models/client.ts";
 
 export function ClientMobileCard({
                                      client,
@@ -23,10 +23,10 @@ export function ClientMobileCard({
                                      onDelete,
                                      onToggleActive,
                                  }: {
-    client: IClientGet;
+    client: IClientUserGet;
     onEdit: (id: number) => void; // Callback for editing client
     onDelete: (id: number) => void; // Callback for deleting client
-    onToggleActive: (event: React.ChangeEvent<HTMLInputElement>, client: IClientGet) => void; // Callback for toggling active status
+    onToggleActive: (event: React.ChangeEvent<HTMLInputElement>, client: IClientUserGet) => void; // Callback for toggling active status
 }) {
     return (
         <Accordion
@@ -35,7 +35,7 @@ export function ClientMobileCard({
                 borderRadius: 3,
                 marginBottom: 0,
                 border: "1px solid",
-                borderColor: client.active ? "#4caf50" : "#f44336", // Sporty colors for active/inactive
+                borderColor: client.is_active ? "#4caf50" : "#f44336", // Sporty colors for active/inactive
                 "&:before": { display: "none" },
  // Gradient when active
             }}
@@ -147,10 +147,10 @@ export function ClientMobileCard({
                 <Box display="flex" flexDirection="column" gap={1} my={2}>
                     <Typography variant="caption">
                         Birth Date:{" "}
-                        {client.birth_date
-                            ? dayjs(client.birth_date).format("DD.MM.YYYY")
+                        {client.date_of_birth
+                            ? dayjs(client.date_of_birth).format("DD.MM.YYYY")
                             : "Not Specified"}
-                        {client.is_birthday && (
+                        {client.date_of_birth && dayjs(client.date_of_birth).isSame(dayjs(), 'day') && (
                             <Chip
                                 label="🎉 Birthday Today!"
                                 size="small"
@@ -161,13 +161,9 @@ export function ClientMobileCard({
                     </Typography>
                     <Typography variant="caption">
                         Google Authenticated:{" "}
-                        {client.google_authenticated ? "Yes" : "No"}
+                        {client.is_authenticated_with_google ? "Yes" : "No"}
                     </Typography>
-                    {client.parent_name && (
-                        <Typography variant="caption">
-                            Parent: {client.parent_name}
-                        </Typography>
-                    )}
+
                 </Box>
 
                 <Divider />
@@ -180,10 +176,10 @@ export function ClientMobileCard({
                     mt={2}
                 >
                     <Typography variant="body2" fontWeight="bold">
-                        Status: {client.active ? "Активен" : "Деактивирован"}
+                        Status: {client.is_active ? "Активен" : "Деактивирован"}
                     </Typography>
                     <Switch
-                        checked={client.active}
+                        checked={client.is_active ?? false}
                         onChange={(event ) => onToggleActive(event, client)}
                         color="primary"
                     />

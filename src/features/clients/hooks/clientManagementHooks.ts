@@ -1,9 +1,11 @@
 import {
     useGetClientsQuery,
-    useCreateClientMutation, useUpdateClientMutation, useDeleteClientMutation, useAddClientSubscriptionMutation,
+    useCreateClientMutation, useUpdateClientMutation, useDeleteClientMutation,
+    useGetClientStudentsQuery,
 } from '../../../store/apis/clientsApi.ts';
-import {IClientGet} from '../models/client.ts';
+import {IClientUserGet} from '../models/client.ts';
 import {useEffect, useState} from "react";
+
 
 export const useClients = () => {
     // Получение списка клиентов
@@ -14,7 +16,7 @@ export const useClients = () => {
         error: clientsError,
         refetch: refetchClients,
     } = useGetClientsQuery(undefined, {refetchOnMountOrArgChange: true});
-    const [displayClients, setDisplayClients] = useState<IClientGet[]>([]);
+    const [displayClients, setDisplayClients] = useState<IClientUserGet[]>([]);
 
     useEffect(() => {setDisplayClients(clients)}, [clients])
     // Мутация создания клиента
@@ -25,14 +27,21 @@ export const useClients = () => {
         isSuccess: isCreateSuccess
     }] = useCreateClientMutation();
 
+    // Функция для получения студентов клиента
+    const getClientStudents = (clientId: number) => {
+        return useGetClientStudentsQuery(clientId, {
+            refetchOnMountOrArgChange: true,
+            skip: !clientId,
+        });
+    };
 
-    const [addClientSubscription, {
-        isLoading: isAddSubscriptionLoading,
-        isSuccess: isAddSubscriptionSuccess,
-        isError: isAddSubscriptionError,
-        data: addClientSubscriptionData,
-        error: addClientSubscriptionError,
-    }] = useAddClientSubscriptionMutation()
+    // const [addClientSubscription, {
+    //     isLoading: isAddSubscriptionLoading,
+    //     isSuccess: isAddSubscriptionSuccess,
+    //     isError: isAddSubscriptionError,
+    //     data: addClientSubscriptionData,
+    //     error: addClientSubscriptionError,
+    // }] = useAddClientSubscriptionMutation()
     //Client update mutation
     const [updateClient, {
         isLoading: isUpdatingClient,
@@ -42,7 +51,6 @@ export const useClients = () => {
     }] = useUpdateClientMutation();
 
     const [deleteClient, {isLoading: isDeletingClient, isError: isDeleteError, error: deleteClientError, isSuccess: isDeleteSuccess}] = useDeleteClientMutation();
-
 
     // Функция-обертка для удаления клиента
     // const removeClient = async (clientId: number) => {
@@ -57,7 +65,7 @@ export const useClients = () => {
     return {
         // Данные клиентов
         clients,
-        addClientSubscriptionData,
+        //addClientSubscriptionData,
         displayClients,
         setDisplayClients,
 
@@ -66,34 +74,35 @@ export const useClients = () => {
         createClient,
         updateClient,
         deleteClient,
-        addClientSubscription,
+        //addClientSubscription,
         refetchClients,
+        getClientStudents,
 
         // Состояния загрузки для клиентов
         isLoadingClients,
-        isAddSubscriptionLoading,
+        //isAddSubscriptionLoading,
         isCreatingClient,
         isUpdatingClient,
         isDeletingClient,
 
         // Состояния ошибки
         isErrorClients,
-        isAddSubscriptionError,
+        //isAddSubscriptionError,
         isCreateError,
         isUpdateError,
         isDeleteError,
 
         //Успешные состояния
         isCreateSuccess,
-        isAddSubscriptionSuccess,
+        //isAddSubscriptionSuccess,
         isUpdateSuccess,
         isDeleteSuccess,
 
         //Сами ошибки
         clientsError,
-        addClientSubscriptionError,
+        //addClientSubscriptionError,
         clientUpdateError,
         createClientError,
-        deleteClientError
+        deleteClientError,
     };
 };

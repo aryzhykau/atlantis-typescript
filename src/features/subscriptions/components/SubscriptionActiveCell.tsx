@@ -1,41 +1,41 @@
 import Switch from "@mui/material/Switch";
 import {GridRenderCellParams} from "@mui/x-data-grid";
-import {useSubscriptions} from "../hooks/useSubscriptions.ts";
+import { useUpdateSubscriptionMutation } from "../../../store/apis/subscriptionsApi.ts";
+import { ISubscriptionResponse, ISubscriptionUpdatePayload } from "../models/subscription.ts";
 import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
 
-
-
 interface ISubscriptionActiveCellProps {
-    params: GridRenderCellParams;
+    params: GridRenderCellParams<ISubscriptionResponse>;
 }
 
 const SubscriptionActiveCell: React.FC<ISubscriptionActiveCellProps> = ({params}) => {
-    const {updateSubscription, refetchSubscriptions} = useSubscriptions();
+    const [updateSubscription, {isLoading}] = useUpdateSubscriptionMutation();
     const {displaySnackbar} = useSnackbar();
 
+    const subscription = params.row;
+
     return <Switch
-        checked={Boolean(params.row.active)}
+        checked={Boolean(subscription.is_active)}
+        disabled={isLoading}
         onChange={async (e) => {
             const isActive = e.target.checked;
+            const payload: ISubscriptionUpdatePayload = { is_active: isActive };
             try {
                 await updateSubscription({
-                    subscriptionId: Number(params.row.id),
-                    subscriptionData: {...params.row, active: isActive }
+                    id: subscription.id,
+                    payload: payload
                 }).unwrap();
-                await refetchSubscriptions();
                 if(isActive) {
-                    displaySnackbar("Подписка доступна клиентам", "success")
+                    displaySnackbar("Статус абонемента обновлен: Активен", "success")
                 }
                 else {
-                    displaySnackbar("Подписка недоступна клиентам", "success");
+                    displaySnackbar("Статус абонемента обновлен: Неактивен", "success");
                 }
             }
-            catch (e: unknown) {
-                console.log(e)
-                displaySnackbar(
-                    "Ошибка при изменении состояния активности клиента",
-                    "error"
-                );
+            catch (err: unknown) {
+                console.error("Ошибка при изменении статуса абонемента:", err);
+                const errorDetail = (err as any)?.data?.detail || 'Ошибка при изменении статуса';
+                displaySnackbar(String(errorDetail), "error");
             }
         }}
         color="primary"

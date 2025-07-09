@@ -1,22 +1,6 @@
 import {GridColDef} from "@mui/x-data-grid";
 import TrainingTypeColorCircle from "../components/TrainingTypeColorCircle.tsx";
-
-const dateFormater = ( value: never ) => {
-
-    if (value === undefined || value === null) {
-        return "Не указана дата";
-    }
-
-    const date = new Date(value);
-
-    if (isNaN(date.getTime())) return "Неверная дата"; // Если дата некорректная
-
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-
-    return `${day}.${month}.${year}`;
-}
+import { Chip } from "@mui/material";
 
 
 const priceFormatter = (value: never) => {
@@ -29,10 +13,22 @@ const priceFormatter = (value: never) => {
 
 
 export const trainingTypeColumns: GridColDef[] = [
-    {field: 'color', headerName: "#", width:30, align: "center", display: "flex", renderCell: params => <TrainingTypeColorCircle circleColor={params.row.color}/>},
-    {field: 'title', headerName: 'Название', flex: 1},
+    {field: 'color', headerName: "#", headerAlign: "center", width:30, align: "center", display: "flex", renderCell: params => <TrainingTypeColorCircle circleColor={params.row.color}/>},
+    {field: 'name', headerName: 'Название', flex: 1},
     {field: 'price', headerName: 'Стоимость', width: 100, valueFormatter: priceFormatter},
-    {field: 'require_subscription', headerName: 'Требуется подписка', type: 'boolean', flex: 1},
-    {field: 'created_at', headerName: 'Создан', width: 80, valueFormatter: dateFormater},
-    {field: 'updated_at', headerName: 'Обновлен', width: 80, valueFormatter: dateFormater},
+    {field: 'max_participants', headerName: 'Макс. учеников', width: 100},
+    {
+        field: 'is_subscription_only',
+        headerName: 'Только по подписке',
+        type: 'boolean',
+        flex: 1,
+        renderCell: (params) => (
+            <Chip
+                label={params.value ? "Да" : "Нет"}
+                color={params.value ? "primary" : "default"}
+                size="small"
+                variant="outlined"
+            />
+        )
+    },
 ];

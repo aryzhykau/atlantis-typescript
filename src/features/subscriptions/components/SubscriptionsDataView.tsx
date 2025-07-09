@@ -1,114 +1,91 @@
-import {Box, Modal, Typography} from "@mui/material";
-import {DataGrid, GridRenderCellParams} from "@mui/x-data-grid";
+import {Box, Button, Dialog, DialogContent, Typography} from "@mui/material";
+import {DataGrid, GridRenderCellParams, GridColDef} from "@mui/x-data-grid";
 import SubscriptionForm from "./SubscriptionForm.tsx";
 import {useState} from "react";
-import {useSubscriptions} from "../hooks/useSubscriptions.ts";
+import {
+    useGetSubscriptionsQuery
+} from "../../../store/apis/subscriptionsApi.ts";
 import {subscriptionsColumns} from "../tables/subscriptionsColumns.tsx";
-import {ISubscription, ISubscriptionGet} from "../models/subscription.ts";
-import Actions from "../../../components/datagrid/Actions.tsx";
+import { ISubscriptionResponse, ISubscriptionCreatePayload } from "../models/subscription.ts";
 import CreateEntityButton from "../../../components/buttons/CreateEntityButton.tsx";
-import {SubscriptionDeleteModal} from "./SubscriptionDeleteModal.tsx";
-import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
 
 
-const style = {
-    position: "absolute",
-    width: "35%",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    bgcolor: "background.paper",
-    p: 4,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-};
 
-const subscriptionInitialValues = {title: "", price: 0, active: true, duration: 30, total_sessions: 1}
+const subscriptionInitialValues: ISubscriptionCreatePayload = {name: "", price: 0, is_active: true, validity_days: 30, number_of_sessions: 1}
 
 export function SubscriptionsDataView() {
-    const [modalOpen, setModalOpen] = useState<boolean>(false);
-    const {subscriptions, isLoading, deleteSubscription, refetchSubscriptions} = useSubscriptions();
-    const [subscriptionId, setSubscriptionId] = useState<number>(0);
-    const [formInitValues, setFormInitValues] = useState<ISubscription>(subscriptionInitialValues)
+    const [formModalOpen, setFormModalOpen] = useState<boolean>(false);
+
+
+    const {data: subscriptionsData, isLoading, isError, error} = useGetSubscriptionsQuery();
+    const subscriptions = subscriptionsData?.items || [];
+
+
+
+    const [subscriptionId, setSubscriptionId] = useState<number | null>(null);
+    const [formInitValues, setFormInitValues] = useState<Partial<ISubscriptionResponse>>(subscriptionInitialValues)
     const [isCreating, setIsCreating] = useState<boolean>(true);
-    const [isDeleting, setIsDeleting] = useState<boolean>(false);
-    const {displaySnackbar} = useSnackbar();
 
 
     const handleCreateButtonClick = () => {
         setIsCreating(true)
-        setSubscriptionId(0);
+        setSubscriptionId(null);
         setFormInitValues(subscriptionInitialValues);
-        setModalOpen((prev) => !prev)
+        setFormModalOpen(true);
     }
-    const handleEdit = (row: ISubscriptionGet) => {
-        console.log('Edit:', row);
+    const handleEdit = (row: ISubscriptionResponse) => {
         setSubscriptionId(row.id);
-        setFormInitValues({
+        const initialData: Partial<ISubscriptionResponse> = {
+            name: row.name,
             price: row.price,
-            title: row.title,
-            duration: row.duration,
-            active: row.active,
-            total_sessions: row.total_sessions,
-        })
+            validity_days: row.validity_days,
+            is_active: row.is_active,
+            number_of_sessions: row.number_of_sessions,
+            id: row.id
+        };
+        setFormInitValues(initialData);
         setIsCreating(false);
-        setModalOpen((prev) => !prev)
-        // Add your logic for editing here
+        setFormModalOpen(true);
     };
 
-    const handleDelete = (id: number) => {
-        console.log('Delete ID:', id);
-        setIsDeleting(true);
-        setSubscriptionId(id);
-        setModalOpen(true);
-    };
-
-    const handleCancel = () => {
-        setIsDeleting(false);
-        setModalOpen(false);
-    }
-
-    const handleDeleteConfirm = async () => {
-        try {
-            await deleteSubscription({subscriptionId}).unwrap();
-            await refetchSubscriptions();
-            setIsDeleting(false);
-            setModalOpen(false);
-            displaySnackbar("Yes", "success")
-        }
-        catch (e: unknown) {
-            console.log(e)
-            displaySnackbar("No", "error")
-
-        }
-
-    }
 
 
     const onFormClose = () => {
-        setModalOpen(false)
+        setFormModalOpen(false);
+        setSubscriptionId(null);
     }
 
-    const extendedSubscriptionsColumns = subscriptionsColumns.map((column) => column);
-    extendedSubscriptionsColumns.push(
+    const extendedSubscriptionsColumns: GridColDef<ISubscriptionResponse>[] = [
+        ...subscriptionsColumns,
         {
-            field: 'actions',
-            headerName: 'Действия',
+            field: 'editAction',
+            headerName: 'Изменить',
             width: 100,
+            align: 'center',
+            headerAlign: 'center',
             sortable: false,
-            renderCell: (params: GridRenderCellParams) => (
-                <Actions params={params} handleDelete={handleDelete} handleEdit={handleEdit} />
+            filterable: false,
+            disableColumnMenu: true,
+            renderCell: (params: GridRenderCellParams<ISubscriptionResponse>) => (
+                <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleEdit(params.row)}
+                >
+                    Edit
+                </Button>
             ),
-        },
-    )
+        }
+    ]
+
+    if (isError) {
+        return <Typography color="error">Ошибка загрузки абонементов: {JSON.stringify(error)}</Typography>;
+    }
 
     return (
-        <>
-            <Box width={"49%"}>
-                <Box display={"flex"} justifyContent={"flex-start"} alignItems={"center"} flexDirection={"column"}>
-
-                    <Box mb={6} display={"flex"} justifyContent={"space-between"} alignItems={"center"} sx={{ width: '100%' }}>
+        <Box width="49%" display="flex" flexDirection="column">
+            <Box display={"flex"} justifyContent={"flex-start"} alignItems={"center"} flexDirection={"column"} sx={{width: "100%"}}>
+                <Box mb={2} display={"flex"} justifyContent={"space-between"} alignItems={"center"} sx={{ width: '100%' }}>
                         <Typography variant={"h5"}>Абонементы</Typography>
                         <CreateEntityButton onClick={handleCreateButtonClick}>
                             Добавить абонемент
@@ -118,8 +95,7 @@ export function SubscriptionsDataView() {
                         rows={subscriptions}
                         columns={extendedSubscriptionsColumns}
                         loading={isLoading}
-
-                        pageSizeOptions={[10]}
+                    pageSizeOptions={[10, 25, 50]}
                         initialState={{
                             pagination: {
                                 paginationModel: {
@@ -128,28 +104,34 @@ export function SubscriptionsDataView() {
                             },
                         }}
                         disableRowSelectionOnClick
+                    autoHeight
                         sx={{
-
                             width: '100%',
+                        borderRadius: 1,
                             '& .MuiDataGrid-row:hover': {
                                 backgroundColor: (theme) => theme.palette.background.paper,
                             },
                         }}
-                        getRowId={(row) => row.id}
+                    getRowId={(row: ISubscriptionResponse) => row.id}
                     />
-                </Box>
             </Box>
-            <Modal
-                open={modalOpen}
-                onClose={handleCancel}
-                aria-labelledby="modal-title"
-                aria-describedby="modal-description"
+            <Dialog
+                open={formModalOpen}
+                onClose={onFormClose}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{ sx: { m: { xs: 1, sm: 2 }, borderRadius: 2 } }}
+                aria-labelledby="dialog-title-subscription-form"
             >
-                <Box sx={style}>
-                    {isDeleting ? (<SubscriptionDeleteModal onConfirm={handleDeleteConfirm} onCancel={handleCancel}/>) :
-                        (<SubscriptionForm isCreating={isCreating} id={subscriptionId} initialValues={formInitValues} onClose={onFormClose} />)}
+                <DialogContent sx={{ p: 0, '&:first-of-type': { pt: 0 } }}>
+                     <SubscriptionForm
+                        isCreating={isCreating}
+                        initialValues={formInitValues}
+                        onClose={onFormClose}
+                        key={subscriptionId || 'new'}
+                     />
+                </DialogContent>
+            </Dialog>
                 </Box>
-            </Modal>
-        </>
     )
 }

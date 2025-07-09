@@ -1,38 +1,30 @@
-import {Dayjs} from "dayjs";
-
-export interface ITrainingClient {
-    client_id: number | null;
-    trial_training?: boolean;
-}
 export interface ITraining {
-    trainer_id: number | null;
-    training_date?: Dayjs | string| null | undefined;
-    training_time?: Dayjs | string| null | undefined;
-    training_type_id: string | null;
-    clients: ITrainingClient[];
+  id: number;
+  title: string;
+  description?: string;
+  start_time: string;
+  end_time: string;
+  trainer_id: number;
+  training_type_id: number;
+  max_participants?: number;
+  students?: ITrainingStudent[];
+  training_datetime?: string; // Для обратной совместимости
 }
 
-
-
-export interface ITrainingGet {
-    id: number
-    trainer_id: number
-    created_at: Dayjs | string | null | undefined
-    training_type_id: number
-    training_datetime: string
-    clients: ITrainingClientGet[]
+export interface ITrainingGet extends ITraining {
+  created_at: string;
+  updated_at: string;
 }
 
-export interface ITrainingClientGet {
-    trial_training: boolean
-    invoice_id: number
-    client: ITrainingClientObject
-}
-
-export interface ITrainingClientObject {
-    first_name: string
-    last_name: string
-    email: string
-    phone: string
-    birth_date: string
-}
+export interface ITrainingStudent {
+  id: number;
+  student_id: number;
+  training_id: number;
+  attendance_status: string;
+  student?: {
+    id: number;
+    name: string;
+    email: string;
+    birth_date?: string; // Добавляем поле для обратной совместимости
+  };
+} 

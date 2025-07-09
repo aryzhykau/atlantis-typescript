@@ -3,18 +3,18 @@ import PersonIcon from "@mui/icons-material/Person";
 import SportsIcon from '@mui/icons-material/Sports';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PoolIcon from '@mui/icons-material/Pool';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PaymentsIcon from '@mui/icons-material/Payments';
+import SchoolIcon from '@mui/icons-material/School';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import {ClientsLayout} from "../layouts/clients/Clients.tsx";
-import {TrainersLayout} from "../layouts/trainers/Trainers.tsx";
+import { TrainersListPage } from "../features/trainers/components/TrainersListPage.tsx";
 import {DashboardLayout} from "../layouts/Dashboard.tsx";
 import { TrainingSettings } from "../layouts/trainingTypesSubscriptions/TrainingSettings.tsx";
 import {MobileClientsLayout} from "../layouts/clients/MobileClients.tsx";
-import Calendar from "../layouts/calendar/Calendar.tsx";
-
 import InvoicesPayments from "../layouts/invoicesPyaments/InvoicesPayments.tsx";
-
-
+import { StudentsListPage } from '../features/students/components/StudentsListPage.tsx';
+import CalendarV2Page from "../features/calendar-v2/components/CalendarV2Page.tsx";
+import MobileCalendarV2Page from "../features/calendar-v2/components/MobileCalendarV2Page.tsx";
 
 export const MenuItems: IMenuItems[] = [
     {
@@ -32,11 +32,18 @@ export const MenuItems: IMenuItems[] = [
         mobilePage: <MobileClientsLayout/>
     },
     {
+        title: "Ученики",
+        link: "students",
+        icon: <SchoolIcon/>,
+        page: <StudentsListPage/>,
+        mobilePage: <StudentsListPage/>
+    },
+    {
         title: "Тренеры",
         link: "trainers",
         icon: <SportsIcon/>,
-        page: <TrainersLayout/>,
-        mobilePage: <></>
+        page: <TrainersListPage/>,
+        mobilePage: <TrainersListPage/>
     },
     {
         title: "Тренировки и абонементы",
@@ -46,17 +53,17 @@ export const MenuItems: IMenuItems[] = [
         mobilePage: <></>
     },
     {
-        title: "Календарь",
-        link: "calendar",
-        icon: <CalendarMonthIcon/>,
-        page: <Calendar/>,
-        mobilePage: <></>
-    },
-    {
         title: "Платежи",
         link: "invoices",
         icon: <PaymentsIcon/>,
         page: <InvoicesPayments/>,
         mobilePage: <></>
+    },
+    {
+        title: "Календарь",
+        link: "calendar",
+        icon: <CalendarTodayIcon />,
+        page: <CalendarV2Page />,
+        mobilePage: <MobileCalendarV2Page />
     }
 ];

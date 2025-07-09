@@ -1,7 +1,7 @@
 import {GridColDef} from "@mui/x-data-grid";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
-
+import dayjs from "dayjs";
 const fieldWidth = 150;
 
 export const trainerColums: GridColDef[] = [
@@ -27,6 +27,15 @@ export const trainerColums: GridColDef[] = [
         sortable: true,
     },
     {
+        field: "date_of_birth",
+        headerName: "Дата рождения",
+        width: fieldWidth,
+        sortable: true,
+        valueFormatter: (value) => {
+            return value ? dayjs(value).format("DD.MM.YYYY") : "Нет данных";
+        }
+    },
+    {
         field: "phone",
         headerName: "Телефон",
         width: fieldWidth,
@@ -46,7 +55,7 @@ export const trainerColums: GridColDef[] = [
         sortable: true,
     },
     {
-        field: "fixed_salary",
+        field: "is_fixed_salary",
         headerName: "Фиксированная зарплата",
         align: 'center',
         display: "flex",

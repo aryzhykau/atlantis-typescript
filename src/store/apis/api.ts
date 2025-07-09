@@ -57,5 +57,18 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const baseApi = createApi({
     baseQuery: baseQueryWithReauth,
     endpoints: () => ({}),
-    tagTypes: ['Client', 'Trainer', 'User'], // можно перечислить все типы данных
+    tagTypes: [
+        'Client', 
+        'Trainer', 
+        'User', 
+        'Subscription', 
+        'StudentSubscriptions', 
+        'Students', 
+        'TrainingType',
+        'TrainingTemplateV2',
+        'TrainingStudentTemplateV2',
+        'RealTrainingV2',
+        'Payment',
+        'TrainerStats',
+    ],
 });

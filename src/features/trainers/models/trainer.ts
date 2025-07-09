@@ -1,18 +1,67 @@
+// import dayjs from "dayjs"; // dayjs не используется в новых интерфейсах напрямую, даты будут строками или Dayjs на уровне форм
 
-export interface ITrainer {
+// Enum для ролей пользователя, соответствует UserRole из openapi.json
+export enum UserRole {
+    CLIENT = "CLIENT",
+    TRAINER = "TRAINER",
+    ADMIN = "ADMIN",
+}
+
+// Базовые данные тренера, общие для создания и ответа
+export interface ITrainerCoreData {
     first_name: string;
     last_name: string;
-    active?: boolean;
+    date_of_birth: string; // Формат 'YYYY-MM-DD' как в API
     email: string;
     phone: string;
-    salary: number | null;
-    fixed_salary: boolean;
-    role?: string | null;
 }
-export interface ITrainerGet extends ITrainer {
+
+// Интерфейс для ответа API при запросе данных тренера (GET /trainers/{trainer_id} или из списка)
+// Соответствует схеме TrainerResponse из openapi.json
+export interface ITrainerResponse extends ITrainerCoreData {
     id: number;
-    created_at: string;
-    google_authenticated: boolean;
+    role: UserRole;
+    is_authenticated_with_google: boolean;
+    salary: number | null;
+    is_fixed_salary: boolean | null;
+    is_active: boolean | null;
+    deactivation_date: string | null; // Формат 'YYYY-MM-DDTHH:mm:ss.sssZ' или аналогичный ISO date-time
+}
+
+// Интерфейс для payload при СОЗДАНИИ тренера (POST /trainers/)
+// Соответствует схеме TrainerCreate из openapi.json
+export interface ITrainerCreatePayload extends ITrainerCoreData {
+    salary?: number | null; // Опционально, т.к. в схеме есть default для is_fixed_salary, а salary может быть null
+    is_fixed_salary?: boolean; // Опционально, default: false в API
+}
+
+// Интерфейс для payload при ОБНОВЛЕНИИ тренера (PATCH /trainers/{trainer_id})
+// Соответствует схеме TrainerUpdate из openapi.json
+// Все поля опциональны
+export interface ITrainerUpdatePayload {
+    first_name?: string | null;
+    last_name?: string | null;
+    date_of_birth?: string | null; // Формат 'YYYY-MM-DD'
+    email?: string | null;
+    phone?: string | null;
+    salary?: number | null;
+    is_fixed_salary?: boolean | null;
+    is_active?: boolean | null;
+}
+
+// Интерфейс для ответа API при запросе списка тренеров (GET /trainers/)
+// Соответствует схеме TrainersList из openapi.json
+export interface ITrainersList {
+    trainers: ITrainerResponse[];
+    // В openapi.json для TrainersList нет поля total, в отличие от InvoiceList или SubscriptionList.
+    // Если API его не возвращает, то и здесь его быть не должно.
+    // Если бы было, добавили бы: total: number;
+}
+
+// Интерфейс для payload при ОБНОВЛЕНИИ СТАТУСА (PATCH /trainers/{trainer_id}/status)
+// Соответствует схеме StatusUpdate из openapi.json
+export interface IStatusUpdatePayload {
+    is_active: boolean;
 }
 
 
