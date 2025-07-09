@@ -1,6 +1,5 @@
 import {IInvoiceGet, IInvoiceGetResponse} from "../../features/invoices/models/invoice.ts";
 import {baseApi} from "./api.ts";
-import {BaseQueryMeta, BaseQueryResult} from "@reduxjs/toolkit/query";
 import dayjs from "dayjs";
 
 export const invoicesApi = baseApi.injectEndpoints({

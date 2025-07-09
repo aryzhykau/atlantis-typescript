@@ -21,7 +21,7 @@ export const studentsApi = baseApi.injectEndpoints({
         }),
         getStudentById: builder.query<IStudent, number>({
             query: (id) => `/students/${id}`,
-            providesTags: (result, error, id) => [{ type: 'Students', id }],
+            providesTags: (_, __, id) => [{ type: 'Students', id }],
         }),
         createStudent: builder.mutation<IStudent, IStudentCreatePayload>({
             query: (studentData) => ({
@@ -37,7 +37,7 @@ export const studentsApi = baseApi.injectEndpoints({
                 method: 'PATCH',
                 body: studentData,
             }),
-            invalidatesTags: (result, error, { id }) => [{ type: 'Students', id }, { type: 'Students', id: 'LIST' }, {type: 'Client', id: 'LIST'}],
+            invalidatesTags: (_, __, { id }) => [{ type: 'Students', id }, { type: 'Students', id: 'LIST' }, {type: 'Client', id: 'LIST'}],
         }),
         updateStudentStatus: builder.mutation<IStudentStatusResponse, { id: number; statusData: IStudentStatusUpdatePayload }>({
             query: ({ id, statusData }) => ({
@@ -45,7 +45,7 @@ export const studentsApi = baseApi.injectEndpoints({
                 method: 'PATCH',
                 body: statusData,
             }),
-            invalidatesTags: (result, error, { id }) => [{ type: 'Students', id }, { type: 'Students', id: 'LIST' }, {type: 'Client', id: 'LIST'}],
+            invalidatesTags: (_, __, { id }) => [{ type: 'Students', id }, { type: 'Students', id: 'LIST' }, {type: 'Client', id: 'LIST'}],
         }),
         // Эндпоинт getClientStudents остается в clientsApi.ts, чтобы не дублировать
         // и не ломать существующую логику ClientPage.

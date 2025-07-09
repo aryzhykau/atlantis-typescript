@@ -24,7 +24,7 @@ export const subscriptionsApi = baseApi.injectEndpoints({
         }),
         getSubscriptionById: builder.query<ISubscriptionResponse, number>({
             query: (id) => `/subscriptions/${id}`,
-            providesTags: (result, error, id) => [{ type: 'Subscription', id }],
+            providesTags: (_, __, id) => [{ type: 'Subscription', id }],
         }),
         createSubscription: builder.mutation<ISubscriptionResponse, ISubscriptionCreatePayload>({
             query: (payload) => ({
@@ -40,18 +40,18 @@ export const subscriptionsApi = baseApi.injectEndpoints({
                 method: 'PATCH',
                 body: payload,
             }),
-            invalidatesTags: (result, error, { id }) => [{ type: 'Subscription', id }, { type: 'Subscription', id: 'LIST' }],
+            invalidatesTags: (_, __, { id }) => [{ type: 'Subscription', id }, { type: 'Subscription', id: 'LIST' }],
         }),
         deleteSubscription: builder.mutation<void, { subscriptionId: number }>({
             query: ({ subscriptionId }) => ({
                 url: `/subscriptions/${subscriptionId}`,
                 method: 'DELETE',
             }),
-            invalidatesTags: (result, error, { subscriptionId }) => [{ type: 'Subscription', id: subscriptionId }, { type: 'Subscription', id: 'LIST' }],
+            invalidatesTags: (_, __, { subscriptionId }) => [{ type: 'Subscription', id: subscriptionId }, { type: 'Subscription', id: 'LIST' }],
         }),
         getStudentSubscriptions: builder.query<IStudentSubscriptionResponse[], { studentId: number }>({
             query: ({ studentId }) => `/subscriptions/student/${studentId}`,
-            providesTags: (result, error, { studentId }) => 
+            providesTags: (result, __, { studentId }) => 
                 result
                     ? [
                         ...result.map(({ id }) => ({ type: 'StudentSubscriptions' as const, id: id.toString() + '-student-' + studentId.toString() })),
@@ -85,7 +85,7 @@ export const subscriptionsApi = baseApi.injectEndpoints({
                     freeze_duration_days: payload.freeze_duration_days,
                 },
             }),
-            invalidatesTags: (result, error, { studentSubscriptionId }) => 
+            invalidatesTags: (result, __, { studentSubscriptionId }) => 
                 result 
                 ? [
                     { type: 'StudentSubscriptions', id: studentSubscriptionId.toString() + '-student-' + result.student_id.toString() },
@@ -100,7 +100,7 @@ export const subscriptionsApi = baseApi.injectEndpoints({
                 url: `/subscriptions/student/${studentSubscriptionId}/unfreeze`,
                 method: 'POST',
             }),
-            invalidatesTags: (result, error, { studentSubscriptionId, studentId }) => 
+            invalidatesTags: (result, __, { studentSubscriptionId, studentId }) => 
                 result
                 ? [
                     { type: 'StudentSubscriptions', id: studentSubscriptionId.toString() + '-student-' + studentId.toString() },
@@ -116,7 +116,7 @@ export const subscriptionsApi = baseApi.injectEndpoints({
                 method: 'PATCH',
                 body: payload,
             }),
-            invalidatesTags: (result, error, { studentSubscriptionId }) => 
+            invalidatesTags: (result, __, { studentSubscriptionId }) => 
                 result 
                 ? [
                     { type: 'StudentSubscriptions', id: studentSubscriptionId.toString() + '-student-' + result.student_id.toString() },
