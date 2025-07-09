@@ -44,67 +44,9 @@ interface StyledFieldProps {
     [key: string]: any;
 }
 
-const StyledField: React.FC<StyledFieldProps> = ({ name, label, icon, color = 'primary', ...props }) => {
-    const theme = useTheme();
-    const gradients: Record<StyledFieldColor, string> = useGradients();
-    return (
-        <Paper
-            elevation={0}
-            sx={{
-                p: 2,
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                background: theme.palette.background.paper,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                    boxShadow: theme.shadows[4],
-                    borderColor: theme.palette[color].main,
-                    background: theme.palette.action.hover,
-                }
-            }}
-        >
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Box
-                    sx={{
-                        p: 1,
-                        borderRadius: 2,
-                        background: gradients[color],
-                        color: 'white',
-                        mr: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minWidth: 40,
-                        height: 40,
-                    }}
-                >
-                    {icon}
-                </Box>
-                <Typography 
-                    variant="caption" 
-                    sx={{ 
-                        color: 'text.secondary',
-                        fontWeight: 500,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5
-                    }}
-                >
-                    {label}
-                </Typography>
-            </Box>
-            <Box sx={{ pl: 6 }}>
-                <Field
-                    name={name}
-                    {...props}
-                />
-            </Box>
-        </Paper>
-    );
-};
+
 
 export const StudentForm: React.FC<StudentFormProps> = ({ initialValues, onSubmit, onClose, isLoading }) => {
-    const theme = useTheme();
     const gradients: Record<StyledFieldColor, string> = useGradients();
     const { data: clients = [] } = useGetClientsQuery();
     
@@ -148,7 +90,7 @@ export const StudentForm: React.FC<StudentFormProps> = ({ initialValues, onSubmi
                                         options={clients}
                                         getOptionLabel={(option: IClientUserGet) => `${option.first_name} ${option.last_name}`}
                                         value={clients.find(client => client.id === values.client_id) || null}
-                                        onChange={(event: any, newValue: IClientUserGet | null) => setFieldValue('client_id', newValue?.id || null)}
+                                        onChange={(_event: any, newValue: IClientUserGet | null) => setFieldValue('client_id', newValue?.id || null)}
                                         renderInput={(params: any) => (
                                             <TextField
                                                 {...params}

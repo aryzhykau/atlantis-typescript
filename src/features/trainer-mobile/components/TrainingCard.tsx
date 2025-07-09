@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Paper, Typography, Chip, IconButton, Collapse } from '@mui/material';
-import { FitnessCenter, AccessTime, Group, ExpandMore, ExpandLess } from '@mui/icons-material';
+import { FitnessCenter, AccessTime, Group, ExpandMore } from '@mui/icons-material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { StudentAttendanceItem } from './StudentAttendanceItem';
 

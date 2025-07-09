@@ -79,7 +79,7 @@ const mockPaymentHistoryResponse = {
 
 // Настраиваем MSW сервер
 const server = setupServer(
-    http.get('/api/trainers/:trainerId/payments', ({ params }) => {
+    http.get('/api/trainers/:trainerId/payments', () => {
         return Response.json(mockPaymentHistoryResponse);
     })
 );

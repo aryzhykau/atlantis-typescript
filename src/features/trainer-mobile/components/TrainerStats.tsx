@@ -23,7 +23,7 @@ export const TrainerStats: React.FC = () => {
   const gradients = useGradients();
 
   // Получаем текущего пользователя (тренера)
-  const { data: user, isLoading: isLoadingUser } = useGetCurrentUserQuery();
+  const { isLoading: isLoadingUser } = useGetCurrentUserQuery();
 
 
   // Получаем платежи тренера за последний месяц

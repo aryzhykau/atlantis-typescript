@@ -53,7 +53,7 @@ export const FreezeSubscriptionForm: React.FC<FreezeSubscriptionFormProps> = ({
                 onSubmit={onSubmit}
                 enableReinitialize // Позволяет обновлять initialValues, если пропсы изменятся (хотя здесь не тот случай)
             >
-                {({ errors, touched, setFieldValue, values, isSubmitting, dirty, isValid }) => (
+                {({ errors, touched, setFieldValue, values, isSubmitting, isValid }) => (
                     <Form>
                         <DialogContent sx={{ pt: 1, pb: 2 }}>
                             <Grid container spacing={2}>

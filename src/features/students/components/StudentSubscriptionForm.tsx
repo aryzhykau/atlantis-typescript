@@ -10,22 +10,20 @@ import {Select,} from "formik-mui";
 
 import {useSubscriptions} from "../../subscriptions/hooks/useSubscriptions.ts";
 import MenuItem from "@mui/material/MenuItem";
-import {useAddStudentSubscriptionMutation, useGetStudentsQuery} from "../../../store/apis/studentsApi.ts";
-import {IStudentGet, IStudentSubscriptionFormValues} from "../models/student.ts";
+import { useGetStudentsQuery} from "../../../store/apis/studentsApi.ts";
+import {IStudent} from "../models/student.ts";
 import {useEffect} from "react";
-import { ISubscriptionToStudent } from "../../subscriptions/models/subscription.ts";
+import { IStudentSubscriptionCreatePayload } from "../../subscriptions/models/subscription.ts";
 
 
 
 
-const defaultValues : IStudentSubscriptionFormValues = {
+const defaultValues = {
     subscription_id: 0,
-
 };
 
-
 interface ClientsFormProps {
-    student: IStudentGet;
+    student: IStudent;
     onClose: () => void;
 }
 
@@ -36,7 +34,7 @@ export function StudentSubscriptionForm({student, onClose }: ClientsFormProps) {
 
 
 
-    const {addSubscriptionToStudent, isAddSubscriptionToStudentLoading, isAddSubscriptionToStudentError, isAddSubscriptionToStudentSuccess, addSubscriptionToStudentData, addSubscriptionToStudentError} = useSubscriptions();
+    const {addSubscriptionToStudent} = useSubscriptions();
     const {refetch} = useGetStudentsQuery();
     const {displaySnackbar} = useSnackbar();
     const { subscriptions } = useSubscriptions();
@@ -52,12 +50,12 @@ export function StudentSubscriptionForm({student, onClose }: ClientsFormProps) {
             console.log(student.id)
             console.log(values.subscription_id)
             if (student.id === null) throw new Error()
-            const data: ISubscriptionToStudent = {
+            const data: IStudentSubscriptionCreatePayload = {
                 student_id: student.id,
                 subscription_id: values.subscription_id,
                 is_auto_renew: true
             }
-            await addSubscriptionToStudent({data}).unwrap();
+            await addSubscriptionToStudent(data).unwrap();
             displaySnackbar(`Абонемент добавлен ученику ${student.first_name} ${student.last_name}`, "success");
             refetch();
             resetForm();

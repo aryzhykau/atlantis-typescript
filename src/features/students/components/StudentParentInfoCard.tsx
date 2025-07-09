@@ -4,8 +4,7 @@ import {
     Typography, 
     Box, 
     alpha,
-    Link,
-    Tooltip
+    Link,    
 } from '@mui/material';
 import { IStudentParentClientData } from '../models/student';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';

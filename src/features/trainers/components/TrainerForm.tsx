@@ -5,8 +5,7 @@ import { TextField, CheckboxWithLabel } from "formik-mui";
 import { DatePicker } from "formik-mui-x-date-pickers";
 import { ITrainerCreatePayload, ITrainerUpdatePayload, ITrainerResponse } from "../models/trainer.ts";
 import dayjs from 'dayjs';
-import { useTheme } from '@mui/material/styles';
-import { useGradients } from '../../trainer-mobile/hooks/useGradients';
+
 
 
 // Начальные значения для формы СОЗДАНИЯ тренера (поля как в ITrainerCreatePayload)
@@ -49,8 +48,6 @@ export function TrainerForm({
     isLoading = false,
     stickyActions = false,
 }: TrainerFormProps) {
-    const theme = useTheme();
-    const gradients = useGradients();
 
     const validationSchema = yup.object({
         first_name: yup.string().required("Имя обязательно").min(2, "Минимум 2 символа").max(50, "Максимум 50 символов"),

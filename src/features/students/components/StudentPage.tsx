@@ -8,13 +8,6 @@ import {
     Paper, 
     IconButton, 
     Button, 
-    Select, 
-    MenuItem, 
-    FormControl, 
-    InputLabel, 
-    SelectChangeEvent, 
-    Checkbox, 
-    FormControlLabel,
     alpha,
     Tabs,
     Tab
@@ -23,12 +16,15 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import { useGetStudentByIdQuery, useUpdateStudentMutation } from '../../../store/apis/studentsApi';
 import { useGetStudentSubscriptionsQuery, useGetSubscriptionsQuery, useAddSubscriptionToStudentMutation } from '../../../store/apis/subscriptionsApi';
-import { IStudent, IStudentUpdatePayload } from '../models/student';
-import { IStudentSubscriptionView, ISubscriptionResponse, IStudentSubscriptionCreatePayload } from '../../subscriptions/models/subscription';
+import { IStudentUpdatePayload } from '../models/student';
+import { IStudentSubscriptionView, IStudentSubscriptionCreatePayload } from '../../subscriptions/models/subscription';
 import { useSnackbar } from '../../../hooks/useSnackBar';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import { useTheme } from '@mui/material';
 import dayjs from 'dayjs';
+import isBetween from 'dayjs/plugin/isBetween';
+
+dayjs.extend(isBetween);
 
 // Импортируем созданные компоненты
 import { StudentInfoCard } from './StudentInfoCard';
@@ -208,7 +204,7 @@ export function StudentPage() {
         }
     };
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue);
     };
 
@@ -521,6 +517,7 @@ export function StudentPage() {
                             first_name: student.first_name,
                             last_name: student.last_name,
                             date_of_birth: dayjs(student.date_of_birth),
+                            client_id: student.client.id,
                         }}
                         onSubmit={handleUpdateStudent}
                         isLoading={isUpdatingStudent}

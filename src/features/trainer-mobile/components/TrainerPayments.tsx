@@ -25,7 +25,6 @@ import {
   ExpandMore,
   ExpandLess,
 } from '@mui/icons-material';
-import * as Yup from 'yup';
 import dayjs from 'dayjs';
 import { useCreateQuickPaymentMutation, useGetTrainerPaymentsQuery, useGetTrainerStudentsQuery } from '../api/trainerApi';
 import { useSnackbar } from '../../../hooks/useSnackBar';

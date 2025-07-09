@@ -1,11 +1,10 @@
 import * as yup from "yup";
-import {useTrainers} from "../hooks/trainerManagementHooks.ts";
-import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
-import { Field, Form, Formik } from "formik";
-import {Box, Button, Divider, Typography, IconButton} from "@mui/material";
-import {TextField, CheckboxWithLabel} from "formik-mui";
-import {DatePicker} from "formik-mui-x-date-pickers";
-import {ITrainerResponse} from "../models/trainer.ts";
+import { Form, Formik, Field } from "formik";
+import { Box, Button, Typography, IconButton, Divider } from "@mui/material";
+import { TextField, CheckboxWithLabel } from "formik-mui";
+import { DatePicker } from "formik-mui-x-date-pickers";
+import { ITrainerCreatePayload, ITrainerUpdatePayload, ITrainerResponse } from "../models/trainer.ts";
+
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
@@ -15,86 +14,111 @@ import CloseIcon from '@mui/icons-material/Close';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const defaultValues = {
+// Начальные значения для формы СОЗДАНИЯ тренера
+const defaultCreateValues: ITrainerCreatePayload = {
     first_name: "",
     last_name: "",
-    date_of_birth: null,
+    date_of_birth: "",
     email: "",
     phone: "",
     salary: null,
-    is_fixed_salary: false
+    is_fixed_salary: false,
 };
 
-interface TrainersFormProps {
-    title?: string;
-    initialValues?: ITrainerResponse;
-    onClose: () => void;
-    isEdit?: boolean;
-    trainerId?: number | null;
+// Типы для значений формы внутри Formik
+interface TrainerFormValues {
+    first_name: string;
+    last_name: string;
+    date_of_birth: dayjs.Dayjs | null;
+    email: string;
+    phone: string;
+    salary: number | null | undefined;
+    is_fixed_salary: boolean | null | undefined;
 }
 
-export function TrainersForm({
-    title = "Добавить тренера", 
-    initialValues = defaultValues,  
-    isEdit = false, 
-    trainerId = null, 
-    onClose
-}: TrainersFormProps) {
-    const {createTrainer, updateTrainer, refetchTrainers} = useTrainers();
-    const {displaySnackbar} = useSnackbar();
+interface TrainerFormProps {
+    title?: string;
+    initialValues?: Partial<ITrainerResponse>; 
+    onSubmit: (values: ITrainerCreatePayload | ITrainerUpdatePayload, id?: number) => Promise<void>;
+    onClose: () => void;
+    isEdit?: boolean;
+    isLoading?: boolean;
+    stickyActions?: boolean;
+}
+
+export function TrainerForm({
+    title = "Добавить тренера",
+    initialValues,
+    onSubmit,
+    onClose,
+    isEdit = false,
+}: TrainerFormProps) {
 
     const validationSchema = yup.object({
-        first_name: yup.string().required("Имя обязательно"),
-        last_name: yup.string().required("Фамилия обязательна"),
+        first_name: yup.string().required("Имя обязательно").min(2, "Минимум 2 символа").max(50, "Максимум 50 символов"),
+        last_name: yup.string().required("Фамилия обязательна").min(2, "Минимум 2 символа").max(50, "Максимум 50 символов"),
         email: yup.string().email("Введите корректный email").required("Email обязателен"),
-        phone: yup.string().matches(/^[0-9]{10}$/, "Введите корректный номер").required("Телефон обязателен"),
-        date_of_birth: yup.date().required("Дата рождения обязательна"),
-        salary: yup.number().nullable(),
-        is_fixed_salary: yup.boolean()
+        phone: yup.string().required("Телефон обязателен").min(10, "Минимум 10 символов").max(15, "Максимум 15 символов"),
+        date_of_birth: yup.date().nullable().required("Дата рождения обязательна"),
+        salary: yup.number().nullable().min(0, "Зарплата не может быть отрицательной"),
+        is_fixed_salary: yup.boolean().nullable(),
     });
 
-    const handleSubmit = async (values: ITrainerResponse, {resetForm}: {resetForm: () => void}) => {
-        try {
-            // Обрабатываем дату рождения в правильном формате
-            const processedValues = {
-                ...values,
-                date_of_birth: values.date_of_birth 
-                    ? dayjs(values.date_of_birth).tz(dayjs.tz.guess()).format('YYYY-MM-DD') 
-                    : null
-            };
+    const formikInitialValues: TrainerFormValues = isEdit && initialValues
+        ? {
+            first_name: initialValues.first_name || "",
+            last_name: initialValues.last_name || "",
+            email: initialValues.email || "",
+            phone: initialValues.phone || "",
+            date_of_birth: initialValues.date_of_birth ? dayjs(initialValues.date_of_birth) : null,
+            salary: initialValues.salary,
+            is_fixed_salary: initialValues.is_fixed_salary,
+          }
+        : {
+            first_name: defaultCreateValues.first_name,
+            last_name: defaultCreateValues.last_name,
+            date_of_birth: null,
+            email: defaultCreateValues.email,
+            phone: defaultCreateValues.phone,
+            salary: defaultCreateValues.salary,
+            is_fixed_salary: defaultCreateValues.is_fixed_salary,
+          };
 
-            if (isEdit) {
-                if (trainerId === null) throw new Error();
-                await updateTrainer({trainerId: trainerId, trainerData: processedValues}).unwrap();
-                displaySnackbar("Тренер обновлен", "success");
-            } else {
-                const createData = {...processedValues, active: true};
-                await createTrainer({trainerData: createData}).unwrap();
-                displaySnackbar("Тренер создан", "success");
+    const handleFormSubmit = async (values: TrainerFormValues) => {
+        // Готовим данные для отправки, где date_of_birth - строка
+        const payload: Partial<ITrainerCreatePayload | ITrainerUpdatePayload> = {
+            ...values,
+            date_of_birth: values.date_of_birth ? dayjs(values.date_of_birth).format('YYYY-MM-DD') : undefined,
+            salary: values.salary === undefined ? null : values.salary,
+            is_fixed_salary: values.is_fixed_salary === undefined ? false : (values.is_fixed_salary === null ? false : values.is_fixed_salary),
+        };
+        
+        // Удаляем ключи со значением undefined, чтобы они не отправлялись (важно для PATCH)
+        Object.keys(payload).forEach(key => {
+            if (payload[key as keyof typeof payload] === undefined) {
+                delete payload[key as keyof typeof payload];
             }
-            refetchTrainers();
-            resetForm();
-            onClose();
-        } catch (error: unknown) {
-            const errorMessage =
-                typeof error === "object" &&
-                error !== null &&
-                "data" in error &&
-                "detail" in (error as { data: { detail?: string } }).data
-                    ? (error as { data: { detail?: string } }).data.detail ?? "Что-то пошло не так"
-                    : "Что-то пошло не так";
+        });
 
-            displaySnackbar(errorMessage, "error");
+        if (isEdit && initialValues?.id) {
+            await onSubmit(payload as ITrainerUpdatePayload, initialValues.id);
+        } else {
+            // Для создания, все обязательные поля должны быть, date_of_birth не может быть undefined
+            if (!payload.date_of_birth) {
+                payload.date_of_birth = dayjs().format('YYYY-MM-DD');
+            }
+            await onSubmit(payload as ITrainerCreatePayload);
         }
     };
 
     return (
         <Formik
-            initialValues={isEdit ? initialValues : defaultValues}
+            initialValues={formikInitialValues}
             validationSchema={validationSchema}
-            onSubmit={handleSubmit}
+            onSubmit={handleFormSubmit}
+            enableReinitialize 
         >
-            {({isSubmitting}) => (
+            {({ isSubmitting }: any) => (
                 <Form>
                     <Box
                         display="flex"

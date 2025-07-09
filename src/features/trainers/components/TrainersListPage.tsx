@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Box, Button, Typography, TextField, Paper, FormControlLabel, Switch, InputAdornment, alpha, Dialog, DialogContent } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Link as RouterLink } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
-import { useGetTrainersQuery, useCreateTrainerMutation, useUpdateTrainerMutation, useDeleteTrainerMutation, useUpdateTrainerStatusMutation } from '../../../store/apis/trainersApi';
-import { ITrainerResponse, ITrainerCreatePayload, ITrainerUpdatePayload, IStatusUpdatePayload } from '../models/trainer';
+import { useGetTrainersQuery, useCreateTrainerMutation, useUpdateTrainerMutation } from '../../../store/apis/trainersApi';
+import { ITrainerResponse, ITrainerCreatePayload, ITrainerUpdatePayload } from '../models/trainer';
 import { TrainerForm } from './TrainerForm'; 
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import Alert from '@mui/material/Alert';
@@ -16,8 +16,7 @@ export function TrainersListPage() {
     const { data: trainersListResponse, isLoading, isError, error } = useGetTrainersQuery();
     const [createTrainer, { isLoading: isCreating }] = useCreateTrainerMutation();
     const [updateTrainer, { isLoading: isUpdating }] = useUpdateTrainerMutation();
-    const [deleteTrainerMutation] = useDeleteTrainerMutation();
-    const [updateTrainerStatus] = useUpdateTrainerStatusMutation();
+
     const { displaySnackbar } = useSnackbar();
 
     const gradients = useGradients();
@@ -31,8 +30,7 @@ export function TrainersListPage() {
     const [searchText, setSearchText] = useState('');
     const [showOnlyActive, setShowOnlyActive] = useState(true);
 
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [trainerToDelete, setTrainerToDelete] = useState<ITrainerResponse | null>(null);
+
 
     const handleOpenModal = (trainer?: ITrainerResponse) => {
         if (trainer) {
@@ -67,40 +65,7 @@ export function TrainersListPage() {
         }
     };
 
-    const handleOpenDeleteDialog = (trainer: ITrainerResponse) => {
-        setTrainerToDelete(trainer);
-        setDeleteDialogOpen(true);
-    };
 
-    const handleCloseDeleteDialog = () => {
-        setTrainerToDelete(null);
-        setDeleteDialogOpen(false);
-    };
-
-    const handleDeleteConfirm = async () => {
-        if (!trainerToDelete) return;
-        try {
-            await deleteTrainerMutation({ trainerId: trainerToDelete.id }).unwrap();
-            displaySnackbar(`Тренер ${trainerToDelete.first_name} ${trainerToDelete.last_name} успешно удалён`, 'success');
-            handleCloseDeleteDialog();
-        } catch (err: any) {
-            console.error("Ошибка при удалении тренера: ", err);
-            const errorMessage = err?.data?.detail || 'Ошибка удаления тренера';
-            displaySnackbar(errorMessage, 'error');
-        }
-    };
-
-    const handleToggleTrainerStatus = async (trainer: ITrainerResponse) => {
-        const newStatus: IStatusUpdatePayload = { is_active: !trainer.is_active };
-        try {
-            await updateTrainerStatus({ trainerId: trainer.id, statusData: newStatus }).unwrap();
-            displaySnackbar(`Статус тренера ${trainer.first_name} ${trainer.last_name} успешно изменён`, 'success');
-        } catch (err: any) {
-            console.error("Ошибка при изменении статуса тренера: ", err);
-            const errorMessage = err?.data?.detail || 'Ошибка изменения статуса';
-            displaySnackbar(errorMessage, 'error');
-        }
-    };
 
     const filteredTrainers = useMemo(() => {
         if (!trainersListResponse?.trainers) return [];

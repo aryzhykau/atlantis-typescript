@@ -17,7 +17,7 @@ export const useTrainingTypes = () => {
         }
         ] = useCreateTrainingTypeMutation();
 
-    const {data: trainingTypes = [], isLoading, isError, isSuccess, error, refetch: refetchTrainingTypes} = useGetTrainingTypesQuery();
+    const {data: trainingTypes = [], isLoading, isError, isSuccess, error, refetch: refetchTrainingTypes} = useGetTrainingTypesQuery({});
     const [updateTrainingType, {isLoading: isUpdateLoading, isError: isUpdateError, isSuccess: isUpdateSuccess, error: updateError, data: updateData}] = useUpdateTrainingTypeMutation();
 
     return {

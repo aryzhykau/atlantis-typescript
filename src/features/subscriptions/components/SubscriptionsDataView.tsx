@@ -3,49 +3,29 @@ import {DataGrid, GridRenderCellParams, GridColDef} from "@mui/x-data-grid";
 import SubscriptionForm from "./SubscriptionForm.tsx";
 import {useState} from "react";
 import {
-    useGetSubscriptionsQuery,
-    useDeleteSubscriptionMutation
+    useGetSubscriptionsQuery
 } from "../../../store/apis/subscriptionsApi.ts";
 import {subscriptionsColumns} from "../tables/subscriptionsColumns.tsx";
 import { ISubscriptionResponse, ISubscriptionCreatePayload } from "../models/subscription.ts";
 import CreateEntityButton from "../../../components/buttons/CreateEntityButton.tsx";
-import {SubscriptionDeleteModal} from "./SubscriptionDeleteModal.tsx";
-import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
-import { Modal } from "@mui/material";
 
-const modalDeleteStyle = {
-    position: "absolute" as "absolute",
-    width: "35%",
-    minWidth: 320,
-    maxWidth: 500,
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    bgcolor: "background.paper",
-    borderRadius: '8px',
-    boxShadow: 24,
-    p: 3,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    outline: 'none',
-};
+
 
 const subscriptionInitialValues: ISubscriptionCreatePayload = {name: "", price: 0, is_active: true, validity_days: 30, number_of_sessions: 1}
 
 export function SubscriptionsDataView() {
     const [formModalOpen, setFormModalOpen] = useState<boolean>(false);
-    const [deleteModalOpen, setDeleteModalOpen] = useState<boolean>(false);
+
 
     const {data: subscriptionsData, isLoading, isError, error} = useGetSubscriptionsQuery();
     const subscriptions = subscriptionsData?.items || [];
 
-    const [deleteSubscriptionMutation] = useDeleteSubscriptionMutation();
+
 
     const [subscriptionId, setSubscriptionId] = useState<number | null>(null);
     const [formInitValues, setFormInitValues] = useState<Partial<ISubscriptionResponse>>(subscriptionInitialValues)
     const [isCreating, setIsCreating] = useState<boolean>(true);
-    const {displaySnackbar} = useSnackbar();
+
 
     const handleCreateButtonClick = () => {
         setIsCreating(true)
@@ -68,31 +48,7 @@ export function SubscriptionsDataView() {
         setFormModalOpen(true);
     };
 
-    const handleDelete = (id: number) => {
-        setSubscriptionId(id);
-        setDeleteModalOpen(true);
-    };
 
-    const handleCancelDelete = () => {
-        setDeleteModalOpen(false);
-        setSubscriptionId(null);
-    }
-
-    const handleDeleteConfirm = async () => {
-        if (!subscriptionId) return;
-        try {
-            await deleteSubscriptionMutation({subscriptionId}).unwrap();
-            displaySnackbar("Абонемент успешно удален", "success")
-        }
-        catch (e: unknown) {
-            console.error("Ошибка удаления абонемента:", e);
-            const errorDetail = (e as any)?.data?.detail || 'Не удалось удалить абонемент';
-            displaySnackbar(String(errorDetail), "error");
-        } finally {
-            setDeleteModalOpen(false);
-            setSubscriptionId(null);
-        }
-    }
 
     const onFormClose = () => {
         setFormModalOpen(false);

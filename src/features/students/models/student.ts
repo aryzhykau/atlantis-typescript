@@ -1,4 +1,4 @@
-import { IClientCoreData } from '../../clients/models/client';
+
 
 // Соответствует схеме StudentUser из openapi.json (информация о клиенте-родителе)
 export interface IStudentParentClientData {

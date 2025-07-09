@@ -18,7 +18,7 @@ export const AttendanceButtons: React.FC<AttendanceButtonsProps> = ({
   trainingId,
   studentId,
   currentStatus,
-  trainingDate,
+  trainingDate: _,
   canMark,
   isUpdating,
   onMarkPresent,

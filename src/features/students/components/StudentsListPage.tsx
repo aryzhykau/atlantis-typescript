@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Link as MuiLink, Chip, Button, Modal, TextField, FormControlLabel, Checkbox, Autocomplete, DialogTitle, Dialog, DialogContent, Switch, InputAdornment, alpha, Paper, IconButton } from '@mui/material';
+import { Box, Typography, CircularProgress, Link as MuiLink, Chip, Button, TextField, FormControlLabel, Dialog, DialogContent, Switch, InputAdornment, alpha, Paper, IconButton } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Link as RouterLink } from 'react-router-dom';
 import { useGetStudentsQuery, useCreateStudentMutation } from '../../../store/apis/studentsApi';
 import { useGetClientsQuery } from '../../../store/apis/clientsApi';
-import { IClientUserGet } from '../../clients/models/client';
 import { IStudent, IStudentCreatePayload, IStudentUpdatePayload } from '../models/student';
 import dayjs, { Dayjs } from 'dayjs';
 import { StudentForm } from './StudentForm';
@@ -41,19 +40,6 @@ const baseInitialStudentFormValues: StudentFormValuesForList = {
     client_id: null,
 };
 
-const modalStyle = {
-    position: 'absolute' as 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: { xs: '90%', md: '50%' }, 
-    bgcolor: 'background.paper',
-    boxShadow: 24,
-    p: 4,
-    maxHeight: '90vh',
-    overflowY: 'auto',
-    borderRadius: 2,
-};
 
 export function StudentsListPage() {
   const { data: students, error, isLoading, refetch } = useGetStudentsQuery();
