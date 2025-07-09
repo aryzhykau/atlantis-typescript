@@ -1,4 +1,3 @@
-import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseApi } from './api'; // Assuming you have this
 import { ITrainingType, ITrainingTypeCreate, ITrainingTypeUpdate, ITrainingTypesList } from '../../features/training-types/models/trainingType';
 
@@ -17,7 +16,7 @@ export const trainingTypesApi = baseApi.injectEndpoints({
         }),
         getTrainingTypeById: builder.query<ITrainingType, number>({
             query: (id: number) => `training_types/${id}`,
-            providesTags: (result: ITrainingType | undefined, error: any, id: number) => [{ type: 'TrainingType', id }],
+            providesTags: (_, __, id: number) => [{ type: 'TrainingType', id }],
         }),
         createTrainingType: builder.mutation<ITrainingType, ITrainingTypeCreate>({
             query: (newTrainingType: ITrainingTypeCreate) => ({
@@ -33,8 +32,8 @@ export const trainingTypesApi = baseApi.injectEndpoints({
                 method: 'PATCH',
                 body: payload,
             }),
-            invalidatesTags: (result: ITrainingType | undefined, error: any, { id }: { id: number }) => [{ type: 'TrainingType', id }, { type: 'TrainingType', id: 'LIST' }],
-            }),
+            invalidatesTags: (_, __, { id }: { id: number }) => [{ type: 'TrainingType', id }, { type: 'TrainingType', id: 'LIST' }],
+        }),
         // No dedicated delete endpoint found in openapi.json.
         // Status change (is_active) is handled by updateTrainingType.
     }),
