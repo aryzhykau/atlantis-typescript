@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import { rest } from 'msw';
+import { http } from 'msw';
 import { setupServer } from 'msw/node';
 import TrainerPaymentsTab from '../TrainerPaymentsTab';
 import { trainersApi } from '../../../../store/apis/trainersApi';
@@ -79,8 +79,8 @@ const mockPaymentHistoryResponse = {
 
 // Настраиваем MSW сервер
 const server = setupServer(
-    rest.get('/api/trainers/:trainerId/payments', (req, res, ctx) => {
-        return res(ctx.json(mockPaymentHistoryResponse));
+    http.get('/api/trainers/:trainerId/payments', ({ params }) => {
+        return Response.json(mockPaymentHistoryResponse);
     })
 );
 
@@ -220,8 +220,8 @@ describe('TrainerPaymentsTab', () => {
     it('handles API error gracefully', async () => {
         // Мокаем ошибку API
         server.use(
-            rest.get('/api/trainers/:trainerId/payments', (req, res, ctx) => {
-                return res(ctx.status(500), ctx.json({ detail: 'Internal server error' }));
+            http.get('/api/trainers/:trainerId/payments', () => {
+                return Response.json({ detail: 'Internal server error' }, { status: 500 });
             })
         );
 
@@ -235,9 +235,9 @@ describe('TrainerPaymentsTab', () => {
     it('shows loading state', () => {
         // Мокаем медленный ответ
         server.use(
-            rest.get('/api/trainers/:trainerId/payments', async (req, res, ctx) => {
+            http.get('/api/trainers/:trainerId/payments', async () => {
                 await new Promise(resolve => setTimeout(resolve, 100));
-                return res(ctx.json(mockPaymentHistoryResponse));
+                return Response.json(mockPaymentHistoryResponse);
             })
         );
 
@@ -251,14 +251,14 @@ describe('TrainerPaymentsTab', () => {
     it('displays empty state when no payments', async () => {
         // Мокаем пустой ответ
         server.use(
-            rest.get('/api/trainers/:trainerId/payments', (req, res, ctx) => {
-                return res(ctx.json({
+            http.get('/api/trainers/:trainerId/payments', () => {
+                return Response.json({
                     items: [],
                     total: 0,
                     skip: 0,
                     limit: 50,
                     has_more: false
-                }));
+                });
             })
         );
 

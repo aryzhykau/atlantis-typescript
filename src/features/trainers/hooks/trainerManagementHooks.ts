@@ -2,7 +2,7 @@ import {
     useGetTrainersQuery,
     useCreateTrainerMutation, useUpdateTrainerMutation, useDeleteTrainerMutation,
 } from '../../../store/apis/trainersApi.ts';
-import {ITrainer} from '../models/trainer.ts';
+import {ITrainerResponse} from '../models/trainer.ts';
 import {useEffect, useState} from "react";
 
 export const useTrainers = () => {
@@ -14,7 +14,7 @@ export const useTrainers = () => {
         error: trainersError,
         refetch: refetchTrainers,
     } = useGetTrainersQuery();
-    const [displayTrainers, setDisplayTrainers] = useState<ITrainer[]>([]);
+    const [displayTrainers, setDisplayTrainers] = useState<ITrainerResponse[]>([]);
 
     useEffect(() => {
         setDisplayTrainers(trainers.trainers)

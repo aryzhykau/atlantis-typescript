@@ -2,49 +2,33 @@ import React, { useState } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Button,
+
   Grid,
-  Divider,
   Chip,
   Avatar,
-  FormControlLabel,
-  Switch,
   CircularProgress,
   Paper,
   Fade,
   Slide,
   IconButton,
-  Tooltip,
-  LinearProgress,
+
   alpha,
   useTheme,
 } from '@mui/material';
 import {
-  Person,
   Euro,
-  Add as AddIcon,
   Payment as PaymentIcon,
   History as HistoryIcon,
   TrendingUp,
   AccountBalance,
   Receipt,
-  Close,
   ExpandMore,
   ExpandLess,
 } from '@mui/icons-material';
-import { Formik, Form, Field } from 'formik';
-import { TextField as FormikTextField, Select as FormikSelect } from 'formik-mui';
 import * as Yup from 'yup';
 import dayjs from 'dayjs';
-import { useCreateQuickPaymentMutation, useGetTrainerTrainingsRangeQuery, useGetTrainerPaymentsQuery, useGetTrainerStudentsQuery } from '../api/trainerApi';
+import { useCreateQuickPaymentMutation, useGetTrainerPaymentsQuery, useGetTrainerStudentsQuery } from '../api/trainerApi';
 import { useSnackbar } from '../../../hooks/useSnackBar';
-import { useAuth } from '../../../hooks/useAuth';
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useGetCurrentUserQuery } from '../../../store/apis/userApi';
 import { StatsGrid } from './StatsGrid';
@@ -57,14 +41,6 @@ interface PaymentFormData {
   student_id: number;
   amount: string;
 }
-
-const PaymentSchema = Yup.object({
-  student_id: Yup.number().required('Выберите студента'),
-  amount: Yup.number()
-    .required('Введите сумму')
-    .positive('Сумма должна быть больше 0')
-    .min(0.01, 'Минимальная сумма 0.01 €'),
-});
 
 export const TrainerPayments: React.FC = () => {
   const theme = useTheme();

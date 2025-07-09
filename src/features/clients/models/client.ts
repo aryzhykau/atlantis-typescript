@@ -20,6 +20,8 @@ export interface IClientUserGet extends IClientCoreData {
     is_authenticated_with_google: boolean; // Изменено с google_authenticated
     balance: number | null; // Соответствует openapi (number | null)
     is_active: boolean | null; // Соответствует openapi (boolean | null)
+    created_at: string;
+    active_subscription: string;
 }
 
 // Интерфейс для значений формы создания/редактирования клиента

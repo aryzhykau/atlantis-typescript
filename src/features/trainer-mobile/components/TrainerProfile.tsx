@@ -18,10 +18,8 @@ import {
   DialogActions,
 } from '@mui/material';
 import {
-  Person,
   Email,
   Phone,
-  LocationOn,
   Edit,
   Logout,
   Settings,

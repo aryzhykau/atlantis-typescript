@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
@@ -11,7 +11,6 @@ import {
   useTheme,
   Autocomplete,
   TextField,
-  Chip,
 } from '@mui/material';
 import {
   Person,

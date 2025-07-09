@@ -2,23 +2,6 @@ import {GridColDef} from "@mui/x-data-grid";
 import TrainingTypeColorCircle from "../components/TrainingTypeColorCircle.tsx";
 import { Chip } from "@mui/material";
 
-const dateFormater = ( value: never ) => {
-
-    if (value === undefined || value === null) {
-        return "Не указана дата";
-    }
-
-    const date = new Date(value);
-
-    if (isNaN(date.getTime())) return "Неверная дата"; // Если дата некорректная
-
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-
-    return `${day}.${month}.${year}`;
-}
-
 
 const priceFormatter = (value: never) => {
     if (value === undefined || value === null) {

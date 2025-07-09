@@ -1,11 +1,10 @@
-import {Box, Dialog, DialogContent, Typography, Switch, Chip, CircularProgress, Button} from "@mui/material";
+import {Box, Dialog, DialogContent, Typography, Chip, Button} from "@mui/material";
 import {DataGrid, GridRenderCellParams, GridColDef} from "@mui/x-data-grid";
 import TrainingTypeForm from "./TrainingTypeForm.tsx";
 import {useState} from "react";
 import {trainingTypeColumns} from "../tables/trainingTypeColumns.tsx";
-import {ITrainingType, ITrainingTypeUpdate} from "../../training-types/models/trainingType.ts";
+import {ITrainingType} from "../../training-types/models/trainingType.ts";
 import CreateEntityButton from "../../../components/buttons/CreateEntityButton.tsx";
-import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
 import {useGetTrainingTypesQuery, useUpdateTrainingTypeMutation} from "../../../store/apis/trainingTypesApi.ts";
 
 
@@ -13,15 +12,13 @@ const trainingTypeInitialValues: Partial<ITrainingType> = {name: "", price: null
 
 export function TrainingTypesDataView() {
     const [modalOpen, setModalOpen] = useState<boolean>(false);
-    const {data: trainingTypesResponse, isLoading: isLoadingTrainingTypes, refetch: refetchTrainingTypes} = useGetTrainingTypesQuery({});
+    const {data: trainingTypesResponse, isLoading: isLoadingTrainingTypes} = useGetTrainingTypesQuery({});
     const trainingTypes: ITrainingType[] = trainingTypesResponse || [];
     
-    const [updateTrainingType, {isLoading: isUpdatingStatus}] = useUpdateTrainingTypeMutation();
+    const [_, {isLoading: isUpdatingStatus}] = useUpdateTrainingTypeMutation();
     
     const [isCreating, setIsCreating] = useState<boolean>(true);
     const [currentTrainingTypeForForm, setCurrentTrainingTypeForForm] = useState<Partial<ITrainingType> | null>(null);
-    const [currentTrainingTypeForStatusSwitch, setCurrentTrainingTypeForStatusSwitch] = useState<ITrainingType | null>(null);
-    const {displaySnackbar} = useSnackbar();
 
     const handleCreateButtonClick = () => {
         setCurrentTrainingTypeForForm(trainingTypeInitialValues);
@@ -40,19 +37,6 @@ export function TrainingTypesDataView() {
         setCurrentTrainingTypeForForm(null);
     }
 
-    const handleStatusChange = async (trainingTypeId: number, isActive: boolean) => {
-        try {
-            const payload: ITrainingTypeUpdate = {is_active: isActive};
-            await updateTrainingType({id: trainingTypeId, payload}).unwrap();
-            displaySnackbar("Статус вида тренировки успешно изменен", "success");
-        } catch (error: any) {
-            console.error("Ошибка изменения статуса:", error);
-            const errorDetail = error?.data?.detail || 'Ошибка при изменении статуса';
-            displaySnackbar(String(errorDetail), 'error');
-        } finally {
-            setCurrentTrainingTypeForStatusSwitch(null);
-        }
-    };
 
     const columns: GridColDef<ITrainingType>[] = [
         ...trainingTypeColumns,

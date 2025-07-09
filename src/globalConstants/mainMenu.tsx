@@ -3,7 +3,6 @@ import PersonIcon from "@mui/icons-material/Person";
 import SportsIcon from '@mui/icons-material/Sports';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PoolIcon from '@mui/icons-material/Pool';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import SchoolIcon from '@mui/icons-material/School';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -12,13 +11,8 @@ import { TrainersListPage } from "../features/trainers/components/TrainersListPa
 import {DashboardLayout} from "../layouts/Dashboard.tsx";
 import { TrainingSettings } from "../layouts/trainingTypesSubscriptions/TrainingSettings.tsx";
 import {MobileClientsLayout} from "../layouts/clients/MobileClients.tsx";
-import Calendar from "../layouts/calendar/Calendar.tsx";
-import EditCalendarIcon from '@mui/icons-material/EditCalendar';
-import { Route, Routes } from "react-router-dom";
-import { ClientPage } from "../features/clients/components/ClientPage/ClientPage.tsx";
 import InvoicesPayments from "../layouts/invoicesPyaments/InvoicesPayments.tsx";
 import { StudentsListPage } from '../features/students/components/StudentsListPage.tsx';
-import Timetable from "../layouts/timetable/Timetable.tsx";
 import CalendarV2Page from "../features/calendar-v2/components/CalendarV2Page.tsx";
 import MobileCalendarV2Page from "../features/calendar-v2/components/MobileCalendarV2Page.tsx";
 

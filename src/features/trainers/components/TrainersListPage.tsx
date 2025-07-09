@@ -16,7 +16,7 @@ export function TrainersListPage() {
     const { data: trainersListResponse, isLoading, isError, error } = useGetTrainersQuery();
     const [createTrainer, { isLoading: isCreating }] = useCreateTrainerMutation();
     const [updateTrainer, { isLoading: isUpdating }] = useUpdateTrainerMutation();
-    const [deleteTrainerMutation, { isLoading: isDeleting }] = useDeleteTrainerMutation();
+    const [deleteTrainerMutation] = useDeleteTrainerMutation();
     const [updateTrainerStatus] = useUpdateTrainerStatusMutation();
     const { displaySnackbar } = useSnackbar();
 

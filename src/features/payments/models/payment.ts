@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 
 export interface IPayment {
     client_id: number;

@@ -1,20 +1,13 @@
 import * as yup from "yup";
 import { Form, Formik, Field } from "formik";
-import { Box, Button, Typography, IconButton, CircularProgress, Paper } from "@mui/material";
+import { Box, Button, Typography, CircularProgress } from "@mui/material";
 import { TextField, CheckboxWithLabel } from "formik-mui";
 import { DatePicker } from "formik-mui-x-date-pickers";
 import { ITrainerCreatePayload, ITrainerUpdatePayload, ITrainerResponse } from "../models/trainer.ts";
 import dayjs from 'dayjs';
-import CloseIcon from '@mui/icons-material/Close';
-import PersonIcon from '@mui/icons-material/Person';
-import CakeIcon from '@mui/icons-material/Cake';
-import EmailIcon from '@mui/icons-material/Email';
-import PhoneIcon from '@mui/icons-material/Phone';
-import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
-import PaidIcon from '@mui/icons-material/Paid';
-import { useTheme, alpha } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
-import AddIcon from '@mui/icons-material/Add';
+
 
 // Начальные значения для формы СОЗДАНИЯ тренера (поля как в ITrainerCreatePayload)
 const defaultCreateValues: ITrainerCreatePayload = {
@@ -49,7 +42,6 @@ interface TrainerFormProps {
 }
 
 export function TrainerForm({
-    title = "Добавить тренера",
     initialValues,
     onSubmit,
     onClose,

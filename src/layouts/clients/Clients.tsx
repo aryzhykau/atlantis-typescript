@@ -1,4 +1,4 @@
-import { Box, Dialog, DialogContent, Modal, Typography, IconButton, alpha } from "@mui/material";
+import { Box, Dialog, DialogContent, Typography, IconButton, alpha } from "@mui/material";
 import { ClientsDataGrid } from "../../features/clients/components/ClientsDataGrid";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -11,19 +11,6 @@ import { useGradients } from "../../features/trainer-mobile/hooks/useGradients";
 import { useTheme } from "@mui/material";
 import dayjs from "dayjs";
 
-const style = {
-    position: "absolute",
-    width: "50%",
-    top: "50%",
-    height: "90%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    bgcolor: "background.paper",
-    p: 4,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "flex-start",
-};
 
 export function ClientsLayout() {
     const navigate = useNavigate();

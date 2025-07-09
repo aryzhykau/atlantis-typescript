@@ -1,8 +1,6 @@
 import {GridColDef, GridRenderCellParams} from "@mui/x-data-grid";
-import SubscriptionActiveCell from "../components/SubscriptionActiveCell.tsx";
 import { ISubscriptionResponse } from "../models/subscription.ts";
 import { Chip } from "@mui/material";
-import { ITrainingType } from "../../training-types/models/trainingType.ts";
 
 const priceFormatter = (price: number | undefined | null) => {
     if (price === undefined || price === null || isNaN(price)) {

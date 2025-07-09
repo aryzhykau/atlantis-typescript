@@ -4,7 +4,7 @@ import { useClients } from "../../features/clients/hooks/clientManagementHooks.t
 import {useSnackbar} from "../../hooks/useSnackBar.tsx";
 import TextField from '@mui/material/TextField';
 import {ClientMobileCard} from "../../features/clients/components/ClientMobileCard.tsx";
-import {IClientGet} from "../../features/clients/models/client.ts";
+import {IClientUserGet} from "../../features/clients/models/client.ts";
 
 
 export function MobileClientsLayout() {
@@ -26,7 +26,7 @@ export function MobileClientsLayout() {
     }
 
     const handleChangeActive = async (event: React.ChangeEvent<HTMLInputElement>,
-                                      client: IClientGet) => {
+                                      client: IClientUserGet) => {
         const isActive = event.target.checked;
         try {
             displaySnackbar("Обновляем клиента", "info");
@@ -35,14 +35,11 @@ export function MobileClientsLayout() {
                 clientData: {
                     first_name: client.first_name,
                     last_name: client.last_name,
-                    active: isActive,
+                    is_active: isActive,
                     email: client.email,
                     phone: client.phone,
-                    is_birthday: client.is_birthday,
-                    birth_date: client.birth_date,
-                    parent_name: client.parent_name,
-                    whatsapp: client.whatsapp,
-                    role: client.role,
+                    date_of_birth: client.date_of_birth,
+                    whatsapp_number: client.whatsapp_number
                 }
             }).unwrap();
             displaySnackbar(
@@ -75,7 +72,7 @@ export function MobileClientsLayout() {
             </Box>
             <Box sx={{overflowY: "auto", flexGrow: 1, width: "100%"}}>
                 {!isLoadingClients ? (<List>
-                    {displayClients.map((client) => (
+                    {displayClients.map((client: IClientUserGet) => (
                         <ListItem>
                             <ClientMobileCard onEdit={() => console.log("Edit")} onDelete={() => console.log("Delete")} client={client} onToggleActive={handleChangeActive} />
                         </ListItem>

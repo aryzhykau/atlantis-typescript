@@ -1,7 +1,7 @@
 import {
     useGetTrainingTypesQuery,
     useCreateTrainingTypeMutation,
-    useDeleteTrainingTypeMutation, useUpdateTrainingTypeMutation
+    useUpdateTrainingTypeMutation
 } from "../../../store/apis/trainingTypesApi.ts";
 
 
@@ -18,16 +18,14 @@ export const useTrainingTypes = () => {
         ] = useCreateTrainingTypeMutation();
 
     const {data: trainingTypes = [], isLoading, isError, isSuccess, error, refetch: refetchTrainingTypes} = useGetTrainingTypesQuery();
-    const  [deleteTrainingType, {isLoading: isDeleteLoading, isError: isDeleteError, isSuccess: isDeleteSuccess, data: deleteData, error: deleteError}] = useDeleteTrainingTypeMutation();
     const [updateTrainingType, {isLoading: isUpdateLoading, isError: isUpdateError, isSuccess: isUpdateSuccess, error: updateError, data: updateData}] = useUpdateTrainingTypeMutation();
 
     return {
         createTrainingType,
-        deleteTrainingType,
+        
         updateTrainingType,
         trainingTypes,
-        updateData,
-        deleteData,
+        updateData,   
         refetchTrainingTypes,
         isCreateSuccess,
         isCreateError,
@@ -36,10 +34,6 @@ export const useTrainingTypes = () => {
         createdTrainingType,
         isSuccess,
         isError,
-        deleteError,
-        isDeleteLoading,
-        isDeleteError,
-        isDeleteSuccess,
         isUpdateError,
         isUpdateLoading,
         isUpdateSuccess,

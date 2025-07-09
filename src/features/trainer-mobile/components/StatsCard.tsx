@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Paper, Typography, SxProps, useTheme } from '@mui/material';
+import { Paper, Typography, SxProps, useTheme } from '@mui/material';
 import { SvgIconComponent } from '@mui/icons-material';
 import { useGradients, GradientType } from '../hooks/useGradients';
 

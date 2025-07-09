@@ -13,8 +13,6 @@ import {
   Star,
 } from '@mui/icons-material';
 import { useGetTrainerPaymentsQuery, useGetTrainerTrainingsRangeQuery } from '../api/trainerApi';
-import { useAuth } from '../../../hooks/useAuth';
-import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useGetCurrentUserQuery } from '../../../store/apis/userApi';
 import { StatsGrid } from './StatsGrid';
 import { useGradients } from '../hooks/useGradients';
@@ -26,7 +24,7 @@ export const TrainerStats: React.FC = () => {
 
   // Получаем текущего пользователя (тренера)
   const { data: user, isLoading: isLoadingUser } = useGetCurrentUserQuery();
-  const trainerId = user?.id;
+
 
   // Получаем платежи тренера за последний месяц
   const { data: payments, isLoading: isLoadingPayments } = useGetTrainerPaymentsQuery({

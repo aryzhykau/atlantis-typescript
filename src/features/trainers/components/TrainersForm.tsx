@@ -5,7 +5,7 @@ import { Field, Form, Formik } from "formik";
 import {Box, Button, Divider, Typography, IconButton} from "@mui/material";
 import {TextField, CheckboxWithLabel} from "formik-mui";
 import {DatePicker} from "formik-mui-x-date-pickers";
-import {ITrainer} from "../models/trainer.ts";
+import {ITrainerResponse} from "../models/trainer.ts";
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
@@ -27,7 +27,7 @@ const defaultValues = {
 
 interface TrainersFormProps {
     title?: string;
-    initialValues?: ITrainer;
+    initialValues?: ITrainerResponse;
     onClose: () => void;
     isEdit?: boolean;
     trainerId?: number | null;
@@ -53,7 +53,7 @@ export function TrainersForm({
         is_fixed_salary: yup.boolean()
     });
 
-    const handleSubmit = async (values: ITrainer, {resetForm}: {resetForm: () => void}) => {
+    const handleSubmit = async (values: ITrainerResponse, {resetForm}: {resetForm: () => void}) => {
         try {
             // Обрабатываем дату рождения в правильном формате
             const processedValues = {

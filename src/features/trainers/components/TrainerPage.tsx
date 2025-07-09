@@ -172,7 +172,7 @@ export function TrainerPage() {
     });
 
     const [updateTrainer, { isLoading: isUpdatingTrainer }] = useUpdateTrainerMutation();
-    const [updateTrainerStatus, { isLoading: isUpdatingStatus }] = useUpdateTrainerStatusMutation();
+    const [updateTrainerStatus] = useUpdateTrainerStatusMutation();
 
     useEffect(() => {
         if (isError) {
@@ -181,7 +181,7 @@ export function TrainerPage() {
         }
     }, [isError, error, displaySnackbar]);
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
     };
 
