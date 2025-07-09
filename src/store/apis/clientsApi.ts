@@ -29,14 +29,14 @@ export const clientsApi = baseApi.injectEndpoints({
                 url: `/clients/${clientId}`,
                 method: 'GET',
             }),
-            providesTags: (result, error, id) => [{ type: 'Client', id }],
+            providesTags: (_, __, id) => [{ type: 'Client', id }],
         }),
         getClientStudents: builder.query<IStudent[], number>({
             query: (clientId) => ({
                 url: `/clients/${clientId}/students`,
                 method: 'GET',
             }),
-            providesTags: (result, error, clientId) =>
+            providesTags: (result, __, clientId) =>
                 result
                     ? [
                         ...result.map(({ id }) => ({ type: 'Students' as const, id: id.toString() + '_client_' + clientId.toString() })),
@@ -65,7 +65,7 @@ export const clientsApi = baseApi.injectEndpoints({
                     body: dataToSend,
                 };
             },
-            invalidatesTags: (result, error, { clientId }) => [{ type: 'Client', id: clientId }, {type: 'Client', id: 'LIST'}],
+            invalidatesTags: (_, __, { clientId }) => [{ type: 'Client', id: clientId }, {type: 'Client', id: 'LIST'}],
         }),
         updateClientStatus: builder.mutation<IClientUserGet, { clientId: number; is_active: boolean}>({
             query: ({clientId, is_active}) => ({
@@ -73,14 +73,14 @@ export const clientsApi = baseApi.injectEndpoints({
                 method: 'PATCH',
                 body: {is_active},
             }),
-            invalidatesTags: (result, error, { clientId }) => [{ type: 'Client', id: clientId }, {type: 'Client', id: 'LIST'}],
+            invalidatesTags: (_, __, { clientId }) => [{ type: 'Client', id: clientId }, {type: 'Client', id: 'LIST'}],
         }),
         deleteClient: builder.mutation<void, { clientId: number}>({
             query: ({clientId}) => ({
                 url: `/clients/${clientId}`,
                 method: 'DELETE',
             }),
-            invalidatesTags: (result, error, {clientId}) => [{type: 'Client', id: clientId}, {type: 'Client', id: 'LIST'}],
+            invalidatesTags: (_, __, {clientId}) => [{type: 'Client', id: clientId}, {type: 'Client', id: 'LIST'}],
         }),
     }),
 });

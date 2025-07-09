@@ -17,8 +17,6 @@ import {
   RealTrainingCreate,
   RealTrainingUpdate,
   GetRealTrainingsParams,
-  AddStudentToRealTrainingPayload,
-  UpdateStudentAttendancePayload,
   RealTrainingStudent,
   StudentCancellationRequest,
 } from '../../features/calendar-v2/models/realTraining';
@@ -39,7 +37,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         }
         return `training_templates/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
       },
-      providesTags: (result, error, params) =>
+      providesTags: (result, __, params) =>
         result
           ? [
               ...result.map(({ id }) => ({ type: TRAINING_TEMPLATE_TAG, id } as const)),
@@ -53,7 +51,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
     }),
     getTrainingTemplateById: builder.query<TrainingTemplate, number>({
       query: (id) => `training_templates/${id}`,
-      providesTags: (result, error, id) => [{ type: TRAINING_TEMPLATE_TAG, id }],
+      providesTags: (_, __, id) => [{ type: TRAINING_TEMPLATE_TAG, id }],
     }),
     createTrainingTemplate: builder.mutation<TrainingTemplate, TrainingTemplateCreate>({
       query: (newTemplate) => ({
@@ -69,7 +67,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: TRAINING_TEMPLATE_TAG, id }],
+      invalidatesTags: (_, __, { id }) => [{ type: TRAINING_TEMPLATE_TAG, id }],
     }),
     // Специализированная мутация для перемещения тренировки
     moveTrainingTemplate: builder.mutation<TrainingTemplate, { 
@@ -154,7 +152,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         url: `training_templates/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, id) => [
+      invalidatesTags: (_, __, id) => [
         { type: TRAINING_TEMPLATE_TAG, id },
         { type: TRAINING_TEMPLATE_TAG, id: 'LIST' },
       ],
@@ -169,7 +167,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         }
         return 'training_student_templates/'; // Если аргумента нет, или он пустой, запрашиваем все
       },
-      providesTags: (result, error, arg) => // `arg` здесь это исходный аргумент запроса
+      providesTags: (result, __, arg) => // `arg` здесь это исходный аргумент запроса
         result
           ? [
               ...result.map(({ id }) => ({ type: TRAINING_STUDENT_TEMPLATE_TAG, id } as const)),
@@ -183,7 +181,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
     }),
     getTrainingStudentTemplateById: builder.query<TrainingStudentTemplate, number>({
       query: (id) => `training_student_templates/${id}`,
-      providesTags: (result, error, id) => [{ type: TRAINING_STUDENT_TEMPLATE_TAG, id }],
+      providesTags: (_, __, id) => [{ type: TRAINING_STUDENT_TEMPLATE_TAG, id }],
     }),
     createTrainingStudentTemplate: builder.mutation<TrainingStudentTemplate, TrainingStudentTemplateCreate>({
       query: (newStudentTemplate) => ({
@@ -205,7 +203,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => [
+      invalidatesTags: (_, __, { id }) => [
         { type: TRAINING_STUDENT_TEMPLATE_TAG, id },
         // Потенциально инвалидировать и связанный TrainingTemplate
       ],
@@ -215,7 +213,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         url: `training_student_templates/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, id) => [
+      invalidatesTags: (_, __, id) => [
         { type: TRAINING_STUDENT_TEMPLATE_TAG, id },
         { type: TRAINING_STUDENT_TEMPLATE_TAG, id: 'LIST' },
         // Потенциально инвалидировать и связанный TrainingTemplate
@@ -247,7 +245,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
     }),
     getRealTrainingById: builder.query<RealTraining, number>({
       query: (id) => `real-trainings/${id}`,
-      providesTags: (result, error, id) => [{ type: REAL_TRAINING_TAG, id }],
+      providesTags: (_, __, id) => [{ type: REAL_TRAINING_TAG, id }],
     }),
     createRealTraining: builder.mutation<RealTraining, RealTrainingCreate>({
       query: (newTraining) => ({
@@ -263,7 +261,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: REAL_TRAINING_TAG, id }],
+      invalidatesTags: (_, __, { id }) => [{ type: REAL_TRAINING_TAG, id }],
     }),
     // Специализированная мутация для перемещения реальной тренировки
     moveRealTraining: builder.mutation<RealTraining, { 
@@ -346,7 +344,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         url: `real-trainings/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, id) => [
+      invalidatesTags: (_, __, id) => [
         { type: REAL_TRAINING_TAG, id },
         { type: REAL_TRAINING_TAG, id: 'LIST' },
       ],
@@ -368,7 +366,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         method: 'POST',
         body: { student_id },
       }),
-      invalidatesTags: (result, error, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
+      invalidatesTags: (_, __, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
     }),
     updateStudentAttendance: builder.mutation<RealTrainingStudent, { training_id: number; student_id: number; status_of_presence: string }>({
       query: ({ training_id, student_id, status_of_presence }) => ({
@@ -376,14 +374,14 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         method: 'PUT',
         body: { status_of_presence },
       }),
-      invalidatesTags: (result, error, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
+      invalidatesTags: (_, __, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
     }),
     removeStudentFromRealTraining: builder.mutation<{ success: boolean }, { training_id: number; student_id: number }>({
       query: ({ training_id, student_id }) => ({
         url: `real-trainings/${training_id}/students/${student_id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
+      invalidatesTags: (_, __, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
     }),
     cancelStudentFromTraining: builder.mutation<{ success: boolean }, { training_id: number; student_id: number; data: StudentCancellationRequest }>({
       query: ({ training_id, student_id, data }) => ({
@@ -391,7 +389,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         method: 'DELETE',
         body: data,
       }),
-      invalidatesTags: (result, error, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
+      invalidatesTags: (_, __, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
     }),
 
     // Эндпоинт для полной отмены реальной тренировки администратором
@@ -402,7 +400,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         // API ожидает тело запроса для отмены, даже если оно пустое для POST
         body: cancellationReason ? { cancellation_reason: cancellationReason } : {},
       }),
-      invalidatesTags: (result, error, { trainingId }) => [{ type: REAL_TRAINING_TAG, id: trainingId }],
+      invalidatesTags: (_, __, { trainingId }) => [{ type: REAL_TRAINING_TAG, id: trainingId }],
     }),
 
     // TODO: Добавить остальные эндпоинты для Real Trainings:
