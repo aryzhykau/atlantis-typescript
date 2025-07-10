@@ -23,7 +23,7 @@ import {
   FilterList,
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
-import { useGetTrainerTrainingsRangeQuery } from '../api/trainerApi';
+import { useGetTrainerTrainingsRangeQuery } from '../../../store/apis/trainersApi';
 
 type PeriodFilter = 'week' | 'month' | '3months';
 type StatusFilter = 'all' | 'present' | 'absent' | 'registered';

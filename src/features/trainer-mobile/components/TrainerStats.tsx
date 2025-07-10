@@ -12,7 +12,7 @@ import {
   Schedule,
   Star,
 } from '@mui/icons-material';
-import { useGetTrainerPaymentsQuery, useGetTrainerTrainingsRangeQuery } from '../api/trainerApi';
+import { useGetTrainerPaymentsMobileQuery, useGetTrainerTrainingsRangeQuery } from '../../../store/apis/trainersApi';
 import { useGetCurrentUserQuery } from '../../../store/apis/userApi';
 import { StatsGrid } from './StatsGrid';
 import { useGradients } from '../hooks/useGradients';
@@ -27,8 +27,8 @@ export const TrainerStats: React.FC = () => {
 
 
   // Получаем платежи тренера за последний месяц
-  const { data: payments, isLoading: isLoadingPayments } = useGetTrainerPaymentsQuery({
-    period: 'month',
+  const { data: payments, isLoading: isLoadingPayments } = useGetTrainerPaymentsMobileQuery({
+    period: '2weeks',
   });
 
   // Получаем тренировки тренера за последний месяц
@@ -40,19 +40,11 @@ export const TrainerStats: React.FC = () => {
   );
 
   // Вычисляем статистику
-  const totalAmount = payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
   const totalPayments = payments?.length || 0;
   const totalTrainings = trainings?.length || 0;
-  const averageRating = 4.8; // Пока заглушка, потом добавим реальную логику
 
   // Данные для статистических карточек
   const statsItems = [
-    {
-      icon: TrendingUp,
-      value: `${totalAmount.toFixed(2)} €`,
-      label: 'Общий доход',
-      gradient: 'success' as const,
-    },
     {
       icon: People,
       value: totalPayments.toString(),
@@ -64,13 +56,7 @@ export const TrainerStats: React.FC = () => {
       value: totalTrainings.toString(),
       label: 'Тренировок',
       gradient: 'warning' as const,
-    },
-    {
-      icon: Star,
-      value: averageRating.toFixed(1),
-      label: 'Рейтинг',
-      gradient: 'info' as const,
-    },
+    }
   ];
 
   if (isLoadingUser || isLoadingPayments || isLoadingTrainings) {
@@ -138,34 +124,6 @@ export const TrainerStats: React.FC = () => {
 
       {/* Статистика */}
       <StatsGrid items={statsItems} columns={2} />
-
-      {/* Дополнительная информация */}
-      <Paper 
-        elevation={0}
-        sx={{ 
-          mt: 3, 
-          p: 3, 
-          borderRadius: 3,
-          border: '1px solid',
-          borderColor: 'divider',
-          background: theme.palette.background.paper,
-        }}
-      >
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.text.primary }}>
-          Дополнительная информация
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          • Средний доход за тренировку: {totalTrainings > 0 ? (totalAmount / totalTrainings).toFixed(2) : '0'} €
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          • Активных студентов: {payments?.filter((p, index, arr) => 
-            arr.findIndex(p2 => p2.client?.id === p.client?.id) === index
-          ).length || 0}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          • Период: {dayjs().subtract(1, 'month').format('DD MMMM')} - {dayjs().format('DD MMMM YYYY')}
-        </Typography>
-      </Paper>
     </Box>
   );
 }; 
