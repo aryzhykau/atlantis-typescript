@@ -9,7 +9,7 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 
 dayjs.extend(isSameOrBefore);
 
-import { useGetTrainerTrainingsQuery, useUpdateStudentAttendanceMutation } from '../api/trainerApi';
+import { useGetTrainerTrainingsQuery, useUpdateStudentAttendanceMutation } from '../../../store/apis/trainersApi';
 import { useSnackbar } from '../../../hooks/useSnackBar';
 import { TrainerScheduleHeader } from './TrainerScheduleHeader';
 import { DateNavigation } from './DateNavigation';

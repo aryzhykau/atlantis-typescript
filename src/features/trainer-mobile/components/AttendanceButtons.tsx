@@ -30,7 +30,7 @@ export const AttendanceButtons: React.FC<AttendanceButtonsProps> = ({
     return !['CANCELLED_SAFE', 'CANCELLED_PENALTY'].includes(currentStatus);
   };
 
-  const showPresentButton = currentStatus === 'REGISTERED' || currentStatus === 'ABSENT';
+  const showPresentButton = false
   const showAbsentButton = currentStatus === 'REGISTERED' || currentStatus === 'PRESENT';
 
   if (!shouldShowAttendanceButtons()) {

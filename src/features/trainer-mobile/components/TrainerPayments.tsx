@@ -2,39 +2,36 @@ import React, { useState } from 'react';
 import {
   Box,
   Typography,
-
-  Grid,
-  Chip,
-  Avatar,
-  CircularProgress,
   Paper,
-  Fade,
-  Slide,
-  IconButton,
-
-  alpha,
+  Chip,
+  CircularProgress,
   useTheme,
+  alpha,
+  Fade,
+  IconButton,
+  Grid,
+  Slide,
 } from '@mui/material';
-import {
-  Euro,
+import { 
+  TrendingUp, 
   Payment as PaymentIcon,
-  History as HistoryIcon,
-  TrendingUp,
-  AccountBalance,
-  Receipt,
+  Euro,
   ExpandMore,
   ExpandLess,
 } from '@mui/icons-material';
-import dayjs from 'dayjs';
-import { useCreateQuickPaymentMutation, useGetTrainerPaymentsQuery, useGetTrainerStudentsQuery } from '../api/trainerApi';
-import { useSnackbar } from '../../../hooks/useSnackBar';
-import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useGetCurrentUserQuery } from '../../../store/apis/userApi';
-import { StatsGrid } from './StatsGrid';
-import { PaymentForm } from './PaymentForm';
+import { 
+  useGetTrainerStudentsQuery, 
+  useGetTrainerPaymentsMobileQuery,
+  useCreateQuickPaymentMutation 
+} from '../../../store/apis/trainersApi';
+import { useSnackbar } from '../../../hooks/useSnackBar';
 import { useGradients } from '../hooks/useGradients';
+import { PaymentForm } from './PaymentForm';
+import { skipToken } from '@reduxjs/toolkit/query';
+import dayjs from 'dayjs';
 
-type PeriodFilter = 'week' | 'month' | '3months';
+type PeriodFilter = 'week' | '2weeks';
 
 interface PaymentFormData {
   student_id: number;
@@ -60,35 +57,13 @@ export const TrainerPayments: React.FC = () => {
   );
 
   // Получаем платежи тренера
-  const { data: payments, isLoading: isLoadingPayments } = useGetTrainerPaymentsQuery({
+  const { data: payments, isLoading: isLoadingPayments } = useGetTrainerPaymentsMobileQuery({
     period,
   });
 
-  // Вычисляем статистику
-  const totalAmount = payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
-  const todayPayments = payments?.filter(p => 
-    dayjs(p.payment_date).isSame(dayjs(), 'day')
-  ) || [];
-  const todayAmount = todayPayments.reduce((sum, payment) => sum + payment.amount, 0);
 
   // Получаем градиенты
   const gradients = useGradients();
-
-  // Данные для статистических карточек
-  const statsItems = [
-    {
-      icon: AccountBalance,
-      value: `${totalAmount.toFixed(2)} €`,
-      label: 'Общая сумма',
-      gradient: 'success' as const,
-    },
-    {
-      icon: Receipt,
-      value: `${todayAmount.toFixed(2)} €`,
-      label: 'Сегодня',
-      gradient: 'warning' as const,
-    },
-  ];
 
   const handleFormSubmit = async (values: PaymentFormData) => {
     const selectedStudent = students.find(s => s.id === values.student_id);
@@ -177,8 +152,6 @@ export const TrainerPayments: React.FC = () => {
         </Box>
       </Paper>
 
-      {/* Статистика */}
-      <StatsGrid items={statsItems} columns={2} />
 
       {/* Форма регистрации платежа */}
       <PaymentForm
@@ -205,10 +178,10 @@ export const TrainerPayments: React.FC = () => {
           <Typography variant="subtitle2" sx={{ fontWeight: 600, color: theme.palette.text.secondary }}>
             Период:
           </Typography>
-          {(['week', 'month', '3months'] as PeriodFilter[]).map((p) => (
+          {(['week', '2weeks'] as PeriodFilter[]).map((p) => (
             <Chip
               key={p}
-              label={p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : '3 месяца'}
+              label={p === 'week' ? 'Неделя' : '2 Недели'}
               onClick={() => setPeriod(p)}
               variant={period === p ? 'filled' : 'outlined'}
               color={period === p ? 'primary' : 'default'}
@@ -244,7 +217,6 @@ export const TrainerPayments: React.FC = () => {
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <HistoryIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
               <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
                 История платежей
               </Typography>
@@ -291,17 +263,18 @@ export const TrainerPayments: React.FC = () => {
                     onClick={() => setExpandedPayment(expandedPayment === payment.id ? null : payment.id)}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar 
-                        sx={{ 
-                          width: 48, 
+                      <Box sx={{ 
+                          borderRadius: 4,
+                          textAlign: 'center',
+                          width: 200, 
                           height: 48, 
                           background: gradients.success,
                           fontSize: '1.2rem',
                           fontWeight: 600,
                         }}
                       >
-                        {payment.client?.first_name?.[0]}{payment.client?.last_name?.[0]}
-                      </Avatar>
+                        {payment.client_first_name} {payment.client_last_name}
+                      </Box>
                       
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5, color: theme.palette.text.primary }}>
