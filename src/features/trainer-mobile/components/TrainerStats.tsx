@@ -10,7 +10,6 @@ import {
   TrendingUp,
   People,
   Schedule,
-  Star,
 } from '@mui/icons-material';
 import { useGetTrainerPaymentsMobileQuery, useGetTrainerTrainingsRangeQuery } from '../../../store/apis/trainersApi';
 import { useGetCurrentUserQuery } from '../../../store/apis/userApi';
