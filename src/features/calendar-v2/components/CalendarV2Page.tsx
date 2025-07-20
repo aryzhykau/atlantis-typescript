@@ -151,19 +151,13 @@ const CalendarV2Page: React.FC = () => {
   const isLoading = viewMode === 'scheduleTemplate' ? isLoadingTemplates : isLoadingActual;
   const error = viewMode === 'scheduleTemplate' ? errorTemplates : errorActual;
 
-  // Создаем опции для фильтров на основе загруженных данных
+  // --- Filter Options Generation ---
   const filterOptions = useMemo(() => {
-    if (viewMode === 'scheduleTemplate' && scheduleTemplates) {
-      return createFilterOptionsFromTemplates(scheduleTemplates);
+    if (viewMode === 'scheduleTemplate') {
+      return createFilterOptionsFromTemplates(scheduleTemplates || []);
+    } else {
+      return createFilterOptionsFromRealTrainings(actualTrainings || []);
     }
-    if (viewMode === 'actualTrainings' && actualTrainings) {
-      return createFilterOptionsFromRealTrainings(actualTrainings);
-    }
-    return {
-      trainerOptions: [],
-      trainingTypeOptions: [],
-      studentOptions: [],
-    };
   }, [viewMode, scheduleTemplates, actualTrainings]);
 
   // Фильтруем данные на основе текущих фильтров

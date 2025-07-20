@@ -5,7 +5,6 @@ import {Field, FieldArray, Form, Formik, FormikProps} from "formik";
 import {
     Box, 
     Button, 
-    Checkbox, 
     alpha,
     CircularProgress,
     Grid
@@ -17,7 +16,7 @@ import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import { useTheme } from '@mui/material';
 
 import {DatePicker} from "formik-mui-x-date-pickers";
-import {TextField} from "formik-mui";
+import {TextField, Checkbox} from "formik-mui";
 import { IClientUserFormValues, ClientUpdate, IClientCreatePayload } from "../models/client.ts";
 import * as Yup from "yup";
 

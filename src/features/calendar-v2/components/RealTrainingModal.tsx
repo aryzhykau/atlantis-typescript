@@ -190,12 +190,14 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
     // Отладочная информация
     console.log('[RealTrainingModal] Students data:', studentsToDisplay);
     studentsToDisplay.forEach((student, index) => {
-      console.log(`[RealTrainingModal] Student ${index}:`, {
-        id: student.id,
-        name: `${student.student.first_name} ${student.student.last_name}`,
-        status: student.status,
-        statusType: typeof student.status
-      });
+      if (student.student) {
+        console.log(`[RealTrainingModal] Student ${index}:`, {
+          id: student.id,
+          name: `${student.student.first_name} ${student.student.last_name}`,
+          status: student.status,
+          statusType: typeof student.status
+        });
+      }
     });
 
     if (studentsToDisplay.length === 0) {
@@ -211,6 +213,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {studentsToDisplay.map((s_real) => {
+            if (!s_real.student) return null;
             const borderColor = realTrainingData.training_type?.color || theme.palette.divider;
             const isCancelled = isStudentCancelled(s_real.status);
             
@@ -258,7 +261,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
                       opacity: isCancelled ? 0.7 : 1
                     }}
                   >
-                    {`${s_real.student.first_name || ''} ${s_real.student.last_name || ''}`.trim()}
+                    {s_real.student ? `${s_real.student.first_name || ''} ${s_real.student.last_name || ''}`.trim() : 'Имя не найдено'}
                   </Typography>
                   {s_real.student.client && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
@@ -308,10 +311,10 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
                   color="error"
                   size="small"
                   startIcon={<CancelIcon />}
-                  onClick={() => handleOpenCancelDialog(s_real.student.id, `${s_real.student.first_name} ${s_real.student.last_name}`)}
-                  disabled={isCancellingStudent && studentToCancel?.id === s_real.student.id}
+                  onClick={() => s_real.student && handleOpenCancelDialog(s_real.student.id, `${s_real.student.first_name} ${s_real.student.last_name}`)}
+                  disabled={isCancellingStudent && studentToCancel?.id === s_real.student?.id}
                 >
-                  {isCancellingStudent && studentToCancel?.id === s_real.student.id ? <CircularProgress size={20} /> : 'Отменить'}
+                  {isCancellingStudent && studentToCancel?.id === s_real.student?.id ? <CircularProgress size={20} /> : 'Отменить'}
                 </Button>
               )}
 

@@ -42,7 +42,7 @@ const baseInitialStudentFormValues: StudentFormValuesForList = {
 
 
 export function StudentsListPage() {
-  const { data: students, error, isLoading, refetch } = useGetStudentsQuery();
+  const { data: students, error, isLoading } = useGetStudentsQuery();
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [createStudent, { isLoading: isCreatingStudent }] = useCreateStudentMutation();
   const { displaySnackbar } = useSnackbar();
@@ -118,8 +118,7 @@ export function StudentsListPage() {
     try {
       await createStudent(payload).unwrap();
       displaySnackbar('Студент успешно создан', 'success');
-      handleCloseAddStudentModal(); 
-      refetch();
+      handleCloseAddStudentModal();
     } catch (err: any) {
       console.error("Ошибка создания студента:", err);
       const errorDetail = err?.data?.detail || 'Не удалось создать студента';

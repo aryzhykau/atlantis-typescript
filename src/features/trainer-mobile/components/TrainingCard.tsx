@@ -3,12 +3,12 @@ import { Box, Paper, Typography, Chip, IconButton, Collapse } from '@mui/materia
 import { FitnessCenter, AccessTime, Group, ExpandMore } from '@mui/icons-material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { StudentAttendanceItem } from './StudentAttendanceItem';
+import { TrainerTraining } from '../models';
 
 interface TrainingCardProps {
-  training: any;
+  training: TrainerTraining;
   canMark: boolean;
   isUpdating: boolean;
-  onMarkPresent: (trainingId: number, studentId: number) => void;
   onMarkAbsent: (trainingId: number, studentId: number) => void;
 }
 
@@ -16,7 +16,6 @@ export const TrainingCard: React.FC<TrainingCardProps> = ({
   training,
   canMark,
   isUpdating,
-  onMarkPresent,
   onMarkAbsent,
 }) => {
   const theme = useTheme();
@@ -26,7 +25,7 @@ export const TrainingCard: React.FC<TrainingCardProps> = ({
     return timeString.substring(0, 5); // "HH:MM"
   };
 
-  const getStudentCount = (training: any) => {
+  const getStudentCount = (training: TrainerTraining) => {
     return training.students?.filter((s: any) => 
       !['CANCELLED_SAFE', 'CANCELLED_PENALTY'].includes(s.status)
     ).length || 0;
@@ -136,7 +135,6 @@ export const TrainingCard: React.FC<TrainingCardProps> = ({
                   trainingDate={training.training_date}
                   canMark={canMark}
                   isUpdating={isUpdating}
-                  onMarkPresent={onMarkPresent}
                   onMarkAbsent={onMarkAbsent}
                 />
               ))}

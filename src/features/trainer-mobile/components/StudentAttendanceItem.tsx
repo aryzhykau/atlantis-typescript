@@ -5,14 +5,14 @@ import { useGradients } from '../hooks/useGradients';
 import { AttendanceButtons } from './AttendanceButtons';
 import { alpha } from '@mui/material/styles';
 import { useTheme } from '@mui/material/styles';
+import { TrainerStudent } from '../models';
 
 interface StudentAttendanceItemProps {
-  studentTraining: any;
+  studentTraining: TrainerStudent;
   trainingId: number;
   trainingDate: string;
   canMark: boolean;
   isUpdating: boolean;
-  onMarkPresent: (trainingId: number, studentId: number) => void;
   onMarkAbsent: (trainingId: number, studentId: number) => void;
 }
 
@@ -22,7 +22,6 @@ export const StudentAttendanceItem: React.FC<StudentAttendanceItemProps> = ({
   trainingDate,
   canMark,
   isUpdating,
-  onMarkPresent,
   onMarkAbsent,
 }) => {
   const gradients = useGradients();
@@ -53,11 +52,9 @@ export const StudentAttendanceItem: React.FC<StudentAttendanceItemProps> = ({
     }
   };
 
-  const handleQuickMark = (status: 'PRESENT' | 'ABSENT') => {
+  const handleQuickMark = (status: 'ABSENT') => {
     if (canMark && !isUpdating) {
-      if (status === 'PRESENT') {
-        onMarkPresent(trainingId, studentTraining.student_id);
-      } else {
+      if (status === 'ABSENT') {
         onMarkAbsent(trainingId, studentTraining.student_id);
       }
     }
@@ -65,8 +62,7 @@ export const StudentAttendanceItem: React.FC<StudentAttendanceItemProps> = ({
 
   const canQuickMark = canMark && !isUpdating && 
     (studentTraining.status === 'REGISTERED' || 
-     studentTraining.status === 'PRESENT' ||
-     studentTraining.status === 'ABSENT');
+     studentTraining.status === 'PRESENT');
 
   return (
     <Box sx={{ 
@@ -95,20 +91,12 @@ export const StudentAttendanceItem: React.FC<StudentAttendanceItemProps> = ({
       } : {},
     }}
     onClick={() => {
-      // Быстрая отметка: если ученик записан, отмечаем как присутствующий
-      if (studentTraining.status === 'REGISTERED') {
-        handleQuickMark('PRESENT');
-      }
-      // Если ученик присутствовал, отмечаем как отсутствующий
-      else if (studentTraining.status === 'PRESENT') {
+      // Быстрая отметка: если ученик записан или присутствовал, отмечаем как отсутствующий
+      if (studentTraining.status === 'REGISTERED' || studentTraining.status === 'PRESENT') {
         handleQuickMark('ABSENT');
       }
-      // Если ученик отсутствовал, отмечаем как присутствующий
-      else if (studentTraining.status === 'ABSENT') {
-        handleQuickMark('PRESENT');
-      }
     }}
-    title={canQuickMark ? 'Нажмите для быстрой отметки' : ''}
+    title={canQuickMark ? 'Нажмите, чтобы отметить отсутствие' : ''}
     >
       <Avatar 
         sx={{ 
@@ -166,7 +154,6 @@ export const StudentAttendanceItem: React.FC<StudentAttendanceItemProps> = ({
         trainingDate={trainingDate}
         canMark={canMark}
         isUpdating={isUpdating}
-        onMarkPresent={onMarkPresent}
         onMarkAbsent={onMarkAbsent}
       />
     </Box>
