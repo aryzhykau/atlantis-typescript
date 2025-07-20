@@ -1,34 +1,23 @@
 // Модели для тренерского мобильного интерфейса
 
-export interface TrainerTraining {
-  id: number;
-  training_date: string;
-  start_time: string;
-  training_type?: {
-    id: number;
-    name: string;
-    color: string;
-  };
-  students: TrainerTrainingStudent[];
-  status?: string;
+export interface TrainerStudent {
+    student_id: number;
+    status: 'PRESENT' | 'ABSENT' | 'REGISTERED' | 'CANCELLED_SAFE' | 'CANCELLED_PENALTY';
+    student: {
+        first_name: string;
+        last_name: string;
+    };
 }
 
-export interface TrainerTrainingStudent {
-  id: number;
-  student_id: number;
-  student: {
+export interface TrainerTraining {
     id: number;
-    first_name: string;
-    last_name: string;
-    client?: {
-      id: number;
-      first_name: string;
-      last_name: string;
-      phone?: string;
+    training_date: string;
+    start_time: string;
+    training_type: {
+        name: string;
+        color: string;
     };
-  };
-  status: 'REGISTERED' | 'PRESENT' | 'ABSENT' | 'CANCELLED_SAFE' | 'CANCELLED_PENALTY' | 'WAITLIST';
-  attendance_marked_at?: string;
+    students: TrainerStudent[];
 }
 
 export interface AttendanceUpdate {

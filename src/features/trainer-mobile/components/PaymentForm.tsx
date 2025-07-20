@@ -97,7 +97,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <AddIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
             <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
               Регистрация платежа
             </Typography>

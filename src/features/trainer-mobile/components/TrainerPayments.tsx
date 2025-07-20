@@ -323,7 +323,7 @@ export const TrainerPayments: React.FC = () => {
                               Зарегистрировал
                             </Typography>
                             <Typography variant="body2" sx={{ fontWeight: 500, color: theme.palette.text.primary }}>
-                              {payment.registered_by?.first_name} {payment.registered_by?.last_name}
+                              {payment.registered_by_first_name} {payment.registered_by_last_name}
                             </Typography>
                           </Grid>
                         </Grid>

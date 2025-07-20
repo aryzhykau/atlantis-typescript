@@ -51,7 +51,7 @@ export const clientsApi = baseApi.injectEndpoints({
                 method: 'POST',
                 body: clientData,
             }),
-            invalidatesTags: [{ type: 'Client', id: 'LIST' }],
+            invalidatesTags: (result) => result ? [{ type: 'Client', id: 'LIST' }, { type: 'Students', id: 'LIST_FOR_CLIENT_' + result.id }, { type: 'Students', id: 'LIST' }] : [{ type: 'Client', id: 'LIST' }, { type: 'Students', id: 'LIST' }],
         }),
         updateClient: builder.mutation<IClientUserGet, { clientId: number; clientData: ClientUpdate}>({
             query: ({clientId, clientData}) => {

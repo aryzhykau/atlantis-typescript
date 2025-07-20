@@ -15,6 +15,7 @@ import { TrainerScheduleHeader } from './TrainerScheduleHeader';
 import { DateNavigation } from './DateNavigation';
 import { TrainingCard } from './TrainingCard';
 import { EmptyState } from './EmptyState';
+import { TrainerTraining } from '../models';
 
 export const TrainerSchedule: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
@@ -22,7 +23,7 @@ export const TrainerSchedule: React.FC = () => {
   
   const { data: trainings, isLoading, error } = useGetTrainerTrainingsQuery({
     date: selectedDate.format('YYYY-MM-DD'),
-  });
+  }) as { data: TrainerTraining[] | undefined; isLoading: boolean; error: any };
 
   const [updateAttendance, { isLoading: isUpdatingAttendance }] = useUpdateStudentAttendanceMutation();
 
@@ -37,7 +38,7 @@ export const TrainerSchedule: React.FC = () => {
   const handleAttendanceUpdate = async (
     trainingId: number, 
     studentId: number, 
-    status: 'PRESENT' | 'ABSENT'
+    status: 'ABSENT'
   ) => {
     try {
       await updateAttendance({
@@ -47,7 +48,7 @@ export const TrainerSchedule: React.FC = () => {
       }).unwrap();
       
       displaySnackbar(
-        `Отметка обновлена: ${status === 'PRESENT' ? 'Присутствовал' : 'Отсутствовал'}`,
+        `Отметка обновлена: Отсутствовал`,
         'success'
       );
     } catch (error: any) {
@@ -138,9 +139,6 @@ export const TrainerSchedule: React.FC = () => {
                 training={training}
                 canMark={canMarkAttendance(training.training_date)}
                 isUpdating={isUpdatingAttendance}
-                onMarkPresent={(trainingId, studentId) => 
-                  handleAttendanceUpdate(trainingId, studentId, 'PRESENT')
-                }
                 onMarkAbsent={(trainingId, studentId) => 
                   handleAttendanceUpdate(trainingId, studentId, 'ABSENT')
                 }

@@ -4,7 +4,6 @@ import {
   Payment as PaymentIcon,
   TrendingUp as StatsIcon,
   CalendarToday as ScheduleIcon,
-  CheckCircle as AttendanceIcon,
   Person as ProfileIcon,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -26,8 +25,7 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
     if (path.includes('/payments')) return 0;
     if (path.includes('/stats')) return 1;
     if (path.includes('/schedule')) return 2;
-    if (path.includes('/attendance')) return 3;
-    if (path.includes('/profile')) return 4;
+    if (path.includes('/profile')) return 3;
     return 0; // По умолчанию платежи
   };
 
@@ -45,9 +43,6 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
         navigate('/trainer-mobile/schedule');
         break;
       case 3:
-        navigate('/trainer-mobile/attendance');
-        break;
-      case 4:
         navigate('/trainer-mobile/profile');
         break;
     }
@@ -69,11 +64,6 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
       label: 'Расписание',
       icon: <ScheduleIcon />,
       gradient: gradients.info,
-    },
-    {
-      label: 'Посещения',
-      icon: <AttendanceIcon />,
-      gradient: gradients.primary,
     },
     {
       label: 'Профиль',

@@ -38,14 +38,22 @@ export const getTrainerName = (event: CalendarEvent): string => {
  */
 export const getStudentNames = (event: CalendarEvent): string[] => {
   if (isTrainingTemplate(event) && event.assigned_students) {
-    return event.assigned_students.map(student => 
-      `${student.student.first_name || ''} ${student.student.last_name || ''}`.trim()
-    ).filter(name => name);
+    return event.assigned_students.map(studentTemplate => {
+      const student = studentTemplate.student;
+      if (student) {
+        return `${student.first_name || ''} ${student.last_name || ''}`.trim();
+      }
+      return '';
+    }).filter(name => name);
   }
   if (isRealTraining(event) && event.students) {
-    return event.students.map(student => 
-      `${student.student.first_name || ''} ${student.student.last_name || ''}`.trim()
-    ).filter(name => name);
+    return event.students.map(studentTraining => {
+      const student = studentTraining.student;
+      if (student) {
+        return `${student.first_name || ''} ${student.last_name || ''}`.trim();
+      }
+      return '';
+    }).filter(name => name);
   }
   return [];
 };
@@ -55,10 +63,10 @@ export const getStudentNames = (event: CalendarEvent): string[] => {
  */
 export const getStudentIds = (event: CalendarEvent): number[] => {
   if (isTrainingTemplate(event) && event.assigned_students) {
-    return event.assigned_students.map(student => student.student.id);
+    return event.assigned_students.map(studentTemplate => studentTemplate.student?.id).filter(id => id !== undefined) as number[];
   }
   if (isRealTraining(event) && event.students) {
-    return event.students.map(student => student.student.id);
+    return event.students.map(studentTraining => studentTraining.student?.id).filter(id => id !== undefined) as number[];
   }
   return [];
 };
@@ -192,13 +200,15 @@ export const createFilterOptionsFromTemplates = (
     if (template.assigned_students) {
       template.assigned_students.forEach(studentTemplate => {
         const student = studentTemplate.student;
-        const studentName = `${student.first_name || ''} ${student.last_name || ''}`.trim();
-        if (studentName && !studentSet.has(student.id)) {
-          studentSet.set(student.id, {
-            id: student.id,
-            label: studentName,
-            type: 'student',
-          });
+        if (student) {
+          const studentName = `${student.first_name || ''} ${student.last_name || ''}`.trim();
+          if (studentName && !studentSet.has(student.id)) {
+            studentSet.set(student.id, {
+              id: student.id,
+              label: studentName,
+              type: 'student',
+            });
+          }
         }
       });
     }
@@ -253,13 +263,15 @@ export const createFilterOptionsFromRealTrainings = (
     if (training.students) {
       training.students.forEach(studentTraining => {
         const student = studentTraining.student;
-        const studentName = `${student.first_name || ''} ${student.last_name || ''}`.trim();
-        if (studentName && !studentSet.has(student.id)) {
-          studentSet.set(student.id, {
-            id: student.id,
-            label: studentName,
-            type: 'student',
-          });
+        if (student) {
+          const studentName = `${student.first_name || ''} ${student.last_name || ''}`.trim();
+          if (studentName && !studentSet.has(student.id)) {
+            studentSet.set(student.id, {
+              id: student.id,
+              label: studentName,
+              type: 'student',
+            });
+          }
         }
       });
     }
