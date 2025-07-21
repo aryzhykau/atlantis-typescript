@@ -12,7 +12,6 @@ import {
   TextField,
   Grid,
   Slide,
-  IconButton,
 } from '@mui/material';
 import { 
   ReceiptLong, 
@@ -29,7 +28,7 @@ import {
 } from '../../../store/apis/trainersApi';
 import { useGetCurrentUserQuery } from '../../../store/apis/userApi';
 import dayjs from 'dayjs';
-import { Expense } from '../models/expense';
+import { Expense } from '../models/index';
 
 type PeriodFilter = 'week' | '2weeks' | 'month';
 
