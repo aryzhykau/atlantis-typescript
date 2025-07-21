@@ -10,7 +10,7 @@ import {ClientsLayout} from "../layouts/clients/Clients.tsx";
 import { TrainersListPage } from "../features/trainers/components/TrainersListPage.tsx";
 import {DashboardLayout} from "../layouts/Dashboard.tsx";
 import { TrainingSettings } from "../layouts/trainingTypesSubscriptions/TrainingSettings.tsx";
-import {MobileClientsLayout} from "../layouts/clients/MobileClients.tsx";
+import {MobileClients} from "../layouts/clients/MobileClients.tsx";
 import InvoicesPayments from "../layouts/invoicesPyaments/InvoicesPayments.tsx";
 import { StudentsListPage } from '../features/students/components/StudentsListPage.tsx';
 import CalendarV2Page from "../features/calendar-v2/components/CalendarV2Page.tsx";
@@ -29,7 +29,7 @@ export const MenuItems: IMenuItems[] = [
         link: "clients",
         icon: <PersonIcon/>,
         page: <ClientsLayout/>,
-        mobilePage: <MobileClientsLayout/>
+        mobilePage: <MobileClients/>
     },
     {
         title: "Ученики",

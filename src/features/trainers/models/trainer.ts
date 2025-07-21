@@ -18,8 +18,14 @@ export interface ITrainerCoreData {
 
 // Интерфейс для ответа API при запросе данных тренера (GET /trainers/{trainer_id} или из списка)
 // Соответствует схеме TrainerResponse из openapi.json
-export interface ITrainerResponse extends ITrainerCoreData {
+export interface ITrainerResponse {
     id: number;
+    first_name: string;
+    last_name: string;
+    date_of_birth: string;
+    email: string;
+    phone_country_code: string;
+    phone_number: string;
     role: UserRole;
     is_authenticated_with_google: boolean;
     salary: number | null;
@@ -30,7 +36,13 @@ export interface ITrainerResponse extends ITrainerCoreData {
 
 // Интерфейс для payload при СОЗДАНИИ тренера (POST /trainers/)
 // Соответствует схеме TrainerCreate из openapi.json
-export interface ITrainerCreatePayload extends ITrainerCoreData {
+export interface ITrainerCreatePayload {
+    first_name: string;
+    last_name: string;
+    date_of_birth: string;
+    email: string;
+    phone_country_code: string;
+    phone_number: string;
     salary?: number | null; // Опционально, т.к. в схеме есть default для is_fixed_salary, а salary может быть null
     is_fixed_salary?: boolean; // Опционально, default: false в API
 }
@@ -43,7 +55,8 @@ export interface ITrainerUpdatePayload {
     last_name?: string | null;
     date_of_birth?: string | null; // Формат 'YYYY-MM-DD'
     email?: string | null;
-    phone?: string | null;
+    phone_country_code?: string;
+    phone_number?: string;
     salary?: number | null;
     is_fixed_salary?: boolean | null;
     is_active?: boolean | null;

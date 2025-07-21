@@ -76,7 +76,7 @@ export function ClientMobileCard({
                                 color: theme => theme.palette.text.secondary
                             }}
                         >
-                            {client.phone}
+                            {`+${client.phone_country_code} ${client.phone_number}`}
                         </Typography>
                     </Box>
 
@@ -100,7 +100,7 @@ export function ClientMobileCard({
                         gap={1}
                     >
                         <PhoneIcon fontSize="small" sx={{ color: "gray" }} />
-                        {client.phone || "No phone number"}
+                        {`+${client.phone_country_code} ${client.phone_number}` || "No phone number"}
                     </Typography>
                     <Typography
                         variant="body2"

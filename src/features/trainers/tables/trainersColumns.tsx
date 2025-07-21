@@ -42,6 +42,7 @@ export const trainerColums: GridColDef[] = [
         sortable: false,
         align: "center",
         headerAlign: "center",
+        valueGetter: (_value, row) => `${row.phone_country_code} ${row.phone_number}`,
     },
     {
         field: "salary",

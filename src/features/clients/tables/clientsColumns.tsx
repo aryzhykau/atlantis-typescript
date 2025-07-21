@@ -75,6 +75,7 @@ export const clientColums: GridColDef[] = [
         headerName: "Телефон",
         width: 100,
         sortable: false,
+        valueGetter: (_value, row) => `${row.phone_country_code} ${row.phone_number}`,
     },
     {
         field: "date_of_birth",

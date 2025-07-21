@@ -300,9 +300,9 @@ export const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ client, onClient
                     <InfoItem
                         icon={<PhoneIcon />}
                         label="Телефон"
-                        value={client.phone || "Не указан"}
+                        value={`+${client.phone_country_code} ${client.phone_number}` || "Не указан"}
                         color="success"
-                        href={client.phone ? `tel:${client.phone}` : undefined}
+                        href={client.phone_country_code ? `tel:+${client.phone_country_code}${client.phone_number}` : undefined}
                     />
                 </Box>
 
@@ -310,9 +310,9 @@ export const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ client, onClient
                     <InfoItem
                         icon={<WhatsAppIcon />}
                         label="WhatsApp"
-                        value={client.whatsapp_number || "Не указан"}
+                        value={client.whatsapp_number ? `+${client.whatsapp_country_code} ${client.whatsapp_number}` : "Не указан"}
                         color="success"
-                        href={client.whatsapp_number ? `https://wa.me/${client.whatsapp_number.replace(/[^0-9]/g, '')}` : undefined}
+                        href={client.whatsapp_country_code ? `https://wa.me/${client.whatsapp_country_code}${client.whatsapp_number}` : undefined}
                     />
                 </Box>
 

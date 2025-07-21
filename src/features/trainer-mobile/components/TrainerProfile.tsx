@@ -181,7 +181,7 @@ export const TrainerProfile: React.FC = () => {
             </ListItemIcon>
             <ListItemText 
               primary="Телефон" 
-              secondary={user?.phone || 'Не указан'}
+              secondary={`+${user?.phone_country_code} ${user?.phone_number}` || 'Не указан'}
               secondaryTypographyProps={{ color: 'text.secondary' }}
             />
           </ListItem>
