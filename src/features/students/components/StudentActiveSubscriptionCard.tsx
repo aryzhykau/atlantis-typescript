@@ -272,24 +272,6 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
                             
                             {/* Статус абонемента */}
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                                <Box
-                                    sx={{
-                                        p: 1,
-                                        borderRadius: 2,
-                                        background: getStatusGradient(),
-                                        color: 'white',
-                                        mr: 2,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        minWidth: 40,
-                                        height: 40,
-                                    }}
-                                >
-                                    {/* {activeSubscription.status?.toLowerCase() === 'active' ? <PlayCircleOutlineIcon /> : 
-                                     activeSubscription.status?.toLowerCase() === 'frozen' ? <PauseCircleOutlineIcon /> : 
-                                     <EventBusyIcon />} */}
-                                </Box>
                                 <Chip
                                     label={
                                         activeSubscription.status?.toLowerCase() === 'active' ? 'Активен' :
