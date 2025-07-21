@@ -80,10 +80,7 @@ export const subscriptionsApi = baseApi.injectEndpoints({
             query: ({ studentSubscriptionId, payload }) => ({
                 url: `/subscriptions/student/${studentSubscriptionId}/freeze`,
                 method: 'POST',
-                params: {
-                    freeze_start_date: payload.freeze_start_date,
-                    freeze_duration_days: payload.freeze_duration_days,
-                },
+                body: payload,
             }),
             invalidatesTags: (result, __, { studentSubscriptionId }) => 
                 result 
