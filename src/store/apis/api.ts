@@ -70,5 +70,6 @@ export const baseApi = createApi({
         'RealTrainingV2',
         'Payment',
         'TrainerStats',
+        'Expenses',
     ],
 });

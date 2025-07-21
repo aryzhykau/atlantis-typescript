@@ -5,6 +5,7 @@ import {
   TrendingUp as StatsIcon,
   CalendarToday as ScheduleIcon,
   Person as ProfileIcon,
+  ReceiptLong as ExpensesIcon,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGradients } from '../features/trainer-mobile/hooks/useGradients';
@@ -23,9 +24,10 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
   const getCurrentPage = () => {
     const path = location.pathname;
     if (path.includes('/payments')) return 0;
-    if (path.includes('/stats')) return 1;
-    if (path.includes('/schedule')) return 2;
-    if (path.includes('/profile')) return 3;
+    if (path.includes('/expenses')) return 1;
+    if (path.includes('/stats')) return 2;
+    if (path.includes('/schedule')) return 3;
+    if (path.includes('/profile')) return 4;
     return 0; // По умолчанию платежи
   };
 
@@ -37,12 +39,15 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
         navigate('/trainer-mobile/payments');
         break;
       case 1:
-        navigate('/trainer-mobile/stats');
+        navigate('/trainer-mobile/expenses');
         break;
       case 2:
-        navigate('/trainer-mobile/schedule');
+        navigate('/trainer-mobile/stats');
         break;
       case 3:
+        navigate('/trainer-mobile/schedule');
+        break;
+      case 4:
         navigate('/trainer-mobile/profile');
         break;
     }
@@ -54,6 +59,11 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
       label: 'Платежи',
       icon: <PaymentIcon />,
       gradient: gradients.success,
+    },
+    {
+      label: 'Расходы',
+      icon: <ExpensesIcon />,
+      gradient: gradients.primary,
     },
     {
       label: 'Статистика',

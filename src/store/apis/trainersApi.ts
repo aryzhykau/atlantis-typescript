@@ -10,6 +10,12 @@ import { IPaymentHistoryResponse, IPaymentHistoryFilter } from "../../features/p
 import { IPaymentListResponse, IPaymentFilter } from "../../features/payments/models/payment";
 // Mobile trainer models
 import { TrainerTraining, AttendanceUpdate, QuickPayment, TrainerStats } from "../../features/trainer-mobile/models";
+// import {
+//   Student,
+
+// } from '../../features/trainer-mobile/models';
+import { Expense } from '../../features/trainer-mobile/models/index.ts';
+
 
 export const trainersApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -178,11 +184,21 @@ export const trainersApi = baseApi.injectEndpoints({
 
         // Получение студентов тренера
         getTrainerStudents: builder.query<any[], { trainer_id: number }>({
-            query: ({ trainer_id }) => ({
-                url: `/students/trainer/${trainer_id}`,
-                method: 'GET',
-            }),
+            query: ({ trainer_id }) => `trainers/${trainer_id}/students`,
             providesTags: ['Students'],
+        }),
+
+        getExpenses: builder.query<Expense[], { period: string }>({
+            query: ({ period }) => `expenses/?period=${period}`,
+            providesTags: (result) => (result ? [{ type: 'Expenses', id: 'LIST' }] : []),
+        }),
+        createExpense: builder.mutation<Expense, Partial<Expense>>({
+            query: (body) => ({
+                url: 'expenses/',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: [{ type: 'Expenses', id: 'LIST' }],
         }),
     }),
 });
@@ -204,4 +220,6 @@ export const {
     useGetTrainerPaymentsMobileQuery,
     useGetTrainerStatsQuery,
     useGetTrainerStudentsQuery,
+    useGetExpensesQuery,
+    useCreateExpenseMutation,
 } = trainersApi;
