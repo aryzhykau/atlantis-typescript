@@ -5,6 +5,7 @@ import { TrainerSchedule } from './TrainerSchedule';
 import { TrainerPayments } from './TrainerPayments';
 import { TrainerStats } from './TrainerStats';
 import { TrainerProfile } from './TrainerProfile';
+import { TrainerExpenses } from './TrainerExpenses';
 
 export const TrainerMobileApp: React.FC = () => {
   return (
@@ -12,6 +13,7 @@ export const TrainerMobileApp: React.FC = () => {
       <Routes>
         <Route path="/" element={<Navigate to="/trainer-mobile/payments" replace />} />
         <Route path="/payments" element={<TrainerPayments />} />
+        <Route path="/expenses" element={<TrainerExpenses />} />
         <Route path="/stats" element={<TrainerStats />} />
         <Route path="/schedule" element={<TrainerSchedule />} />
         <Route path="/profile" element={<TrainerProfile />} />
