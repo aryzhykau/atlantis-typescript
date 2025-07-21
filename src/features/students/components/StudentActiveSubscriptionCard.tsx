@@ -28,8 +28,8 @@ import EventBusyIcon from '@mui/icons-material/EventBusy';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
-import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
-import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
+// import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+// import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CardMembershipIcon from '@mui/icons-material/CardMembership';
 
@@ -286,9 +286,9 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
                                         height: 40,
                                     }}
                                 >
-                                    {activeSubscription.status?.toLowerCase() === 'active' ? <PlayCircleOutlineIcon /> : 
+                                    {/* {activeSubscription.status?.toLowerCase() === 'active' ? <PlayCircleOutlineIcon /> : 
                                      activeSubscription.status?.toLowerCase() === 'frozen' ? <PauseCircleOutlineIcon /> : 
-                                     <EventBusyIcon />}
+                                     <EventBusyIcon />} */}
                                 </Box>
                                 <Chip
                                     label={
