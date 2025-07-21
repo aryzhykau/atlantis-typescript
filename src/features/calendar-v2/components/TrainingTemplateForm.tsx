@@ -236,11 +236,6 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                           <Typography variant="body1" sx={{ fontWeight: 500, mt: 0.5 }}>
                             🕐 {selectedTime}
                           </Typography>
-                          <Chip 
-                            label={`День недели: ${selectedDate.day() === 0 ? 7 : selectedDate.day()}`}
-                            size="small" 
-                            sx={styles.timeChip}
-                          />
                         </Box>
                   )}
                     </CardContent>
