@@ -1,85 +1,94 @@
-import {Box, List, ListItem, CircularProgress, Typography} from "@mui/material";
+import { useState } from 'react';
+import { Box, Typography, Fab, Dialog, DialogContent, DialogTitle, IconButton, CircularProgress } from '@mui/material';
+import { useGetClientsQuery } from '../../store/apis/clientsApi';
+import { IClientUserGet, IClientUserFormValues } from '../../features/clients/models/client';
+import { ClientMobileCard } from '../../features/clients/components/ClientMobileCard';
+import AddIcon from '@mui/icons-material/Add';
+import { Link } from 'react-router-dom';
+import CloseIcon from '@mui/icons-material/Close';
+import { ClientsForm } from '../../features/clients/components/ClientsForm';
+import dayjs from 'dayjs';
 
-import { useClients } from "../../features/clients/hooks/clientManagementHooks.ts";
-import {useSnackbar} from "../../hooks/useSnackBar.tsx";
-import TextField from '@mui/material/TextField';
-import {ClientMobileCard} from "../../features/clients/components/ClientMobileCard.tsx";
-import {IClientUserGet} from "../../features/clients/models/client.ts";
 
+export function MobileClients() {
+    const { data: clients, isLoading, isError } = useGetClientsQuery();
+    const [openEditModal, setOpenEditModal] = useState(false);
+    const [clientToEdit, setClientToEdit] = useState<IClientUserGet | null>(null);
 
-export function MobileClientsLayout() {
-
-    const {clients, displayClients, setDisplayClients, isLoadingClients, refetchClients, updateClient} = useClients();
-    // const [modalOpen, setModalOpen] = useState<boolean>(false);
-    const {displaySnackbar} = useSnackbar();
-
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.value === "") {
-            setDisplayClients(clients);
+    const handleOpenEditModal = (id: number) => {
+        const client = clients?.find(c => c.id === id);
+        if (client) {
+            setClientToEdit(client);
+            setOpenEditModal(true);
         }
-        else {
-            setDisplayClients(clients.filter((client) =>
-                [client.first_name, client.last_name, client.email]
-                    .some(field => field?.toLowerCase().startsWith(e.target.value.toLowerCase()))
-            ));
-        }
+    };
+
+    const handleCloseModal = () => {
+        setOpenEditModal(false);
+        setClientToEdit(null);
     }
 
-    const handleChangeActive = async (event: React.ChangeEvent<HTMLInputElement>,
-                                      client: IClientUserGet) => {
-        const isActive = event.target.checked;
-        try {
-            displaySnackbar("Обновляем клиента", "info");
-            await updateClient({
-                clientId: client.id,
-                clientData: {
-                    first_name: client.first_name,
-                    last_name: client.last_name,
-                    is_active: isActive,
-                    email: client.email,
-                    phone: client.phone,
-                    date_of_birth: client.date_of_birth,
-                    whatsapp_number: client.whatsapp_number
-                }
-            }).unwrap();
-            displaySnackbar(
-                `Клиент ${client.first_name} ${client.last_name} ${isActive ? "теперь активен и может посещать тренировки" : "приостановлен и не сможет посещать тренировки"}`,
-                "success"
-            );
-            await refetchClients();
-        } catch (error) {
-            console.error(error);
-            displaySnackbar(
-                "Ошибка при изменении состояния активности клиента",
-                "error"
-            );
-        }
-    }
+    const initialFormValues: IClientUserFormValues | undefined = clientToEdit ? {
+        first_name: clientToEdit.first_name,
+        last_name: clientToEdit.last_name,
+        email: clientToEdit.email,
+        phone: `${clientToEdit.phone_country_code}${clientToEdit.phone_number}`,
+        date_of_birth: clientToEdit.date_of_birth ? dayjs(clientToEdit.date_of_birth) : null,
+        whatsapp_number: clientToEdit.whatsapp_country_code && clientToEdit.whatsapp_number ? `${clientToEdit.whatsapp_country_code}${clientToEdit.whatsapp_number}`: '',
+        is_student: clientToEdit.students ? clientToEdit.students.length === 0 : false,
+        students: clientToEdit.students?.map(s => ({
+            first_name: s.first_name,
+            last_name: s.last_name,
+            date_of_birth: s.date_of_birth ? dayjs(s.date_of_birth) : null,
+        })) || []
+    } : undefined;
+
 
     return (
-        <>
-        <Box sx={{mt: "16px", p: 2, display: "flex",  height: "90vh", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "16px"}}>
-            <Box display="flex" justifyContent="space-between" mb="32px" width="100%" sx={{alignItems: "center"}}>
-                <Typography variant="h4">Клиенты</Typography>
-                <TextField
-                    id="filled-search"
-                    label="Поиск клиента"
-                    type="search"
-                    variant="outlined"
-                    onChange={handleSearchChange}
-                ></TextField>
+        <Box sx={{ pb: 7 }}>
+            {isLoading && <CircularProgress />}
+            {isError && <Typography color="error">Ошибка загрузки клиентов.</Typography>}
+            {clients?.map((client: IClientUserGet) => (
+                <ClientMobileCard 
+                    key={client.id} 
+                    client={client} 
+                    onEdit={() => handleOpenEditModal(client.id)} 
+                    onDelete={() => {}} 
+                    onToggleActive={() => {}}
+                />
+            ))}
 
-            </Box>
-            <Box sx={{overflowY: "auto", flexGrow: 1, width: "100%"}}>
-                {!isLoadingClients ? (<List>
-                    {displayClients.map((client: IClientUserGet) => (
-                        <ListItem>
-                            <ClientMobileCard onEdit={() => console.log("Edit")} onDelete={() => console.log("Delete")} client={client} onToggleActive={handleChangeActive} />
-                        </ListItem>
-                    ))}
-                </List>) : (<Box display="flex" justifyContent="center" alignItems="center" height="80%"><CircularProgress /></Box>)}
-            </Box>
+            <Fab color="primary" aria-label="add" sx={{ position: 'fixed', bottom: 16, right: 16 }} component={Link} to="/home/clients/new">
+                <AddIcon />
+            </Fab>
+
+            <Dialog open={openEditModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
+                <DialogTitle>
+                    Редактировать клиента
+                    <IconButton
+                        aria-label="close"
+                        onClick={handleCloseModal}
+                        sx={{
+                            position: 'absolute',
+                            right: 8,
+                            top: 8,
+                            color: (theme) => theme.palette.grey[500],
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent>
+                    {initialFormValues && clientToEdit && (
+                        <ClientsForm
+                            initialValues={initialFormValues}
+                            isEdit={true}
+                            clientId={clientToEdit.id}
+                            onClose={handleCloseModal}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
         </Box>
-        </>
-    )
+    );
 }

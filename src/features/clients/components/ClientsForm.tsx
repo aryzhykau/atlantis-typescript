@@ -19,6 +19,8 @@ import {DatePicker} from "formik-mui-x-date-pickers";
 import {TextField, Checkbox} from "formik-mui";
 import { IClientUserFormValues, ClientUpdate, IClientCreatePayload } from "../models/client.ts";
 import * as Yup from "yup";
+import { FormikTelInput } from "../../../components/FormikTelInput.tsx";
+import { parsePhoneNumber } from 'libphonenumber-js';
 
 
 dayjs.extend(utc);
@@ -64,7 +66,7 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
         first_name: yup.string().required("Имя обязательно"),
         last_name: yup.string().required("Фамилия обязательна"),
         email: yup.string().email("Введите корректный email").required("Email обязателен"),
-        phone: yup.string().matches(/^[0-9]{10}$/, "Формат: 0987654321").required("Телефон обязателен"),
+        phone: yup.string().required("Телефон обязателен"),
         date_of_birth: yup.date().required("Дата рождения обязательна"),
         whatsapp_number: yup.string(),
         is_student: yup.boolean(),
@@ -79,15 +81,9 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
 
     const handleSubmit = async (values: IClientUserFormValues, {resetForm}: {resetForm: () =>  void}) => {
         try {
-            const clientFirstName = values.first_name;
-            const clientLastName = values.last_name;
-            const clientEmail = values.email;
-            const clientPhone = values.phone;
-            const clientDateOfBirth = values.date_of_birth
-                ? dayjs(values.date_of_birth).tz(dayjs.tz.guess()).format('YYYY-MM-DD')
-                : null;
-            const clientWhatsappNumber = values.whatsapp_number === "" ? null : values.whatsapp_number;
-    
+            const phoneInfo = values.phone ? parsePhoneNumber(values.phone) : null;
+            const whatsappInfo = values.whatsapp_number ? parsePhoneNumber(values.whatsapp_number) : null;
+
             if (isEdit) {
                 if (clientId === null) {
                     displaySnackbar("Ошибка: ID клиента отсутствует для обновления.", "error");
@@ -95,17 +91,23 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
                 }
     
                 const clientDataToUpdate: ClientUpdate = {
-                    first_name: clientFirstName,
-                    last_name: clientLastName,
-                    email: clientEmail,
-                    phone: clientPhone,
-                    date_of_birth: clientDateOfBirth,
-                    whatsapp_number: clientWhatsappNumber,
+                    first_name: values.first_name,
+                    last_name: values.last_name,
+                    email: values.email,
+                    phone_country_code: phoneInfo?.countryCallingCode,
+                    phone_number: phoneInfo?.nationalNumber,
+                    date_of_birth: values.date_of_birth ? dayjs(values.date_of_birth).format('YYYY-MM-DD') : null,
+                    whatsapp_country_code: whatsappInfo?.countryCallingCode,
+                    whatsapp_number: whatsappInfo?.nationalNumber,
                 };
     
                 await updateClient({ clientId: clientId, clientData: clientDataToUpdate }).unwrap();
                 displaySnackbar("Клиент успешно обновлен", "success");
             } else {
+                const clientDateOfBirth = values.date_of_birth
+                    ? dayjs(values.date_of_birth).tz(dayjs.tz.guess()).format('YYYY-MM-DD')
+                    : null;
+    
                 if (!clientDateOfBirth) { 
                     displaySnackbar("Дата рождения клиента обязательна.", "error");
                     return; 
@@ -123,12 +125,14 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
                     }) || [];
     
                 const clientDataToCreate: IClientCreatePayload = {
-                    first_name: clientFirstName,
-                    last_name: clientLastName,
-                    email: clientEmail,
-                    phone: clientPhone,
+                    first_name: values.first_name,
+                    last_name: values.last_name,
+                    email: values.email,
+                    phone_country_code: phoneInfo?.countryCallingCode || '',
+                    phone_number: phoneInfo?.nationalNumber || '',
                     date_of_birth: clientDateOfBirth,
-                    whatsapp_number: clientWhatsappNumber,
+                    whatsapp_country_code: whatsappInfo?.countryCallingCode,
+                    whatsapp_number: whatsappInfo?.nationalNumber,
                     is_student: values.is_student,
                     students: studentsToCreate,
                 };
@@ -138,12 +142,12 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
             refetchClients();
             resetForm();
             onClose();
-        } catch (error: any) { 
+        } catch (error: any) {
             const errorMessage =
                 typeof error === "object" &&
                 error !== null &&
-                error.data && 
-                typeof error.data === "object" && 
+                'data' in error &&
+                typeof error.data === "object" &&
                 error.data !== null &&
                 "detail" in error.data &&
                 typeof (error.data as any).detail === 'string' 
@@ -180,10 +184,10 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
                                 <Field name="email" label="Email" component={TextField} fullWidth required variant="outlined" size="small" />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <Field name="phone" label="Телефон" component={TextField} fullWidth required helperText="Формат: 0987654321" variant="outlined" size="small" />
+                                <FormikTelInput name="phone" label="Телефон" fullWidth required defaultCountry="SK" variant="outlined" size="small" />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <Field name="whatsapp_number" label="WhatsApp" component={TextField} fullWidth helperText="Номер WhatsApp, если отличается от основного телефона" variant="outlined" size="small" />
+                                <FormikTelInput name="whatsapp_number" label="WhatsApp" fullWidth defaultCountry="SK" helperText="Номер WhatsApp, если отличается от основного телефона" variant="outlined" size="small" />
                             </Grid>
                         </Grid>
 

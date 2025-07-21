@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Box, Button, Typography, TextField, Paper, FormControlLabel, Switch, InputAdornment, alpha, Dialog, DialogContent } from '@mui/material';
+import { Box, Button, Typography, TextField, Paper, FormControlLabel, Switch, InputAdornment, alpha, Dialog, DialogContent, IconButton } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Link as RouterLink } from 'react-router-dom';
@@ -11,11 +11,12 @@ import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
 import { useSnackbar } from '../../../hooks/useSnackBar';
+import { trainerColums } from '../tables/trainersColumns';
 
 export function TrainersListPage() {
     const { data: trainersListResponse, isLoading, isError, error } = useGetTrainersQuery();
-    const [createTrainer, { isLoading: isCreating }] = useCreateTrainerMutation();
-    const [updateTrainer, { isLoading: isUpdating }] = useUpdateTrainerMutation();
+    const [createTrainer] = useCreateTrainerMutation();
+    const [updateTrainer] = useUpdateTrainerMutation();
 
     const { displaySnackbar } = useSnackbar();
 
@@ -29,8 +30,6 @@ export function TrainersListPage() {
 
     const [searchText, setSearchText] = useState('');
     const [showOnlyActive, setShowOnlyActive] = useState(true);
-
-
 
     const handleOpenModal = (trainer?: ITrainerResponse) => {
         if (trainer) {
@@ -65,8 +64,6 @@ export function TrainersListPage() {
         }
     };
 
-
-
     const filteredTrainers = useMemo(() => {
         if (!trainersListResponse?.trainers) return [];
         let trainers = [...trainersListResponse.trainers];
@@ -81,7 +78,7 @@ export function TrainersListPage() {
                 (trainer.first_name || '').toLowerCase().includes(lowerSearchText) ||
                 (trainer.last_name || '').toLowerCase().includes(lowerSearchText) ||
                 (trainer.email || '').toLowerCase().includes(lowerSearchText) ||
-                (trainer.phone || '').toLowerCase().includes(lowerSearchText)
+                ((trainer.phone_country_code || '') + (trainer.phone_number || '')).toLowerCase().includes(lowerSearchText)
             );
         }
         return trainers.sort((a, b) => a.id - b.id); 
@@ -101,30 +98,26 @@ export function TrainersListPage() {
             headerName: 'ФИО',
             flex: 1,
             minWidth: 150,
-            valueGetter: (_value, row) => `${row.first_name || ''} ${row.last_name || ''}`,
+            valueGetter: (_value: any, row: ITrainerResponse) => `${row.first_name || ''} ${row.last_name || ''}`,
         },
-        { field: 'email', headerName: 'Email', flex: 1, minWidth: 180 },
-        { field: 'phone', headerName: 'Телефон', flex: 1, minWidth: 130 },
+        ...trainerColums.filter(col => !['first_name', 'last_name', 'id'].includes(col.field)),
         {
-            field: 'salary',
-            headerName: 'Оклад',
-            type: 'number',
-            width: 120,
-            valueFormatter: (value: number | null) => value == null ? '-' : `${value}`,
-        },
-        {
-            field: 'is_fixed_salary',
-            headerName: 'Фикс. оклад',
-            align: 'center',
-            width: 130,
-            renderCell: (params: GridRenderCellParams<ITrainerResponse, ITrainerResponse['is_fixed_salary']>) => {
-                if (params.value === true) {
-                    return <span style={{ color: theme.palette.success.main, fontWeight: 600 }}>Да</span>;
-                } else if (params.value === false) {
-                    return <span style={{ color: theme.palette.text.secondary }}>Нет</span>;
-                }
-                return <span style={{ color: theme.palette.text.disabled }}>-</span>;
-            },
+            field: 'actions',
+            headerName: 'Действия',
+            sortable: false,
+            filterable: false,
+            disableColumnMenu: true,
+            flex: 1,
+            minWidth: 150,
+            renderCell: (params: GridRenderCellParams<ITrainerResponse>) => (
+                <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleOpenModal(params.row)}
+                >
+                    Редактировать
+                </Button>
+            ),
         }
     ];
 
@@ -139,7 +132,6 @@ export function TrainersListPage() {
 
     return (
         <Box sx={{ width: '100%' }}>
-            {/* Фильтры и поиск в отдельной карточке */}
             <Paper
                 elevation={0}
                 sx={{
@@ -235,7 +227,6 @@ export function TrainersListPage() {
                 </Button>
             </Paper>
 
-            {/* Таблица без внешнего Paper и заголовка */}
             <Box sx={{ width: '100%', p: 0 }}>
                 <DataGrid
                     rows={filteredTrainers || []}
@@ -286,7 +277,6 @@ export function TrainersListPage() {
                 />
             </Box>
 
-            {/* Модальное окно для создания/редактирования тренера */}
             {isModalOpen && (
                 <Dialog
                     open={isModalOpen}
@@ -302,7 +292,6 @@ export function TrainersListPage() {
                         }
                     }}
                 >
-                    {/* Градиентный заголовок модального окна */}
                     <Box
                         sx={{
                             p: 3,
@@ -324,34 +313,28 @@ export function TrainersListPage() {
                                 <AddIcon sx={{ fontSize: 28, mr: 1 }} />
                                 {isEditMode ? 'Редактировать тренера' : 'Добавить тренера'}
                             </Typography>
-                            <Button
+                            <IconButton
                                 aria-label="Закрыть"
                                 onClick={handleCloseModal}
                                 sx={{
                                     color: 'white',
-                                    minWidth: 0,
-                                    p: 1.2,
                                     ml: 2,
-                                    borderRadius: 2,
                                     '&:hover': {
                                         background: alpha('#ffffff', 0.15),
                                     }
                                 }}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                            </Button>
+                            </IconButton>
                         </Box>
                     </Box>
-                    {/* Контент модального окна */}
-                    <DialogContent sx={{ p: 3, '&:first-of-type': { pt: 0 }, background: isDark ? 'rgba(40,40,50,0.45)' : 'rgba(255,255,255,0.7)', backdropFilter: 'blur(16px)' }}>
+                    <DialogContent sx={{ p: 3, background: isDark ? 'rgba(40,40,50,0.45)' : 'rgba(255,255,255,0.7)', backdropFilter: 'blur(16px)' }}>
                         <TrainerForm
                             title={isEditMode ? 'Редактировать тренера' : 'Добавить тренера'}
                             initialValues={editingTrainer || undefined}
                             onSubmit={handleFormSubmit}
                             onClose={handleCloseModal}
                             isEdit={isEditMode}
-                            isLoading={isCreating || isUpdating}
-                            stickyActions
                         />
                     </DialogContent>
                 </Dialog>

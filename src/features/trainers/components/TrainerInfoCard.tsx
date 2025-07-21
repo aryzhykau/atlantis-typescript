@@ -285,9 +285,9 @@ export const TrainerInfoCard: React.FC<TrainerInfoCardProps> = ({ trainer, onEdi
                     <InfoItem
                         icon={<PhoneOutlinedIcon />}
                         label="Телефон"
-                        value={trainer.phone}
+                        value={`${trainer.phone_country_code} ${trainer.phone_number}`}
                         color="success"
-                        href={`tel:${trainer.phone}`}
+                        href={`tel:+${trainer.phone_country_code}${trainer.phone_number}`}
                     />
                 </Box>
 

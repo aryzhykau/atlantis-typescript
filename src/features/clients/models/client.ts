@@ -1,28 +1,46 @@
 import {Dayjs} from "dayjs";
-// import {IStudent} from "../../students/models/student.ts"; // Заменяем на IStudentFormShape
-import { IStudentFormShape } from '../components/ClientsForm'; // Импортируем новый тип
+import { IStudent } from "../../students/models/student";
 
-// Интерфейс, отражающий основные поля данных клиента, возвращаемые API
-export interface IClientCoreData {
+// Базовые поля для клиента
+interface IClientCoreData {
     first_name: string;
     last_name: string;
     email: string;
-    phone: string;
-    date_of_birth: string | null; // API возвращает 'YYYY-MM-DD' или null
-    whatsapp_number: string | null; // Изменено с whatsapp, соответствует openapi ClientResponse
+    date_of_birth: string | null;
 }
 
-// Интерфейс для ответа API при запросе данных клиента (GET /clients/{client_id})
-// Должен строго соответствовать схеме ClientResponse из openapi.json
+// Интерфейс для данных клиента, полученных от API (GET)
 export interface IClientUserGet extends IClientCoreData {
     id: number;
-    role: string; // Соответствует UserRole enum из API (CLIENT, TRAINER, ADMIN)
-    is_authenticated_with_google: boolean; // Изменено с google_authenticated
-    balance: number | null; // Соответствует openapi (number | null)
-    is_active: boolean | null; // Соответствует openapi (boolean | null)
+    balance: number | null;
     created_at: string;
     active_subscription: string;
+    students?: IStudent[];
+    is_active: boolean | null;
+    deactivation_date?: string | null;
+    is_authenticated_with_google: boolean;
+    phone_country_code: string;
+    phone_number: string;
+    whatsapp_country_code?: string | null;
+    whatsapp_number?: string | null;
 }
+
+// Интерфейс для формы добавления студента к клиенту, специфичный для ClientPage
+export interface StudentFormValuesClientPage {
+    first_name: string;
+    last_name: string;
+    date_of_birth: Dayjs | null;
+    client_id: number;
+}
+
+// Интерфейс для payload при СОЗДАНИИ студента из ClientPage
+export interface IStudentCreateFromClientPagePayload {
+    first_name: string;
+    last_name: string;
+    date_of_birth: string; // YYYY-MM-DD
+    client_id: number;
+}
+
 
 // Интерфейс для значений формы создания/редактирования клиента
 export interface IClientUserFormValues {
@@ -43,21 +61,32 @@ export interface IClientCreatePayload {
     date_of_birth: string; // Формат 'YYYY-MM-DD'
     is_student?: boolean; // По умолчанию false в openapi
     email: string;
-    phone: string; // Должен соответствовать паттерну API '^\+?[0-9]{10,15}$'
+    phone_country_code: string;
+    phone_number: string;
+    whatsapp_country_code?: string | null;
     whatsapp_number?: string | null; // Должен соответствовать паттерну API, если не null
     students?: Array<{ first_name: string; last_name: string; date_of_birth: string; }>;
 }
 
-// Интерфейс для payload при ОБНОВЛЕНИИ клиента (соответствует ClientUpdate из openapi.json)
+// Утилитарный тип для формы создания студента в рамках формы клиента
+export interface IStudentFormShape {
+    first_name: string;
+    last_name: string;
+    date_of_birth: Dayjs | string | null;
+}
+
+
+// Интерфейс для payload при ОБНОВЛЕНИИ клиента (PATCH /clients/{client_id})
 export interface ClientUpdate {
     first_name?: string;
     last_name?: string;
     email?: string;
-    phone?: string; // Должен соответствовать паттерну API
-    whatsapp_number?: string | null; // Должен соответствовать паттерну API, если не null
+    phone_country_code?: string;
+    phone_number?: string;
     date_of_birth?: string | null; // Формат 'YYYY-MM-DD'
-    is_active?: boolean | null; // Добавлено | null
-    balance?: number | null;    // Добавлено | null
+    whatsapp_country_code?: string | null;
+    whatsapp_number?: string | null; // Должен соответствовать паттерну API, если не null
+    is_active?: boolean;
 }
 
 export interface IClientSubscriptionFormValues  {

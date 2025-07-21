@@ -423,9 +423,9 @@ export function ClientPage() {
         first_name: client.first_name,
         last_name: client.last_name,
         email: client.email,
-        phone: client.phone,
+        phone: client.phone_country_code ? `${client.phone_country_code}${client.phone_number}` : '',
         date_of_birth: client.date_of_birth ? dayjs(client.date_of_birth) : null, 
-        whatsapp_number: client.whatsapp_number || '',
+        whatsapp_number: client.whatsapp_country_code ? `${client.whatsapp_country_code}${client.whatsapp_number}` : '',
         is_student: false,
         students: [],
     } : undefined;
