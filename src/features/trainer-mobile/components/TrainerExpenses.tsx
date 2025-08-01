@@ -211,7 +211,7 @@ export const TrainerExpenses: React.FC = () => {
                   <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <Box>
-                        <Typography variant="body1" sx={{ fontWeight: 500 }}>{expense.description || 'Проход в бассейн'}</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>{expense.name || 'Проход в бассейн'}</Typography>
                         <Typography variant="caption" color="text.secondary">{dayjs(expense.expense_date).format('DD MMMM YYYY, HH:mm')}</Typography>
                       </Box>
                       <Chip

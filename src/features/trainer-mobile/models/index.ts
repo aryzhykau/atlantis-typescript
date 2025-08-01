@@ -40,6 +40,7 @@ attendance_rate: number;
 
 export interface Expense {
   id: number;
+  name: string;
   user_id: number;
   expense_type_id: number;
   amount: number;
