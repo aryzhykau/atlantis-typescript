@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Grid, Paper, Typography, alpha, useTheme } from '@mui/material';
+import { Box, Grid, Paper, Typography, alpha, useTheme, ToggleButton, ToggleButtonGroup, TextField } from '@mui/material';
 import { LineChart } from '@mui/x-charts/LineChart';
 import CountedPanel from './CountedPanel';
 import { useGetOverviewStatsQuery } from '../../../store/apis/statsApi';
@@ -7,10 +7,29 @@ import { useGetOverviewStatsQuery } from '../../../store/apis/statsApi';
 export const OverviewStats: React.FC = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { data } = useGetOverviewStatsQuery();
+  const [interval, setInterval] = React.useState<'day' | 'week' | 'month'>('month');
+  const [startDate, setStartDate] = React.useState<string | undefined>(undefined);
+  const [endDate, setEndDate] = React.useState<string | undefined>(undefined);
+  const { data } = useGetOverviewStatsQuery({ start_date: startDate, end_date: endDate, interval });
 
   return (
     <Box>
+      <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
+        <Grid item>
+          <ToggleButtonGroup size="small" value={interval} exclusive onChange={(_, v) => v && setInterval(v)}>
+            <ToggleButton value="day">Дни</ToggleButton>
+            <ToggleButton value="week">Недели</ToggleButton>
+            <ToggleButton value="month">Месяцы</ToggleButton>
+          </ToggleButtonGroup>
+        </Grid>
+        <Grid item>
+          <TextField type="date" size="small" label="Начало" InputLabelProps={{ shrink: true }} value={startDate ?? ''} onChange={(e) => setStartDate(e.target.value || undefined)} />
+        </Grid>
+        <Grid item>
+          <TextField type="date" size="small" label="Конец" InputLabelProps={{ shrink: true }} value={endDate ?? ''} onChange={(e) => setEndDate(e.target.value || undefined)} />
+        </Grid>
+      </Grid>
+
       <Grid container spacing={2}>
         <Grid item>
           <CountedPanel data={data?.total_clients ?? 0} headerLines={["Всего", "Клиентов"]} />
@@ -35,8 +54,8 @@ export const OverviewStats: React.FC = () => {
             <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>Прибыль по месяцам</Typography>
             <LineChart
               height={260}
-              series={[{ data: data?.revenue_by_month ?? [], label: 'Прибыль, €', color: '#2e7d32' }]}
-              xAxis={[{ scaleType: 'point', data: ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'] }]}
+              series={[{ data: data?.revenue_series ?? [], label: 'Прибыль, €', color: '#2e7d32' }]}
+              xAxis={[{ scaleType: 'point', data: data?.labels ?? [] }]}
             />
           </Paper>
         </Grid>
@@ -45,8 +64,8 @@ export const OverviewStats: React.FC = () => {
             <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>Расходы по месяцам</Typography>
             <LineChart
               height={260}
-              series={[{ data: data?.expense_by_month ?? [], label: 'Расходы, €', color: '#c62828' }]}
-              xAxis={[{ scaleType: 'point', data: ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'] }]}
+              series={[{ data: data?.expense_series ?? [], label: 'Расходы, €', color: '#c62828' }]}
+              xAxis={[{ scaleType: 'point', data: data?.labels ?? [] }]}
             />
           </Paper>
         </Grid>
@@ -55,8 +74,8 @@ export const OverviewStats: React.FC = () => {
             <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>Тренировок по месяцам</Typography>
             <LineChart
               height={260}
-              series={[{ data: data?.trainings_by_month ?? [], label: 'Тренировок', color: '#1565c0' }]}
-              xAxis={[{ scaleType: 'point', data: ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'] }]}
+              series={[{ data: data?.trainings_series ?? [], label: 'Тренировок', color: '#1565c0' }]}
+              xAxis={[{ scaleType: 'point', data: data?.labels ?? [] }]}
             />
           </Paper>
         </Grid>

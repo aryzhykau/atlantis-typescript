@@ -6,14 +6,15 @@ export interface OverviewStatsResponse {
   new_clients_month: number;
   trainings_in_month: number;
   trainings_in_year: number;
-  revenue_by_month: number[];
-  expense_by_month: number[];
-  trainings_by_month: number[];
+  labels: string[];
+  revenue_series: number[];
+  expense_series: number[];
+  trainings_series: number[];
 }
 
 export const statsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getOverviewStats: build.query<OverviewStatsResponse, { year?: number } | void>({
+    getOverviewStats: build.query<OverviewStatsResponse, { start_date?: string; end_date?: string; interval?: 'day'|'week'|'month' } | void>({
       query: (params) => ({ url: '/stats/overview', params }),
       providesTags: ['User'],
     }),
