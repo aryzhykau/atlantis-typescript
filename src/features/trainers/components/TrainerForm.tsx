@@ -143,15 +143,17 @@ export function TrainerForm({ title, initialValues, onSubmit, isEdit, onClose, i
 
                             {/* --- Зарплата --- */}
                             <Grid item xs={12}> <Typography variant="h6" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Зарплата</Typography> </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <Field as={TextField} name="salary" type="number" label={values.is_fixed_salary ? "Месячная зарплата (€)" : "Ставка за тренировку (€)"} fullWidth variant="outlined" size="small" error={touched.salary && !!errors.salary} helperText={touched.salary && errors.salary} />
-                            </Grid>
-                            <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Grid item xs={12}>
                                  <FormControlLabel
                                      control={ <Field as={Switch} type="checkbox" name="is_fixed_salary" /> }
-                                     label="Фиксированная зарплата"
+                                     label="Фиксированная месячная зарплата"
                                  />
                             </Grid>
+                            {values.is_fixed_salary && (
+                                <Grid item xs={12} sm={6}>
+                                    <Field as={TextField} name="salary" type="number" label={"Месячная зарплата (€)"} fullWidth variant="outlined" size="small" error={touched.salary && !!errors.salary} helperText={touched.salary && errors.salary} />
+                                </Grid>
+                            )}
                         </Grid>
 
                         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>

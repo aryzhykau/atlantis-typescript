@@ -35,6 +35,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
+import { ITrainerTrainingTypeSalary } from '../models/trainer';
+import { ITrainingType } from '../../training-types/models/trainingType';
 
 interface TrainerSalaryTabProps {
     trainerId: number;
@@ -45,7 +47,7 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
     const gradients = useGradients();
     const { displaySnackbar } = useSnackbar();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingSalary, setEditingSalary] = useState<any | null>(null);
+    const [editingSalary, setEditingSalary] = useState<ITrainerTrainingTypeSalary | null>(null);
 
     const { data: salaries, isLoading: isLoadingSalaries } = useGetTrainerSalariesQuery(trainerId);
     const { data: trainingTypes, isLoading: isLoadingTrainingTypes } = useGetTrainingTypesQuery({});
@@ -54,7 +56,7 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
     const [updateSalary] = useUpdateTrainerSalaryMutation();
     const [deleteSalary] = useDeleteTrainerSalaryMutation();
 
-    const handleOpenModal = (salary: any | null = null) => {
+    const handleOpenModal = (salary: ITrainerTrainingTypeSalary | null = null) => {
         setEditingSalary(salary);
         setIsModalOpen(true);
     };
@@ -64,27 +66,28 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
         setIsModalOpen(false);
     };
 
-    const handleSave = async (values: any) => {
+    const handleSave = async (values: { training_type_id: number; salary: number }) => {
         try {
             if (editingSalary) {
                 await updateSalary({ salaryId: editingSalary.id, data: { salary: values.salary } }).unwrap();
-                displaySnackbar('Salary updated successfully', 'success');
+                displaySnackbar('Зарплата успешно обновлена', 'success');
             } else {
-                await addSalary({ trainerId, data: values }).unwrap();
-                displaySnackbar('Salary added successfully', 'success');
+                await addSalary({ trainerId, data: { ...values, trainer_id: trainerId } }).unwrap();
+                displaySnackbar('Зарплата успешно добавлена', 'success');
             }
             handleCloseModal();
         } catch (error) {
-            displaySnackbar('Error saving salary', 'error');
+            displaySnackbar('Ошибка сохранения зарплаты', 'error');
+            console.error(error)
         }
     };
 
     const handleDelete = async (salaryId: number) => {
         try {
             await deleteSalary(salaryId).unwrap();
-            displaySnackbar('Salary deleted successfully', 'success');
+            displaySnackbar('Зарплата успешно удалена', 'success');
         } catch (error) {
-            displaySnackbar('Error deleting salary', 'error');
+            displaySnackbar('Ошибка удаления зарплаты', 'error');
         }
     };
 
@@ -114,7 +117,7 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
                 alignItems: 'center'
             }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-                    Specific Salaries
+                    Зарплаты по типам тренировок
                 </Typography>
                 <Button 
                     variant="contained" 
@@ -125,13 +128,11 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
                         borderRadius: 2,
                         textTransform: 'none',
                         '&:hover': {
-                            background: theme.palette.mode === 'dark' 
-                                ? 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)'
-                                : 'linear-gradient(135deg, #3f87fe 0%, #00d2fe 100%)',
+                             background: 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)'
                         },
                     }}
                 >
-                    Add Salary
+                    Добавить зарплату
                 </Button>
             </Box>
 
@@ -139,16 +140,16 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell>Training Type</TableCell>
-                            <TableCell align="right">Salary (€)</TableCell>
-                            <TableCell align="right">Actions</TableCell>
+                            <TableCell>Тип тренировки</TableCell>
+                            <TableCell align="right">Зарплата (€)</TableCell>
+                            <TableCell align="right">Действия</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {salaries?.map((salary) => (
                             <TableRow key={salary.id}>
                                 <TableCell component="th" scope="row">
-                                    {trainingTypes?.find((tt: any) => tt.id === salary.training_type_id)?.name || 'N/A'}
+                                    {trainingTypes?.find((tt: ITrainingType) => tt.id === salary.training_type_id)?.name || 'N/A'}
                                 </TableCell>
                                 <TableCell align="right">{salary.salary}</TableCell>
                                 <TableCell align="right">
@@ -177,11 +178,11 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
 };
 
 interface SalaryFormProps {
-    trainingTypes: any[];
-    existingSalaries: any[];
-    onSubmit: (values: any) => void;
+    trainingTypes: ITrainingType[];
+    existingSalaries: ITrainerTrainingTypeSalary[];
+    onSubmit: (values: { training_type_id: number, salary: number }) => void;
     onClose: () => void;
-    initialData?: any | null;
+    initialData?: ITrainerTrainingTypeSalary | null;
 }
 
 const SalaryForm: React.FC<SalaryFormProps> = ({ trainingTypes, existingSalaries, onSubmit, onClose, initialData }) => {
@@ -190,7 +191,12 @@ const SalaryForm: React.FC<SalaryFormProps> = ({ trainingTypes, existingSalaries
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
-        onSubmit({ training_type_id: trainingTypeId, salary: parseFloat(salary) });
+        if(!trainingTypeId || !salary) {
+            // Or show a snackbar
+            alert('Please fill all fields');
+            return
+        }
+        onSubmit({ training_type_id: Number(trainingTypeId), salary: parseFloat(salary as string) });
     };
 
     const availableTrainingTypes = initialData 
@@ -199,13 +205,15 @@ const SalaryForm: React.FC<SalaryFormProps> = ({ trainingTypes, existingSalaries
 
     return (
         <form onSubmit={handleSubmit}>
-            <Typography variant="h6" sx={{ mb: 2 }}>{initialData ? 'Edit Salary' : 'Add Salary'}</Typography>
+            <Typography variant="h6" sx={{ mb: 2 }}>{initialData ? 'Редактировать зарплату' : 'Добавить зарплату'}</Typography>
             <FormControl fullWidth margin="normal">
-                <InputLabel>Training Type</InputLabel>
+                <InputLabel>Тип тренировки</InputLabel>
                 <Select
                     value={trainingTypeId}
+                    label="Тип тренировки"
                     onChange={(e) => setTrainingTypeId(e.target.value as number)}
                     disabled={!!initialData}
+                    required
                 >
                     {availableTrainingTypes.map((tt) => (
                         <MenuItem key={tt.id} value={tt.id}>{tt.name}</MenuItem>
@@ -213,17 +221,18 @@ const SalaryForm: React.FC<SalaryFormProps> = ({ trainingTypes, existingSalaries
                 </Select>
             </FormControl>
             <TextField
-                label="Salary"
+                label="Зарплата"
                 type="number"
                 fullWidth
                 margin="normal"
                 value={salary}
                 onChange={(e) => setSalary(e.target.value)}
-                InputProps={{ inputProps: { min: 0 } }}
+                InputProps={{ inputProps: { min: 0, step: "0.01" } }}
+                required
             />
             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                <Button onClick={onClose} sx={{ mr: 1 }}>Cancel</Button>
-                <Button type="submit" variant="contained">Save</Button>
+                <Button onClick={onClose} sx={{ mr: 1 }}>Отмена</Button>
+                <Button type="submit" variant="contained">Сохранить</Button>
             </Box>
         </form>
     );

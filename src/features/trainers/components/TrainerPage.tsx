@@ -378,10 +378,12 @@ export function TrainerPage() {
                 <TrainerPaymentsTab trainerId={trainer.id} />
             </TabPanel>
 
-            <TabPanel value={activeTab} index={3}>
-                <TrainerSalaryTab trainerId={trainer.id} />
-            </TabPanel>
-
+            {!isFixedSalary && (
+                <TabPanel value={activeTab} index={3}>
+                    <TrainerSalaryTab trainerId={trainer.id} />
+                </TabPanel>
+            )}
+            
             <Dialog 
                 open={isEditModalOpen} 
                 onClose={handleCloseEditModal} 
