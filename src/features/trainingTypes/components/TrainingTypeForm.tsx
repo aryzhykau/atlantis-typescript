@@ -21,7 +21,11 @@ const TrainingTypeSchema = Yup.object({
     name: Yup.string().min(2, 'Название должно содержать минимум 2 символа').max(50, 'Название не должно превышать 50 символов').required('Название обязательно'),
     price: Yup.number()
         .nullable()
-        .min(0, 'Цена не может быть отрицательной'),
+        .min(0, 'Цена не может быть отрицательной')
+        .when('is_subscription_only', {
+            is: true,
+            then: (schema) => schema.oneOf([null], 'Для тренировки по подписке цена должна быть пустой'),
+        }),
     max_participants: Yup.number()
         .nullable()
         .min(1, 'Максимальное количество учеников не может быть меньше 1'),
@@ -168,7 +172,7 @@ const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, 
                         />
                         <Field
                             name="price"
-                            label="Стоимость (оставьте пустым для бесплатной)"
+                            label={values.is_subscription_only ? "Цена недоступна для типа по подписке" : "Стоимость (оставьте пустым для бесплатной)"}
                             component={TextField}
                             type="number"
                             variant="outlined"
@@ -176,6 +180,7 @@ const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, 
                             InputLabelProps={{
                                 shrink: true,
                             }}
+                            disabled={values.is_subscription_only}
                             error={touched.price && Boolean(errors.price)}
                             helperText={touched.price && errors.price}
                         />

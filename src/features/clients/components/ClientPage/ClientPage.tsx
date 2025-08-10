@@ -21,6 +21,7 @@ import { InvoiceStatus } from "../../../invoices/models/invoice";
 import { useCancelPaymentMutation, useGetClientPaymentsQuery } from "../../../../store/apis/paymentsApi";
 import { useInvalidateQueries } from "../../../../hooks/useInvalidateQueries";
 import { ClientPaymentsDataCard } from "./ClientPaymentsDataCard";
+import { useListClientContactsQuery } from "../../../../store/apis/clientContactsApi";
 import { ClientsForm } from "../ClientsForm";
 import { IClientUserFormValues } from "../../models/client";
 import dayjs, { Dayjs } from "dayjs";
@@ -207,6 +208,7 @@ export function ClientPage() {
     const { getClientStudents } = useClients();
     const theme = useTheme();
     const gradients = useGradients();
+    const { data: contactTasks } = useListClientContactsQuery({ status: 'PENDING' });
     
     const [selectedInvoiceStatus, setSelectedInvoiceStatus] = useState<InvoiceStatus | null>(null);
     const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>("all");
@@ -565,6 +567,13 @@ export function ClientPage() {
                 <Grid container spacing={2} alignItems="stretch">
                     <Grid item xs={12} md={6} >
                         {client && <ClientInfoCard client={client} onClientUpdate={refetchClient} />}
+                        {client && (contactTasks ?? []).some(t => t.client_id === client.id) && (
+                            <Paper sx={{ p: 2, mt: 2, backgroundColor: '#fff3cd' }}>
+                                <Typography variant="body2" sx={{ color: '#856404', fontWeight: 600 }}>
+                                    Этому клиенту нужен звонок
+                                </Typography>
+                            </Paper>
+                        )}
                     </Grid>
                     <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
                         {client && <FinancialInfoCard client={client} invoices={invoices?.items || []} invalidateFunction={invalidateQueries} />}

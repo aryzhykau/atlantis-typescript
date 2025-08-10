@@ -15,6 +15,8 @@ import InvoicesPayments from "../layouts/invoicesPyaments/InvoicesPayments.tsx";
 import { StudentsListPage } from '../features/students/components/StudentsListPage.tsx';
 import CalendarV2Page from "../features/calendar-v2/components/CalendarV2Page.tsx";
 import MobileCalendarV2Page from "../features/calendar-v2/components/MobileCalendarV2Page.tsx";
+import CallIcon from '@mui/icons-material/Call';
+import { ClientContactsDataGrid } from "../features/client-contacts/components/ClientContactsDataGrid.tsx";
 
 export const MenuItems: IMenuItems[] = [
     {
@@ -30,6 +32,13 @@ export const MenuItems: IMenuItems[] = [
         icon: <PersonIcon/>,
         page: <ClientsLayout/>,
         mobilePage: <MobileClients/>
+    },
+    {
+        title: "Контакты клиентов",
+        link: "client-contacts",
+        icon: <CallIcon />,
+        page: <ClientContactsDataGrid />,
+        mobilePage: <ClientContactsDataGrid />
     },
     {
         title: "Ученики",

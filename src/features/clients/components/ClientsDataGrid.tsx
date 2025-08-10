@@ -1,6 +1,7 @@
-import { Box, TextField, Button, Paper, Typography, InputAdornment, alpha, FormControlLabel, Switch } from "@mui/material";
+import { Box, TextField, Button, Paper, Typography, InputAdornment, alpha, FormControlLabel, Switch, Chip } from "@mui/material";
 import { DataGrid, GridRenderCellParams, GridCellParams } from "@mui/x-data-grid";
 import { clientColums } from "../tables/clientsColumns";
+import { useListClientContactsQuery } from '../../../store/apis/clientContactsApi';
 import { useClients } from "../hooks/clientManagementHooks";
 
 import { IClientUserFormValues } from "../models/client";
@@ -8,6 +9,7 @@ import Actions from "../../../components/datagrid/Actions";
 
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
+import PhoneInTalkIcon from '@mui/icons-material/PhoneInTalk';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import { useTheme } from '@mui/material';
 import React from 'react';
@@ -26,6 +28,8 @@ export function ClientsDataGrid({
     onDeleteClient 
 }: ClientsDataGridProps) {
     const { clients, displayClients, setDisplayClients, isLoadingClients } = useClients();
+    const { data: contactTasks } = useListClientContactsQuery({ status: 'PENDING' });
+    const clientIdToHasPendingTask = new Set((contactTasks ?? []).map((t) => t.client_id));
     const gradients = useGradients();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
@@ -92,6 +96,31 @@ export function ClientsDataGrid({
 
     const extendedClientColumns = [...clientColums];
 
+    // Добавляем отдельную колонку "Нужен звонок"
+    extendedClientColumns.splice(5, 0, {
+        field: 'needs_call',
+        headerName: 'Нужен звонок',
+        width: 140,
+        sortable: false,
+        renderCell: (params: any) => (
+            clientIdToHasPendingTask.has(Number(params.row.id)) ? (
+                <Chip
+                    size="small"
+                    label="Нужен звонок"
+                    color="warning"
+                    variant={isDark ? 'filled' : 'outlined'}
+                    icon={<PhoneInTalkIcon sx={{ fontSize: 16 }} />}
+                    sx={{
+                        height: 22,
+                        fontWeight: 600,
+                        '& .MuiChip-label': { px: 0.5, fontSize: 12 },
+                        borderRadius: 1.5,
+                    }}
+                />
+            ) : null
+        )
+    } as any);
+
     extendedClientColumns.push({
         field: "actions",
         headerName: "Действия",
@@ -103,6 +132,8 @@ export function ClientsDataGrid({
                 handleDelete={() => handleDeleteBtnClick(params)}
             />)
     });
+
+    // Убираем бейдж из баланса — теперь есть отдельная колонка
 
     return (
         <Box sx={{ width: '100%' }}>
