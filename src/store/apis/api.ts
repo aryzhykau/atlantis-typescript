@@ -71,5 +71,6 @@ export const baseApi = createApi({
         'Payment',
         'TrainerStats',
         'Expenses',
+        'TrainerSalary',
     ],
 });
