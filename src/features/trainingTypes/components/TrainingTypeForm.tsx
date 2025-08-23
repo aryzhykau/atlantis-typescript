@@ -205,6 +205,13 @@ const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, 
                                     as={Checkbox}
                                     checked={values.is_subscription_only}
                                     color="primary"
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        setFieldValue('is_subscription_only', e.target.checked);
+                                        // Clear price when switching to subscription-only
+                                        if (e.target.checked) {
+                                            setFieldValue('price', null);
+                                        }
+                                    }}
                                 />
                             }
                             label="Доступна только по подписке"

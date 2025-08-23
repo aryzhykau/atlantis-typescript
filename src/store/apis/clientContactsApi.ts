@@ -31,7 +31,7 @@ export interface UpdateClientContactTaskDto {
 
 export const clientContactsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    listClientContacts: build.query<ClientContactTask[], { status?: ClientContactStatus; reason?: ClientContactReason; assigned_to_id?: number; limit?: number; offset?: number } | void>({
+    listClientContacts: build.query<ClientContactTask[], { status?: ClientContactStatus; reason?: ClientContactReason; assigned_to_id?: number; limit?: number; offset?: number } | undefined>({
       query: (params) => ({ url: '/client-contacts/', params }),
       providesTags: ['Client'],
     }),
@@ -47,5 +47,6 @@ export const clientContactsApi = baseApi.injectEndpoints({
 });
 
 export const { useListClientContactsQuery, useCreateClientContactMutation, useUpdateClientContactMutation } = clientContactsApi;
+
 
 

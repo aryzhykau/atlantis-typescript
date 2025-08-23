@@ -1,7 +1,7 @@
 import React from 'react';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import { TextField, Button, Grid, Box, Typography, IconButton, Paper, FormControlLabel, Switch, CircularProgress, alpha, useTheme } from '@mui/material';
+import { TextField, Button, Grid, Box, Typography, IconButton, FormControlLabel, Switch, CircularProgress, alpha, useTheme } from '@mui/material';
 import { DatePicker } from "formik-mui-x-date-pickers";
 import { ITrainerCreatePayload, ITrainerUpdatePayload, ITrainerResponse } from "../models/trainer.ts";
 import { parsePhoneNumber } from 'libphonenumber-js';

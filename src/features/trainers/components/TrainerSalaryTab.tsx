@@ -1,33 +1,33 @@
 
 import React, { useState } from 'react';
-import { 
-    Box, 
-    Typography, 
-    CircularProgress, 
-    Button, 
-    Dialog, 
-    DialogContent, 
-    TextField, 
-    Select, 
-    MenuItem, 
-    FormControl, 
-    InputLabel, 
-    Paper, 
-    Table, 
-    TableBody, 
-    TableCell, 
-    TableContainer, 
-    TableHead, 
-    TableRow, 
+import {
+    Box,
+    Typography,
+    CircularProgress,
+    Button,
+    Dialog,
+    DialogContent,
+    TextField,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
     IconButton,
     alpha,
     useTheme
 } from '@mui/material';
-import { 
-    useGetTrainerSalariesQuery, 
-    useAddTrainerSalaryMutation, 
-    useUpdateTrainerSalaryMutation, 
-    useDeleteTrainerSalaryMutation 
+import {
+    useGetTrainerSalariesQuery,
+    useAddTrainerSalaryMutation,
+    useUpdateTrainerSalaryMutation,
+    useDeleteTrainerSalaryMutation
 } from '../../../store/apis/trainerSalariesApi';
 import { useGetTrainingTypesQuery } from '../../../store/apis/trainingTypesApi';
 import { useSnackbar } from '../../../hooks/useSnackBar';
@@ -96,10 +96,10 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
     }
 
     return (
-        <Paper 
+        <Paper
             elevation={0}
-            sx={{ 
-                mb: 3, 
+            sx={{
+                mb: 3,
                 borderRadius: 3,
                 border: '1px solid',
                 borderColor: 'divider',
@@ -107,8 +107,8 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
                 background: theme.palette.background.paper,
             }}
         >
-            <Box sx={{ 
-                p: 2, 
+            <Box sx={{
+                p: 2,
                 background: alpha(theme.palette.primary.main, 0.05),
                 borderBottom: '1px solid',
                 borderColor: 'divider',
@@ -119,16 +119,16 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
                 <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
                     Зарплаты по типам тренировок
                 </Typography>
-                <Button 
-                    variant="contained" 
-                    startIcon={<AddIcon />} 
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
                     onClick={() => handleOpenModal()}
-                    sx={{ 
+                    sx={{
                         background: gradients.success,
                         borderRadius: 2,
                         textTransform: 'none',
                         '&:hover': {
-                             background: 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)'
+                            background: 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)'
                         },
                     }}
                 >
@@ -164,12 +164,12 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
 
             <Dialog open={isModalOpen} onClose={handleCloseModal} maxWidth="xs" fullWidth>
                 <DialogContent sx={{ p: 3 }}>
-                    <SalaryForm 
+                    <SalaryForm
                         trainingTypes={trainingTypes || []}
                         existingSalaries={salaries || []}
-                        onSubmit={handleSave} 
+                        onSubmit={handleSave}
                         onClose={handleCloseModal}
-                        initialData={editingSalary} 
+                        initialData={editingSalary}
                     />
                 </DialogContent>
             </Dialog>
@@ -191,7 +191,7 @@ const SalaryForm: React.FC<SalaryFormProps> = ({ trainingTypes, existingSalaries
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
-        if(!trainingTypeId || !salary) {
+        if (!trainingTypeId || !salary) {
             // Or show a snackbar
             alert('Please fill all fields');
             return
@@ -199,7 +199,7 @@ const SalaryForm: React.FC<SalaryFormProps> = ({ trainingTypes, existingSalaries
         onSubmit({ training_type_id: Number(trainingTypeId), salary: parseFloat(salary as string) });
     };
 
-    const availableTrainingTypes = initialData 
+    const availableTrainingTypes = initialData
         ? trainingTypes
         : trainingTypes.filter(tt => !existingSalaries.some(s => s.training_type_id === tt.id));
 

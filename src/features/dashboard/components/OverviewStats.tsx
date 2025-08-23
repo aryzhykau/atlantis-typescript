@@ -1,12 +1,10 @@
 import React from 'react';
-import { Box, Grid, Paper, Typography, alpha, useTheme, ToggleButton, ToggleButtonGroup, TextField } from '@mui/material';
+import { Box, Grid, Paper, Typography, ToggleButton, ToggleButtonGroup, TextField } from '@mui/material';
 import { LineChart } from '@mui/x-charts/LineChart';
 import CountedPanel from './CountedPanel';
 import { useGetOverviewStatsQuery } from '../../../store/apis/statsApi';
 
 export const OverviewStats: React.FC = () => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
   const [interval, setInterval] = React.useState<'day' | 'week' | 'month'>('month');
   const [startDate, setStartDate] = React.useState<string | undefined>(undefined);
   const [endDate, setEndDate] = React.useState<string | undefined>(undefined);

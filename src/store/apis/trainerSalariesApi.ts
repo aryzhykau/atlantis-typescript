@@ -1,10 +1,22 @@
 
 import { baseApi } from './api';
+import { ITrainerTrainingTypeSalary } from '../../features/trainers/models/trainer';
+
+// Interfaces for API payloads
+interface ITrainerSalaryCreatePayload {
+  trainer_id: number;
+  training_type_id: number;
+  salary: number;
+}
+
+interface ITrainerSalaryUpdatePayload {
+  salary: number;
+}
 
 // Define a service using a base URL and expected endpoints
 export const trainerSalariesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getTrainerSalaries: builder.query<any[], number>({
+    getTrainerSalaries: builder.query<ITrainerTrainingTypeSalary[], number>({
       query: (trainerId) => `/trainers/${trainerId}/salaries`,
       providesTags: (result) =>
         result
@@ -14,7 +26,7 @@ export const trainerSalariesApi = baseApi.injectEndpoints({
             ]
           : [{ type: 'TrainerSalary', id: 'LIST' }],
     }),
-    addTrainerSalary: builder.mutation<any, { trainerId: number; data: any }>({
+    addTrainerSalary: builder.mutation<ITrainerTrainingTypeSalary, { trainerId: number; data: ITrainerSalaryCreatePayload }>({
       query: ({ trainerId, data }) => ({
         url: `/trainers/${trainerId}/salaries`,
         method: 'POST',
@@ -22,7 +34,7 @@ export const trainerSalariesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [{ type: 'TrainerSalary', id: 'LIST' }],
     }),
-    updateTrainerSalary: builder.mutation<any, { salaryId: number; data: any }>({
+    updateTrainerSalary: builder.mutation<ITrainerTrainingTypeSalary, { salaryId: number; data: ITrainerSalaryUpdatePayload }>({
       query: ({ salaryId, data }) => ({
         url: `/trainers/salaries/${salaryId}`,
         method: 'PUT',

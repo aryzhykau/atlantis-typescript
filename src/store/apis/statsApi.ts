@@ -14,7 +14,7 @@ export interface OverviewStatsResponse {
 
 export const statsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getOverviewStats: build.query<OverviewStatsResponse, { start_date?: string; end_date?: string; interval?: 'day'|'week'|'month' } | void>({
+    getOverviewStats: build.query<OverviewStatsResponse, { start_date?: string; end_date?: string; interval?: 'day'|'week'|'month' } | undefined>({
       query: (params) => ({ url: '/stats/overview', params }),
       providesTags: ['User'],
     }),
