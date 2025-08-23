@@ -64,7 +64,7 @@ export const trainerColums: GridColDef[] = [
 
         sortable: true,
         renderCell: (params) => (
-            params.row.fixed_salary ? <CheckCircleIcon color="success"/> : <RemoveCircleIcon color="error"/>
+            params.row.is_fixed_salary ? <CheckCircleIcon color="success"/> : <RemoveCircleIcon color="error"/>
         )
     },
     {

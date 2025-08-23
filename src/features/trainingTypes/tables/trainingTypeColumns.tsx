@@ -3,19 +3,21 @@ import TrainingTypeColorCircle from "../components/TrainingTypeColorCircle.tsx";
 import { Chip } from "@mui/material";
 
 
-const priceFormatter = (value: never) => {
-    if (value === undefined || value === null) {
-        return "Не указана цена"
+const priceFormatter = (value: number | null | undefined, params?: any) => {
+    if (params?.row?.is_subscription_only) {
+        return '—';
     }
-
-    return `${value}€`
+    if (value === undefined || value === null) {
+        return "Не указана цена";
+    }
+    return `${value}€`;
 }
 
 
 export const trainingTypeColumns: GridColDef[] = [
     {field: 'color', headerName: "#", headerAlign: "center", width:30, align: "center", display: "flex", renderCell: params => <TrainingTypeColorCircle circleColor={params.row.color}/>},
     {field: 'name', headerName: 'Название', flex: 1},
-    {field: 'price', headerName: 'Стоимость', width: 100, valueFormatter: priceFormatter},
+    {field: 'price', headerName: 'Стоимость', width: 120, valueFormatter: (_v, p) => priceFormatter(p.value as number | null | undefined, p)},
     {field: 'max_participants', headerName: 'Макс. учеников', width: 100},
     {
         field: 'is_subscription_only',

@@ -77,4 +77,13 @@ export interface IStatusUpdatePayload {
     is_active: boolean;
 }
 
+// Интерфейс для ответа API при запросе зарплат тренера по типам тренировок
+// Соответствует схеме TrainerTrainingTypeSalaryResponse из backend
+export interface ITrainerTrainingTypeSalary {
+    id: number;
+    trainer_id: number;
+    training_type_id: number;
+    salary: number;
+}
+
 

@@ -24,6 +24,7 @@ import dayjs from 'dayjs';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import { useTheme } from '@mui/material';
 import TrainerPaymentsTab from './TrainerPaymentsTab';
+import TrainerSalaryTab from './TrainerSalaryTab';
 
 // Иконки для статистики
 import PersonIcon from '@mui/icons-material/Person';
@@ -352,6 +353,7 @@ export function TrainerPage() {
                     <Tab label="📊 Обзор" {...a11yProps(0)} />
                     <Tab label="🏋️ Тренировки" {...a11yProps(1)} />
                     <Tab label="💰 Платежи" {...a11yProps(2)} />
+                    {!isFixedSalary && <Tab label="💸 Зарплата" {...a11yProps(3)} />}
                 </Tabs>
             </Paper>
 
@@ -376,47 +378,53 @@ export function TrainerPage() {
                 <TrainerPaymentsTab trainerId={trainer.id} />
             </TabPanel>
 
-            {editingTrainerData && (
-                <Dialog 
-                    open={isEditModalOpen} 
-                    onClose={handleCloseEditModal} 
-                    maxWidth="sm" 
-                    fullWidth 
-                    PaperProps={{ 
-                        sx: { 
-                            m: 1, 
-                            borderRadius: 3,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            overflow: 'hidden',
-                        } 
+            {!isFixedSalary && (
+                <TabPanel value={activeTab} index={3}>
+                    <TrainerSalaryTab trainerId={trainer.id} />
+                </TabPanel>
+            )}
+            
+            <Dialog 
+                open={isEditModalOpen} 
+                onClose={handleCloseEditModal} 
+                maxWidth="sm" 
+                fullWidth 
+                PaperProps={{ 
+                    sx: { 
+                        m: 1, 
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        overflow: 'hidden',
+                    } 
+                }}
+            >
+                {/* Градиентный заголовок модального окна */}
+                <Box
+                    sx={{
+                        p: 3,
+                        background: gradients.primary,
+                        color: 'white',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                            opacity: 0.3,
+                        }
                     }}
                 >
-                    {/* Градиентный заголовок модального окна */}
-                    <Box
-                        sx={{
-                            p: 3,
-                            background: gradients.primary,
-                            color: 'white',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: 0, left: 0, right: 0, bottom: 0,
-                                background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-                                opacity: 0.3,
-                            }
-                        }}
-                    >
-                        <Box sx={{ position: 'relative', zIndex: 1 }}>
-                            <Typography variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
-                                ✏️ Редактировать тренера
-                            </Typography>
-                        </Box>
+                    <Box sx={{ position: 'relative', zIndex: 1 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                            ✏️ Редактировать тренера
+                        </Typography>
                     </Box>
-                    
-                    <DialogContent sx={{ p: 0, '&:first-of-type': { pt: 0 } }}> 
+                </Box>
+                
+                <DialogContent sx={{ p: 0, '&:first-of-type': { pt: 0 } }}> 
+                    {editingTrainerData && (
                         <TrainerForm
                             title="Редактировать тренера"
                             initialValues={editingTrainerData}
@@ -425,9 +433,9 @@ export function TrainerPage() {
                             isEdit={true}
                             isLoading={isUpdatingTrainer}
                         />
-                    </DialogContent>
-                </Dialog>
-            )}
+                    )}
+                </DialogContent>
+            </Dialog>
         </Box>
     );
 } 
