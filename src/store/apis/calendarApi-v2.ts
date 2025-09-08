@@ -23,10 +23,19 @@ import {
   TrainingCancellationRequest,
 } from '../../features/calendar-v2/models/realTraining';
 
+// Define types for API state structure
+interface ApiState {
+  queries: Record<string, { data?: unknown }>;
+}
+
+interface RootState {
+  api: ApiState;
+}
+
 // Определяем типы тегов как строки, соответствующие тем, что в baseApi.tagTypes
-const TRAINING_TEMPLATE_TAG: 'TrainingTemplateV2' = 'TrainingTemplateV2';
-const TRAINING_STUDENT_TEMPLATE_TAG: 'TrainingStudentTemplateV2' = 'TrainingStudentTemplateV2';
-const REAL_TRAINING_TAG: 'RealTrainingV2' = 'RealTrainingV2';
+const TRAINING_TEMPLATE_TAG = 'TrainingTemplateV2' as const;
+const TRAINING_STUDENT_TEMPLATE_TAG = 'TrainingStudentTemplateV2' as const;
+const REAL_TRAINING_TAG = 'RealTrainingV2' as const;
 
 export const calendarApiV2 = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -89,10 +98,10 @@ export const calendarApiV2 = baseApi.injectEndpoints({
       onQueryStarted: async ({ id, dayNumber, startTime }, { dispatch, queryFulfilled, getState }) => {
         debugLog('🎯 Начинаем оптимистичное обновление шаблона:', { id, dayNumber, startTime });
         
-        const patches: any[] = [];
+        const patches: Array<{ undo: () => void }> = [];
         
         // Получаем все активные кеши для getTrainingTemplates
-        const state = getState() as any;
+        const state = getState() as RootState;
         const apiState = state.api;
         
         debugLog('🔍 Ищем кеши getTrainingTemplates...');
