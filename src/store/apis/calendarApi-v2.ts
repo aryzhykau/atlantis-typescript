@@ -20,6 +20,7 @@ import {
   RealTrainingStudent,
   StudentCancellationRequest,
   StudentCancellationResponse,
+  TrainingCancellationRequest,
 } from '../../features/calendar-v2/models/realTraining';
 
 // Определяем типы тегов как строки, соответствующие тем, что в baseApi.tagTypes
@@ -394,12 +395,11 @@ export const calendarApiV2 = baseApi.injectEndpoints({
     }),
 
     // Эндпоинт для полной отмены реальной тренировки администратором
-    cancelRealTraining: builder.mutation<RealTraining, { trainingId: number; cancellationReason?: string }>({
-      query: ({ trainingId, cancellationReason }) => ({
+    cancelRealTraining: builder.mutation<RealTraining, { trainingId: number; cancellationData: TrainingCancellationRequest }>({
+      query: ({ trainingId, cancellationData }) => ({
         url: `real-trainings/${trainingId}/cancel`,
         method: 'POST',
-        // API ожидает тело запроса для отмены, даже если оно пустое для POST
-        body: cancellationReason ? { cancellation_reason: cancellationReason } : {},
+        body: cancellationData,
       }),
       invalidatesTags: (_, __, { trainingId }) => [{ type: REAL_TRAINING_TAG, id: trainingId }],
     }),

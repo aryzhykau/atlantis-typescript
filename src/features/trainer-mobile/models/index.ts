@@ -21,7 +21,7 @@ export interface TrainerTraining {
 }
 
 export interface AttendanceUpdate {
-status: 'PRESENT' | 'ABSENT';
+status: 'ABSENT'; // Only ABSENT can be set manually, PRESENT is set automatically by cron job
 cancellation_reason?: string;
 }
 

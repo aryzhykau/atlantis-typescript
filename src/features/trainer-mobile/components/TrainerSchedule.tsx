@@ -60,7 +60,9 @@ export const TrainerSchedule: React.FC = () => {
   };
 
   const canMarkAttendance = (trainingDate: string) => {
-    // Можно отмечать только в день тренировки или после
+    // Тренеры могут отмечать только отсутствие (ABSENT) для зарегистрированных (REGISTERED) студентов
+    // Статус PRESENT устанавливается автоматически cron-задачей в 1:00 AM
+    // Отметки доступны только в день тренировки или после
     const trainingDay = dayjs(trainingDate);
     const today = dayjs();
     return trainingDay.isBefore(today, 'day') || trainingDay.isSame(today, 'day');

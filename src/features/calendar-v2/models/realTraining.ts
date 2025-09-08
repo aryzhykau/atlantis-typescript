@@ -137,6 +137,14 @@ export interface StudentCancellationResponse {
 }
 
 /**
+ * Запрос на отмену всей тренировки администратором.
+ */
+export interface TrainingCancellationRequest {
+  reason: string;
+  process_refunds?: boolean; // По умолчанию true
+}
+
+/**
  * Сводка по зарплате тренера за период.
  */
 export interface TrainerSalarySummary {

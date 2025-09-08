@@ -12,9 +12,9 @@ import TextField from "@mui/material/TextField";
 
 
 export function InvoicesDataView() {
-    const [userId, setUserId] = useState<number | undefined>(undefined);
-    const [onlyUnpaid, setOnlyUnpaid] = useState(false);
-    const {data, refetch, isLoading} = useGetInvoicesQuery({user_id: userId, only_unpaid: onlyUnpaid});
+    const [clientId, setClientId] = useState<number | undefined>(undefined);
+    const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
+    const {data, refetch, isLoading} = useGetInvoicesQuery({client_id: clientId, status: statusFilter});
     const {clients} = useClients();
     const autocompleteOptions = clients.map(client => {
             return {label: `${client.first_name} ${client.last_name}`, id: client.id}
@@ -22,7 +22,7 @@ export function InvoicesDataView() {
 
 
     const onUnpaidChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setOnlyUnpaid(event.target.checked);
+        setStatusFilter(event.target.checked ? "UNPAID" : undefined);
         refetch();
     }
 
@@ -36,7 +36,7 @@ export function InvoicesDataView() {
         , value: IAutocompleteOption | null
     ) => {
         console.log(event.target);
-        setUserId(value ? value.id : undefined);
+        setClientId(value ? value.id : undefined);
         refetch();
     }
 
@@ -56,7 +56,7 @@ export function InvoicesDataView() {
                         <Typography variant={"h5"}>Инвойсы</Typography>
                         <Box>
                             <Typography variant={"caption"}>Показать только неоплаченные</Typography>
-                            <Switch checked={onlyUnpaid} onChange={onUnpaidChange}></Switch>
+                            <Switch checked={statusFilter === "UNPAID"} onChange={onUnpaidChange}></Switch>
                         </Box>
                         <Box display={"flex"} alignItems={"center"} gap={2}>
                             <Typography variant={"caption"}>Выбрать отдельного клиента</Typography>
@@ -64,7 +64,7 @@ export function InvoicesDataView() {
                         </Box>
                     </Box>
                     <DataGrid
-                        rows={data}
+                        rows={data?.items || []}
                         columns={invoicesColumns}
                         loading={isLoading}
 

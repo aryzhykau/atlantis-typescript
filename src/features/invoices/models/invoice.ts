@@ -3,6 +3,12 @@
 export type InvoiceStatus = "UNPAID" | "PAID" | "CANCELLED";
 export type InvoiceType = "SUBSCRIPTION" | "TRAINING";
 
+export interface IUserBasic {
+  id: number;
+  first_name: string;
+  last_name: string;
+}
+
 export interface IInvoiceGet {
   id: number;
   client_id: number;
@@ -20,6 +26,7 @@ export interface IInvoiceGet {
   cancelled_by_id: number | null;
   payment_id: number | null;
   is_auto_renewal: boolean;
+  client: IUserBasic | null;
 }
 
 export interface IInvoiceGetResponse {

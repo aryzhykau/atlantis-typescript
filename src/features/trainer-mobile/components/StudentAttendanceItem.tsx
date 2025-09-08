@@ -44,6 +44,7 @@ export const StudentAttendanceItem: React.FC<StudentAttendanceItemProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'REGISTERED': return 'primary';
       case 'PRESENT': return 'success';
       case 'ABSENT': return 'error';
       case 'CANCELLED_SAFE':
@@ -60,9 +61,10 @@ export const StudentAttendanceItem: React.FC<StudentAttendanceItemProps> = ({
     }
   };
 
+  // Only REGISTERED students can be quickly marked as ABSENT
+  // PRESENT status is set automatically by cron job, not manually
   const canQuickMark = canMark && !isUpdating && 
-    (studentTraining.status === 'REGISTERED' || 
-     studentTraining.status === 'PRESENT');
+    studentTraining.status === 'REGISTERED';
 
   return (
     <Box sx={{ 
@@ -91,12 +93,13 @@ export const StudentAttendanceItem: React.FC<StudentAttendanceItemProps> = ({
       } : {},
     }}
     onClick={() => {
-      // Быстрая отметка: если ученик записан или присутствовал, отмечаем как отсутствующий
-      if (studentTraining.status === 'REGISTERED' || studentTraining.status === 'PRESENT') {
+      // Быстрая отметка: только записанные студенты могут быть отмечены как отсутствующие
+      if (studentTraining.status === 'REGISTERED') {
         handleQuickMark('ABSENT');
       }
     }}
-    title={canQuickMark ? 'Нажмите, чтобы отметить отсутствие' : ''}
+    title={canQuickMark ? 'Нажмите, чтобы отметить отсутствие' : 
+           studentTraining.status === 'PRESENT' ? 'Статус "Присутствовал" устанавливается автоматически' : ''}
     >
       <Avatar 
         sx={{ 
@@ -128,9 +131,14 @@ export const StudentAttendanceItem: React.FC<StudentAttendanceItemProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
             <TouchApp sx={{ fontSize: 12, color: 'text.secondary' }} />
             <Typography variant="caption" color="text.secondary">
-              Нажмите для отметки
+              Нажмите для отметки отсутствия
             </Typography>
           </Box>
+        )}
+        {studentTraining.status === 'PRESENT' && (
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+            Автоматически отмечен системой
+          </Typography>
         )}
       </Box>
       
