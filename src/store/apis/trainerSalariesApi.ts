@@ -1,6 +1,7 @@
 
 import { baseApi } from './api';
 import { ITrainerTrainingTypeSalary } from '../../features/trainers/models/trainer';
+import { TrainerSalarySummary, SalaryCalculationPreview } from '../../features/calendar-v2/models/realTraining';
 
 // Interfaces for API payloads
 interface ITrainerSalaryCreatePayload {
@@ -49,6 +50,35 @@ export const trainerSalariesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, salaryId) => [{ type: 'TrainerSalary', id: salaryId }],
     }),
+    
+    // Get trainer salary summary for a period
+    getTrainerSalarySummary: builder.query<TrainerSalarySummary, {
+      trainerId: number;
+      startDate: string; // YYYY-MM-DD format
+      endDate: string;   // YYYY-MM-DD format
+    }>({
+      query: ({ trainerId, startDate, endDate }) => 
+        `/trainers/${trainerId}/salary-summary?start_date=${startDate}&end_date=${endDate}`,
+      providesTags: (_, __, { trainerId }) => [
+        { type: 'TrainerSalary', id: `SUMMARY_${trainerId}` }
+      ],
+    }),
+
+    // Calculate salary for training cancellation (preview)
+    calculateTrainingSalary: builder.mutation<SalaryCalculationPreview, {
+      trainingId: number;
+      cancelledStudentId: number;
+      cancellationTime: string; // ISO string
+    }>({
+      query: ({ trainingId, cancelledStudentId, cancellationTime }) => ({
+        url: `/trainings/${trainingId}/calculate-salary`,
+        method: 'POST',
+        body: {
+          cancelled_student_id: cancelledStudentId,
+          cancellation_time: cancellationTime,
+        },
+      }),
+    }),
   }),
 });
 
@@ -59,4 +89,6 @@ export const {
   useAddTrainerSalaryMutation,
   useUpdateTrainerSalaryMutation,
   useDeleteTrainerSalaryMutation,
+  useGetTrainerSalarySummaryQuery,
+  useCalculateTrainingSalaryMutation,
 } = trainerSalariesApi;

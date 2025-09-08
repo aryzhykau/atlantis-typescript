@@ -184,7 +184,7 @@ export const trainersApi = baseApi.injectEndpoints({
 
         // Получение студентов тренера
         getTrainerStudents: builder.query<any[], { trainer_id: number }>({
-            query: ({ trainer_id }) => `trainers/${trainer_id}/students`,
+            query: ({ trainer_id }) => `students/trainer/${trainer_id}`,
             providesTags: ['Students'],
         }),
 

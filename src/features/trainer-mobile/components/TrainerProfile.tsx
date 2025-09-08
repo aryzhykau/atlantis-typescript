@@ -126,13 +126,14 @@ export const TrainerProfile: React.FC = () => {
           <Button
             variant="outlined"
             startIcon={<Edit />}
+            disabled
             sx={{ 
               mt: 2, 
-              color: 'white', 
-              borderColor: 'white',
+              color: 'rgba(255,255,255,0.5)', 
+              borderColor: 'rgba(255,255,255,0.3)',
               '&:hover': {
-                borderColor: 'white',
-                background: 'rgba(255,255,255,0.1)',
+                borderColor: 'rgba(255,255,255,0.3)',
+                background: 'rgba(255,255,255,0.05)',
               }
             }}
           >
@@ -211,25 +212,34 @@ export const TrainerProfile: React.FC = () => {
           </Typography>
         </Box>
         <List>
-          <ListItem>
+          <ListItem sx={{ opacity: 0.5, pointerEvents: 'none' }}>
             <ListItemIcon>
-              <Notifications sx={{ color: theme.palette.primary.main }} />
+              <Notifications sx={{ color: theme.palette.text.disabled }} />
             </ListItemIcon>
-            <ListItemText primary="Уведомления" />
+            <ListItemText 
+              primary="Уведомления" 
+              primaryTypographyProps={{ color: theme.palette.text.disabled }}
+            />
           </ListItem>
           <Divider />
-          <ListItem>
+          <ListItem sx={{ opacity: 0.5, pointerEvents: 'none' }}>
             <ListItemIcon>
-              <Security sx={{ color: theme.palette.primary.main }} />
+              <Security sx={{ color: theme.palette.text.disabled }} />
             </ListItemIcon>
-            <ListItemText primary="Безопасность" />
+            <ListItemText 
+              primary="Безопасность" 
+              primaryTypographyProps={{ color: theme.palette.text.disabled }}
+            />
           </ListItem>
           <Divider />
-          <ListItem>
+          <ListItem sx={{ opacity: 0.5, pointerEvents: 'none' }}>
             <ListItemIcon>
-              <Settings sx={{ color: theme.palette.primary.main }} />
+              <Settings sx={{ color: theme.palette.text.disabled }} />
             </ListItemIcon>
-            <ListItemText primary="Общие настройки" />
+            <ListItemText 
+              primary="Общие настройки" 
+              primaryTypographyProps={{ color: theme.palette.text.disabled }}
+            />
           </ListItem>
         </List>
       </Paper>
@@ -246,7 +256,15 @@ export const TrainerProfile: React.FC = () => {
         }}
       >
         <List>
-          <ListItem onClick={handleLogout}>
+          <ListItem 
+            onClick={handleLogout}
+            sx={{
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.error.main, 0.04),
+              }
+            }}
+          >
             <ListItemIcon>
               <Logout sx={{ color: theme.palette.error.main }} />
             </ListItemIcon>

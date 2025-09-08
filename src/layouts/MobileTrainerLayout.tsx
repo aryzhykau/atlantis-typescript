@@ -2,7 +2,6 @@ import React from 'react';
 import { Box, Paper, BottomNavigation, useTheme, BottomNavigationAction } from '@mui/material';
 import {
   Payment as PaymentIcon,
-  TrendingUp as StatsIcon,
   CalendarToday as ScheduleIcon,
   Person as ProfileIcon,
   ReceiptLong as ExpensesIcon,
@@ -25,9 +24,8 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
     const path = location.pathname;
     if (path.includes('/payments')) return 0;
     if (path.includes('/expenses')) return 1;
-    if (path.includes('/stats')) return 2;
-    if (path.includes('/schedule')) return 3;
-    if (path.includes('/profile')) return 4;
+    if (path.includes('/schedule')) return 2;
+    if (path.includes('/profile')) return 3;
     return 0; // По умолчанию платежи
   };
 
@@ -42,12 +40,9 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
         navigate('/trainer-mobile/expenses');
         break;
       case 2:
-        navigate('/trainer-mobile/stats');
-        break;
-      case 3:
         navigate('/trainer-mobile/schedule');
         break;
-      case 4:
+      case 3:
         navigate('/trainer-mobile/profile');
         break;
     }
@@ -64,11 +59,6 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
       label: 'Расходы',
       icon: <ExpensesIcon />,
       gradient: gradients.primary,
-    },
-    {
-      label: 'Статистика',
-      icon: <StatsIcon />,
-      gradient: gradients.warning,
     },
     {
       label: 'Расписание',

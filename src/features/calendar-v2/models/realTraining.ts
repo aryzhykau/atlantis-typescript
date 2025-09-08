@@ -114,6 +114,67 @@ export interface StudentCancellationRequest {
 }
 
 /**
+ * Ответ при отмене участия студента с информацией о зарплате тренера.
+ */
+export interface StudentCancellationResponse {
+  student_cancelled: boolean;
+  trainer_salary_result: {
+    training_id: number;
+    trainer_id: number;
+    cancelled_student_id: number;
+    cancellation_time: string;
+    training_datetime: string;
+    salary_decision: {
+      should_receive_salary: boolean;
+      reason: string;
+      remaining_students_count: number;
+      hours_before_training: number;
+    };
+    expense_created: boolean;
+    expense_id?: number;
+    salary_amount?: number;
+  };
+}
+
+/**
+ * Сводка по зарплате тренера за период.
+ */
+export interface TrainerSalarySummary {
+  trainer_id: number;
+  trainer_name: string;
+  period: {
+    start: string;
+    end: string;
+  };
+  is_fixed_salary: boolean;
+  fixed_salary_amount?: number;
+  individual_training_payments: {
+    total_amount: number;
+    payment_count: number;
+    payments: any[]; // Define expense type based on your needs
+  };
+}
+
+/**
+ * Предварительный расчет зарплаты тренера при отмене.
+ */
+export interface SalaryCalculationPreview {
+  training_id: number;
+  trainer_id: number;
+  cancelled_student_id: number;
+  cancellation_time: string;
+  training_datetime: string;
+  salary_decision: {
+    should_receive_salary: boolean;
+    reason: string;
+    remaining_students_count: number;
+    hours_before_training: number;
+  };
+  potential_salary_amount: number;
+  would_create_expense: boolean;
+}
+
+/**
  * Данные для обновления статуса посещения студента.
  * На основе PUT /real-trainings/{training_id}/students/{student_id}/attendance
  */

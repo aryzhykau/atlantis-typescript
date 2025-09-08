@@ -1,4 +1,4 @@
-import {Box} from "@mui/material";
+import { Box } from "@mui/material";
 import OverviewStats from "../features/dashboard/components/OverviewStats";
 // import * as React from 'react';
 // import { LineChart } from '@mui/x-charts/LineChart';
@@ -13,9 +13,9 @@ import OverviewStats from "../features/dashboard/components/OverviewStats";
 
 export function DashboardLayout() {
 
-    return (
-      <Box display={"flex"} flexDirection={"column"} gap={2}>
-        <OverviewStats />
-      </Box>
-    );
+  return (
+    <Box display={"flex"} flexDirection={"column"} gap={2}>
+      <OverviewStats />
+    </Box>
+  );
 }
