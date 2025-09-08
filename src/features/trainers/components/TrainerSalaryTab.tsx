@@ -21,13 +21,17 @@ import {
     TableRow,
     IconButton,
     alpha,
-    useTheme
+    useTheme,
+    Card,
+    CardContent,
+    Grid,
 } from '@mui/material';
 import {
     useGetTrainerSalariesQuery,
     useAddTrainerSalaryMutation,
     useUpdateTrainerSalaryMutation,
-    useDeleteTrainerSalaryMutation
+    useDeleteTrainerSalaryMutation,
+    useGetTrainerSalarySummaryQuery,
 } from '../../../store/apis/trainerSalariesApi';
 import { useGetTrainingTypesQuery } from '../../../store/apis/trainingTypesApi';
 import { useSnackbar } from '../../../hooks/useSnackBar';
@@ -37,10 +41,116 @@ import AddIcon from '@mui/icons-material/Add';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import { ITrainerTrainingTypeSalary } from '../models/trainer';
 import { ITrainingType } from '../../training-types/models/trainingType';
+import { QuickDateRangeSelector } from './QuickDateRangeSelector';
+import dayjs from 'dayjs';
 
 interface TrainerSalaryTabProps {
     trainerId: number;
 }
+
+// Salary Summary Component
+const SalarySummaryCard: React.FC<{ trainerId: number }> = ({ trainerId }) => {
+    const [dateRange, setDateRange] = useState({
+        startDate: dayjs().startOf('month').format('YYYY-MM-DD'),
+        endDate: dayjs().format('YYYY-MM-DD')
+    });
+
+    const { data: summary, isLoading } = useGetTrainerSalarySummaryQuery({
+        trainerId,
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate
+    });
+
+    // Helper function to format period display
+    const formatPeriod = (start: string, end: string) => {
+        return `${dayjs(start).format('DD.MM.YYYY')} - ${dayjs(end).format('DD.MM.YYYY')}`;
+    };
+
+    const handleQuickRangeSelect = (startDate: string, endDate: string) => {
+        setDateRange({ startDate, endDate });
+    };
+
+    if (isLoading) return <CircularProgress />;
+
+    return (
+        <Card sx={{ mt: 2, mb: 3 }}>
+            <CardContent>
+                <Typography variant="h6" gutterBottom>
+                    Сводка по зарплате
+                </Typography>
+                
+                <QuickDateRangeSelector onRangeSelect={handleQuickRangeSelect} />
+                
+                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                    <TextField
+                        label="Дата начала"
+                        type="date"
+                        value={dateRange.startDate}
+                        onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                        size="small"
+                        InputLabelProps={{ shrink: true }}
+                    />
+                    <TextField
+                        label="Дата окончания"
+                        type="date"
+                        value={dateRange.endDate}
+                        onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                        size="small"
+                        InputLabelProps={{ shrink: true }}
+                    />
+                </Box>
+
+                {summary && (
+                    <>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Период: {formatPeriod(summary.period.start, summary.period.end)}
+                        </Typography>
+                        
+                        <Grid container spacing={2}>
+                            <Grid item xs={6}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Тип зарплаты:
+                                </Typography>
+                                <Typography variant="body1">
+                                    {summary.is_fixed_salary ? 'Фиксированная' : 'По тренировкам'}
+                                </Typography>
+                            </Grid>
+                            
+                            {summary.is_fixed_salary && (
+                                <Grid item xs={6}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Фиксированная сумма:
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {summary.fixed_salary_amount} ₽
+                                    </Typography>
+                                </Grid>
+                            )}
+                            
+                            <Grid item xs={6}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Индивидуальные выплаты:
+                                </Typography>
+                                <Typography variant="body1" color="success.main">
+                                    {summary.individual_training_payments.total_amount} ₽
+                                </Typography>
+                            </Grid>
+                            
+                            <Grid item xs={6}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Количество выплат:
+                                </Typography>
+                                <Typography variant="body1">
+                                    {summary.individual_training_payments.payment_count}
+                                </Typography>
+                            </Grid>
+                        </Grid>
+                    </>
+                )}
+            </CardContent>
+        </Card>
+    );
+};
 
 const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
     const theme = useTheme();
@@ -96,17 +206,20 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
     }
 
     return (
-        <Paper
-            elevation={0}
-            sx={{
-                mb: 3,
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                overflow: 'hidden',
-                background: theme.palette.background.paper,
-            }}
-        >
+        <>
+            <SalarySummaryCard trainerId={trainerId} />
+            
+            <Paper
+                elevation={0}
+                sx={{
+                    mb: 3,
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    overflow: 'hidden',
+                    background: theme.palette.background.paper,
+                }}
+            >
             <Box sx={{
                 p: 2,
                 background: alpha(theme.palette.primary.main, 0.05),
@@ -174,6 +287,7 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
                 </DialogContent>
             </Dialog>
         </Paper>
+        </>
     );
 };
 

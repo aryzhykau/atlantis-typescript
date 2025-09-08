@@ -14,6 +14,8 @@ import {
   alpha,
   CircularProgress,
   TextField,
+  Grid,
+  Alert,
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close';
@@ -33,20 +35,15 @@ import {
     useCancelStudentFromTrainingMutation
 } from '../../../store/apis/calendarApi-v2';
 import { calendarApiV2 } from '../../../store/apis/calendarApi-v2';
-import { StudentCancellationRequest } from '../models/realTraining';
+import { StudentCancellationRequest, StudentCancellationResponse } from '../models/realTraining';
 import { useSnackbar } from '../../../hooks/useSnackBar';
+import { formatDateTime } from '../../../utils/dateHelpers';
 
 interface RealTrainingModalProps {
   open: boolean;
   onClose: () => void;
   trainingId: number | null;
 }
-
-// Helper to format date and time for the input fields
-const toDatetimeLocal = (isoString: string) => {
-    const date = dayjs(isoString);
-    return date.format('YYYY-MM-DDTHH:mm');
-};
 
 const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, trainingId }) => {
   const theme = useTheme();
@@ -74,8 +71,12 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
   const [studentToCancel, setStudentToCancel] = useState<{ id: number; name: string } | null>(null);
   const [cancellationData, setCancellationData] = useState({
       reason: '',
-      notification_time: toDatetimeLocal(new Date().toISOString()),
+      notification_time: dayjs().format('YYYY-MM-DDTHH:mm'),
   });
+
+  // Состояние для отображения информации о зарплате тренера
+  const [salaryResult, setSalaryResult] = useState<StudentCancellationResponse['trainer_salary_result'] | null>(null);
+  const [showSalaryDetails, setShowSalaryDetails] = useState(false);
 
   const isDeletingTraining = isDeletingReal;
 
@@ -96,7 +97,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
     setStudentToCancel({ id: studentId, name: studentName });
     setCancellationData({
         reason: '',
-        notification_time: toDatetimeLocal(new Date().toISOString()),
+        notification_time: dayjs().format('YYYY-MM-DDTHH:mm'),
     });
     setCancelDialogOpen(true);
   };
@@ -104,7 +105,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
   const handleCloseCancelDialog = () => {
     setCancelDialogOpen(false);
     setStudentToCancel(null);
-    setCancellationData({ reason: '', notification_time: toDatetimeLocal(new Date().toISOString()) });
+    setCancellationData({ reason: '', notification_time: dayjs().format('YYYY-MM-DDTHH:mm') });
   };
 
   const handleConfirmCancellation = async () => {
@@ -113,17 +114,33 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
     try {
         const request: StudentCancellationRequest = {
             reason: cancellationData.reason,
-            notification_time: cancellationData.notification_time
+            notification_time: dayjs(cancellationData.notification_time).toISOString()
         };
         
-        await cancelStudentFromTraining({
+        const response = await cancelStudentFromTraining({
             training_id: realTrainingData.id,
             student_id: studentToCancel.id,
             data: request
         }).unwrap();
+
+        // Store salary result for display
+        setSalaryResult(response.trainer_salary_result);
         
         dispatch(calendarApiV2.util.invalidateTags([{ type: 'RealTrainingV2', id: realTrainingData.id }]));
-        displaySnackbar(`Отмена для ${studentToCancel.name} обработана`, 'success');
+        
+        // Show different messages based on trainer salary result
+        const salaryMessage = response.trainer_salary_result.expense_created 
+          ? ` (Тренеру начислена зарплата: ${response.trainer_salary_result.salary_amount} ₽)`
+          : ` (${response.trainer_salary_result.salary_decision.reason})`;
+        
+        displaySnackbar(`Отмена для ${studentToCancel.name} обработана${salaryMessage}`, 'success');
+        
+        // Show detailed salary information if needed
+        if (response.trainer_salary_result.salary_decision.should_receive_salary || 
+            response.trainer_salary_result.expense_created) {
+          setShowSalaryDetails(true);
+        }
+        
         handleCloseCancelDialog();
     } catch (err) {
         console.error('[RealTrainingModal] Failed to cancel student:', err);
@@ -444,6 +461,92 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
         <Button onClick={handleConfirmCancellation} variant="contained" color="error" disabled={isCancellingStudent}>
           {isCancellingStudent ? <CircularProgress size={24} color="inherit" /> : 'Подтвердить отмену'}
         </Button>
+      </DialogActions>
+    </Dialog>
+
+    {/* Salary Details Dialog */}
+    <Dialog open={showSalaryDetails} onClose={() => setShowSalaryDetails(false)} maxWidth="md" fullWidth>
+      <DialogTitle>Информация о зарплате тренера</DialogTitle>
+      <DialogContent>
+        {salaryResult && (
+          <Box sx={{ pt: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Результат обработки отмены студента
+            </Typography>
+            
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                Время отмены: {formatDateTime(salaryResult.cancellation_time)}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Время тренировки: {formatDateTime(salaryResult.training_datetime)}
+              </Typography>
+            </Box>
+            
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">
+                  Решение по зарплате:
+                </Typography>
+                <Typography 
+                  variant="body1" 
+                  color={salaryResult.salary_decision.should_receive_salary ? 'success.main' : 'text.primary'}
+                >
+                  {salaryResult.salary_decision.should_receive_salary ? 'Да' : 'Нет'}
+                </Typography>
+              </Grid>
+              
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">
+                  Часов до тренировки:
+                </Typography>
+                <Typography variant="body1">
+                  {salaryResult.salary_decision.hours_before_training.toFixed(1)}
+                </Typography>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary">
+                  Причина:
+                </Typography>
+                <Typography variant="body1">
+                  {salaryResult.salary_decision.reason}
+                </Typography>
+              </Grid>
+              
+              <Grid item xs={6}>
+                <Typography variant="body2" color="text.secondary">
+                  Оставшиеся студенты:
+                </Typography>
+                <Typography variant="body1">
+                  {salaryResult.salary_decision.remaining_students_count}
+                </Typography>
+              </Grid>
+              
+              {salaryResult.expense_created && (
+                <>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary">
+                      Создан расход:
+                    </Typography>
+                    <Typography variant="body1" color="success.main">
+                      Да (ID: {salaryResult.expense_id})
+                    </Typography>
+                  </Grid>
+                  
+                  <Grid item xs={12}>
+                    <Alert severity="success" sx={{ mt: 1 }}>
+                      Тренеру начислена зарплата: {salaryResult.salary_amount} ₽
+                    </Alert>
+                  </Grid>
+                </>
+              )}
+            </Grid>
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setShowSalaryDetails(false)}>Закрыть</Button>
       </DialogActions>
     </Dialog>
     </>
