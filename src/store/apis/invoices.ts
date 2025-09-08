@@ -1,4 +1,4 @@
-import {IInvoiceGet, IInvoiceGetResponse} from "../../features/invoices/models/invoice.ts";
+import {IInvoiceGetResponse} from "../../features/invoices/models/invoice.ts";
 import {baseApi} from "./api.ts";
 import dayjs from "dayjs";
 
