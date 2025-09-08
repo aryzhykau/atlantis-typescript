@@ -30,12 +30,12 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import dayjs from 'dayjs';
 import { 
     useGetRealTrainingByIdQuery, 
-    useDeleteRealTrainingMutation, 
+    useCancelRealTrainingMutation, 
     
     useCancelStudentFromTrainingMutation
 } from '../../../store/apis/calendarApi-v2';
 import { calendarApiV2 } from '../../../store/apis/calendarApi-v2';
-import { StudentCancellationRequest, StudentCancellationResponse } from '../models/realTraining';
+import { StudentCancellationRequest, StudentCancellationResponse, TrainingCancellationRequest } from '../models/realTraining';
 import { useSnackbar } from '../../../hooks/useSnackBar';
 import { formatDateTime } from '../../../utils/dateHelpers';
 
@@ -52,7 +52,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
 
   // Мутации
   const [cancelStudentFromTraining, { isLoading: isCancellingStudent }] = useCancelStudentFromTrainingMutation();
-  const [deleteRealTraining, { isLoading: isDeletingReal }] = useDeleteRealTrainingMutation();
+  const [cancelRealTraining, { isLoading: isCancellingReal }] = useCancelRealTrainingMutation();
 
   
   const { data: realTrainingData, isLoading: isLoadingReal } = useGetRealTrainingByIdQuery(
@@ -63,7 +63,8 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
   const isLoading = isLoadingReal;
 
   // Состояния
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   
   // Состояние для диалога отмены
@@ -78,7 +79,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
   const [salaryResult, setSalaryResult] = useState<StudentCancellationResponse['trainer_salary_result'] | null>(null);
   const [showSalaryDetails, setShowSalaryDetails] = useState(false);
 
-  const isDeletingTraining = isDeletingReal;
+  const isCancellingTraining = isCancellingReal;
 
   const isStudentCancelled = (status?: string) => {
     return status === 'CANCELLED_SAFE' || status === 'CANCELLED_PENALTY';
@@ -148,19 +149,29 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
     }
   };
 
-  const handleDeleteTraining = async () => {
-    if (!realTrainingData) return;
+  const handleCancelTraining = async () => {
+    if (!realTrainingData || !cancelReason.trim()) return;
     
     try {
-      await deleteRealTraining(realTrainingData.id).unwrap();
+      const cancellationData: TrainingCancellationRequest = {
+        reason: cancelReason.trim(),
+        process_refunds: true
+      };
+      
+      await cancelRealTraining({ 
+        trainingId: realTrainingData.id, 
+        cancellationData 
+      }).unwrap();
+      
       dispatch(calendarApiV2.util.invalidateTags(['RealTrainingV2']));
-      displaySnackbar('Тренировка удалена', 'success');
+      displaySnackbar('Тренировка отменена', 'success');
       onClose();
     } catch (err) {
-      console.error('[RealTrainingModal] Failed to delete training:', err);
-      displaySnackbar('Ошибка при удалении тренировки', 'error');
+      console.error('[RealTrainingModal] Failed to cancel training:', err);
+      displaySnackbar('Ошибка при отмене тренировки', 'error');
     } finally {
-      setShowDeleteConfirmation(false);
+      setShowCancelConfirmation(false);
+      setCancelReason('');
     }
   };
 
@@ -415,22 +426,41 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
       </DialogContent>
       <Box sx={{ p: 3, backgroundColor: theme.palette.background.default, borderTop: `2px solid ${alpha(borderColor, 0.3)}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button onClick={() => setShowDeleteConfirmation(true)} variant="contained" color="error" sx={{background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${alpha(theme.palette.error.main, 0.8)} 100%)`}}>
-            {isDeletingTraining ? <CircularProgress size={20} /> : 'Удалить'}
+          <Button onClick={() => setShowCancelConfirmation(true)} variant="contained" color="warning" sx={{background: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${alpha(theme.palette.warning.main, 0.8)} 100%)`}}>
+            {isCancellingTraining ? <CircularProgress size={20} /> : 'Отменить тренировку'}
           </Button>
         </Box>
         <Button onClick={onClose} variant="outlined" sx={{ borderColor: alpha(borderColor, 0.4), color: borderColor }}>Закрыть</Button>
       </Box>
     </Dialog>
 
-    <Dialog open={showDeleteConfirmation} onClose={() => setShowDeleteConfirmation(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Подтверждение удаления</DialogTitle>
+    <Dialog open={showCancelConfirmation} onClose={() => setShowCancelConfirmation(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Отмена тренировки</DialogTitle>
         <DialogContent>
-            <Typography>Вы уверены, что хотите удалить тренировку?</Typography>
+            <Typography sx={{ mb: 2 }}>
+                Отмена тренировки приведет к автоматическому возврату занятий студентам и отмене связанных счетов.
+            </Typography>
+            <TextField
+                fullWidth
+                label="Причина отмены"
+                multiline
+                rows={3}
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Укажите причину отмены тренировки..."
+                required
+            />
         </DialogContent>
         <DialogActions>
-            <Button onClick={() => setShowDeleteConfirmation(false)}>Отмена</Button>
-            <Button onClick={handleDeleteTraining} color="error" variant="contained">{isDeletingTraining ? <CircularProgress size={24} /> : 'Удалить'}</Button>
+            <Button onClick={() => setShowCancelConfirmation(false)}>Отмена</Button>
+            <Button 
+                onClick={handleCancelTraining} 
+                color="warning" 
+                variant="contained"
+                disabled={!cancelReason.trim() || isCancellingTraining}
+            >
+                {isCancellingTraining ? <CircularProgress size={24} /> : 'Отменить тренировку'}
+            </Button>
         </DialogActions>
     </Dialog>
 

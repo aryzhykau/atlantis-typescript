@@ -1,27 +1,28 @@
-import {IInvoiceGet, IInvoiceGetResponse} from "../../features/invoices/models/invoice.ts";
+import {IInvoiceGetResponse} from "../../features/invoices/models/invoice.ts";
 import {baseApi} from "./api.ts";
 import dayjs from "dayjs";
 
 export const invoicesApi = baseApi.injectEndpoints({
 
     endpoints: (builder) => ({
-        getInvoices: builder.query<IInvoiceGet[], {user_id?: number, only_unpaid: boolean}>({
-            query: ({user_id, only_unpaid}: { user_id?: number | null, only_unpaid: boolean }) => ({
+        getInvoices: builder.query<IInvoiceGetResponse, {client_id?: number, status?: string}>({
+            query: ({client_id, status}: { client_id?: number | null, status?: string | null }) => ({
                 params: {
-                    user_id: user_id,
-                    only_unpaid: only_unpaid.toString()
+                    ...(client_id && { client_id }),
+                    ...(status && { status })
                 },
 
                 url: '/invoices',
                 method: 'GET',
             }),
-            transformResponse: (response: IInvoiceGet[]) => {
-                return response.map((invoice) => {
-                    return {
+            transformResponse: (response: IInvoiceGetResponse) => {
+                return {
+                    ...response,
+                    items: response.items.map((invoice) => ({
                         ...invoice,
                         created_at: dayjs(invoice.created_at).tz(dayjs.tz.guess()).format()
-                    };
-                })
+                    }))
+                };
             },
         }),
 

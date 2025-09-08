@@ -16,24 +16,36 @@ interface AttendanceButtonsProps {
 export const AttendanceButtons: React.FC<AttendanceButtonsProps> = ({
   trainingId,
   studentId,
+  currentStatus,
   onMarkAbsent,
   canMark,
   isUpdating,
 }) => {
   const gradients = useGradients();
 
+  // Only allow marking REGISTERED students as ABSENT
+  const canMarkAbsent = canMark && currentStatus === 'REGISTERED';
+
+  const getButtonTitle = () => {
+    if (!canMark) return 'Отметки доступны в день тренировки';
+    if (currentStatus === 'PRESENT') return 'Статус "Присутствовал" устанавливается автоматически';
+    if (currentStatus === 'ABSENT') return 'Студент уже отмечен как отсутствующий';
+    if (currentStatus === 'REGISTERED') return 'Отметить отсутствие';
+    return 'Недоступно для данного статуса';
+  };
+
   return (
     <Box sx={{ display: 'flex', gap: 1, ml: 1 }}>
         <IconButton
           size="medium"
           onClick={() => onMarkAbsent(trainingId, studentId)}
-          disabled={isUpdating || !canMark}
+          disabled={isUpdating || !canMarkAbsent}
           sx={{
-            background: canMark ? gradients.warning : 'grey.400',
+            background: canMarkAbsent ? gradients.warning : 'grey.400',
             color: 'white',
             '&:hover': { 
-              background: canMark ? gradients.warning : 'grey.400',
-              opacity: canMark ? 0.9 : 1,
+              background: canMarkAbsent ? gradients.warning : 'grey.400',
+              opacity: canMarkAbsent ? 0.9 : 1,
             },
             '&.Mui-disabled': {
               bgcolor: 'grey.300',
@@ -43,7 +55,7 @@ export const AttendanceButtons: React.FC<AttendanceButtonsProps> = ({
             height: 44,
             p: 1,
           }}
-          title={!canMark ? 'Отметки доступны в день тренировки' : 'Отметить отсутствие'}
+          title={getButtonTitle()}
         >
           <CloseIcon sx={{ fontSize: 20 }} />
         </IconButton>
