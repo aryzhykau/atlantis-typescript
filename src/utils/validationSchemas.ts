@@ -98,6 +98,17 @@ export const subscriptionSchemas = {
   }),
 };
 
+// Payment form schemas
+export const paymentSchemas = {
+  create: Yup.object({
+    student: Yup.object().nullable().required('Выберите студента'),
+    amount: Yup.number()
+      .required('Введите сумму')
+      .positive('Сумма должна быть больше 0')
+      .min(0.01, 'Минимальная сумма 0.01 €'),
+  }),
+};
+
 // Student form schemas
 export const studentSchemas = {
   create: Yup.object({

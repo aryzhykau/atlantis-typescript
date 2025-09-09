@@ -8,6 +8,7 @@ export { FormikDatePicker } from './FormikDatePicker';
 export { FormikSwitch } from './FormikSwitch';
 export { FormikFieldArray } from './FormikFieldArray';
 export { FormikColorPicker } from './FormikColorPicker';
+export { FormikAutocomplete } from './FormikAutocomplete';
 
 // Export types
 export type { FormikTextFieldProps } from './FormikTextField';

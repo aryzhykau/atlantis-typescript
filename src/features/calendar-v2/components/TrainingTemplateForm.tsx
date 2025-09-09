@@ -1,11 +1,10 @@
 import React, { useMemo, memo } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, CircularProgress, 
-  TextField as MuiTextField, Typography, AutocompleteRenderInputParams, Chip, IconButton, Box,
+  Typography, Chip, IconButton, Box,
   useTheme, alpha, Divider, Paper, Card, CardContent
 } from '@mui/material';
-import { Autocomplete } from 'formik-mui';
-import { DesktopDatePicker } from 'formik-mui-x-date-pickers';
+import { FormikAutocomplete, FormikDatePicker } from '../../../components/forms/fields';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import AddIcon from '@mui/icons-material/Add';
@@ -15,7 +14,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import GroupIcon from '@mui/icons-material/Group';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import { Formik, Form, Field, FormikHelpers, FieldArray } from 'formik';
+import { Formik, Form, FormikHelpers, FieldArray } from 'formik';
 import * as Yup from 'yup';
 import { TrainingTemplateCreate, TrainingTemplate } from '../models/trainingTemplate';
 import { 
@@ -80,9 +79,9 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
   const [createTrainingTemplate] = useCreateTrainingTemplateMutation();
   const [createTrainingStudentTemplate] = useCreateTrainingStudentTemplateMutation();
   
-  const { data: trainingTypes, isLoading: isLoadingTypes, error: typesError } = useGetTrainingTypesQuery({});
-  const { data: trainersData, isLoading: isLoadingTrainers, error: trainersError } = useGetTrainersQuery();
-  const { data: students, isLoading: isLoadingStudents, error: studentsError } = useGetStudentsQuery();
+  const { data: trainingTypes, isLoading: isLoadingTypes } = useGetTrainingTypesQuery({});
+  const { data: trainersData, isLoading: isLoadingTrainers } = useGetTrainersQuery();
+  const { data: students, isLoading: isLoadingStudents } = useGetStudentsQuery();
   const { displaySnackbar } = useSnackbar();
   
   const trainers = trainersData?.trainers || [];
@@ -250,13 +249,13 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                       </Box>
                       <Divider sx={{ mb: 2 }} />
                       
-                      <Field
+                      <FormikAutocomplete<ITrainingType>
                         name="trainingType"
-                        component={Autocomplete}
+                        label="Выберите тип тренировки"
                         options={trainingTypes || []}
-                        getOptionLabel={(option: ITrainingType) => option?.name || ''}
-                        isOptionEqualToValue={(option: ITrainingType, value: ITrainingType | null) => value !== null && option.id === value.id}
-                        loading={isLoadingTypes}
+                        getOptionLabel={(option) => option?.name || ''}
+                        isOptionEqualToValue={(option, value) => value !== null && option.id === value.id}
+                        isLoading={isLoadingTypes}
                         renderOption={(props: any, option: ITrainingType) => (
                           <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Box 
@@ -274,35 +273,20 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                           </Box>
                         )}
                         textFieldProps={{
-                          label: "Выберите тип тренировки",
-                          error: !!typesError, 
-                          helperText: typesError ? 'Ошибка загрузки типов тренировок' : undefined,
-                          fullWidth: true
-                        }}
-                        renderInput={(rawParams: AutocompleteRenderInputParams) => {
-                          const params = rawParams as AutocompleteRenderInputParams & { error?: boolean; helperText?: string };
-                          return (
-                            <MuiTextField
-                              {...params}
-                              label="Выберите тип тренировки"
-                              error={params.error}
-                              helperText={params.helperText}
-                              InputProps={{
-                                ...params.InputProps,
-                                startAdornment: values.trainingType && (
-                                  <Box 
-                                    sx={{ 
-                                      width: 20, 
-                                      height: 20, 
-                                      borderRadius: '50%', 
-                                      backgroundColor: values.trainingType.color || theme.palette.grey[400],
-                                      mr: 1
-                                    }} 
-                                  />
-                                )
-                              }}
-                            />
-                          );
+                          fullWidth: true,
+                          InputProps: values.trainingType ? {
+                            startAdornment: (
+                              <Box 
+                                sx={{ 
+                                  width: 20, 
+                                  height: 20, 
+                                  borderRadius: '50%', 
+                                  backgroundColor: values.trainingType.color || theme.palette.grey[400],
+                                  mr: 1
+                                }} 
+                              />
+                            )
+                          } : undefined
                         }}
                       />
                     </CardContent>
@@ -317,29 +301,15 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                       </Box>
                       <Divider sx={{ mb: 2 }} />
                       
-                      <Field
+                      <FormikAutocomplete<ITrainerResponse>
                         name="responsibleTrainer"
-                        component={Autocomplete}
+                        label="Выберите тренера"
                         options={trainers || []}
-                        getOptionLabel={(option: ITrainerResponse) => option ? `${option.first_name || ''} ${option.last_name || ''}` : ''} 
-                        isOptionEqualToValue={(option: ITrainerResponse, value: ITrainerResponse | null) => value !== null && option.id === value.id}
-                        loading={isLoadingTrainers}
+                        getOptionLabel={(option) => option ? `${option.first_name || ''} ${option.last_name || ''}` : ''} 
+                        isOptionEqualToValue={(option, value) => value !== null && option.id === value.id}
+                        isLoading={isLoadingTrainers}
                         textFieldProps={{
-                          label: "Выберите тренера",
-                          error: !!trainersError,
-                          helperText: trainersError ? 'Ошибка загрузки тренеров' : undefined,
                           fullWidth: true
-                        }}
-                        renderInput={(rawParams: AutocompleteRenderInputParams) => {
-                          const params = rawParams as AutocompleteRenderInputParams & { error?: boolean; helperText?: string };
-                          return (
-                            <MuiTextField
-                              {...params}
-                              label="Выберите тренера"
-                              error={params.error}
-                              helperText={params.helperText}
-                            />
-                          );
                         }}
                       />
                     </CardContent>
@@ -379,40 +349,29 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                                   >
                                     <Grid container spacing={2} alignItems="center">
                                     <Grid item xs={12} sm={5}>
-                                      <Field
+                                      <FormikAutocomplete<IStudent>
                                         name={`studentAssignments.${index}.student`}
-                                        component={Autocomplete}
+                                        label="Ученик"
                                         options={studentOptions || []}
-                                          getOptionLabel={(option: IStudent) => option ? `${option.first_name} ${option.last_name}` : ''}
-                                        isOptionEqualToValue={(option: IStudent, value: IStudent | null) => value !== null && option.id === value.id}
-                                        loading={isLoadingStudents}
+                                        getOptionLabel={(option) => option ? `${option.first_name} ${option.last_name}` : ''}
+                                        isOptionEqualToValue={(option, value) => value !== null && option.id === value.id}
+                                        isLoading={isLoadingStudents}
                                         textFieldProps={{
-                                          label: "Ученик",
-                                          error: !!studentsError, 
-                                          helperText: studentsError ? 'Ошибка загрузки учеников' : undefined,
-                                            size: "small",
-                                            fullWidth: true
-                                        }}
-                                        renderInput={(rawParams: AutocompleteRenderInputParams) => {
-                                          const params = rawParams as AutocompleteRenderInputParams & { error?: boolean; helperText?: string };
-                                          return (
-                                            <MuiTextField
-                                              {...params}
-                                              label="Ученик"
-                                              error={params.error}
-                                                helperText={params.helperText}
-                                              size="small"
-                                            />
-                                          );
+                                          size: "small",
+                                          fullWidth: true
                                         }}
                                       />
                                     </Grid>
                                     <Grid item xs={10} sm={5}>
-                                      <Field
+                                      <FormikDatePicker
                                         name={`studentAssignments.${index}.startDate`}
-                                        component={DesktopDatePicker}
                                         label="Дата начала"
-                                          slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                                        slotProps={{ 
+                                          textField: { 
+                                            size: 'small', 
+                                            fullWidth: true 
+                                          } 
+                                        }}
                                       />
                                     </Grid>
                                       <Grid item xs={2} sm={2}>
