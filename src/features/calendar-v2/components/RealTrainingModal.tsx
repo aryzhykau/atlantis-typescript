@@ -16,12 +16,14 @@ import {
   TextField,
   Grid,
   Alert,
+  Autocomplete,
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
 import PhoneIcon from '@mui/icons-material/Phone';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
@@ -31,9 +33,10 @@ import dayjs from 'dayjs';
 import { 
     useGetRealTrainingByIdQuery, 
     useCancelRealTrainingMutation, 
-    
-    useCancelStudentFromTrainingMutation
+    useCancelStudentFromTrainingMutation,
+    useAddStudentToRealTrainingMutation
 } from '../../../store/apis/calendarApi-v2';
+import { useGetStudentsQuery } from '../../../store/apis/studentsApi';
 import { calendarApiV2 } from '../../../store/apis/calendarApi-v2';
 import { StudentCancellationRequest, StudentCancellationResponse, TrainingCancellationRequest } from '../models/realTraining';
 import { useSnackbar } from '../../../hooks/useSnackBar';
@@ -53,12 +56,14 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
   // Мутации
   const [cancelStudentFromTraining, { isLoading: isCancellingStudent }] = useCancelStudentFromTrainingMutation();
   const [cancelRealTraining, { isLoading: isCancellingReal }] = useCancelRealTrainingMutation();
+  const [addStudentToTraining, { isLoading: isAddingStudent }] = useAddStudentToRealTrainingMutation();
 
   
   const { data: realTrainingData, isLoading: isLoadingReal } = useGetRealTrainingByIdQuery(
     trainingId || 0, 
     { skip: !trainingId }
   );
+  const { data: allStudents } = useGetStudentsQuery();
   
   const isLoading = isLoadingReal;
 
@@ -75,6 +80,10 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
       notification_time: dayjs().format('YYYY-MM-DDTHH:mm'),
   });
 
+  // Состояние для диалога добавления студента
+  const [addStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
+  const [selectedStudentToAdd, setSelectedStudentToAdd] = useState<any>(null);
+
   // Состояние для отображения информации о зарплате тренера
   const [salaryResult, setSalaryResult] = useState<StudentCancellationResponse['trainer_salary_result'] | null>(null);
   const [showSalaryDetails, setShowSalaryDetails] = useState(false);
@@ -83,6 +92,41 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
 
   const isStudentCancelled = (status?: string) => {
     return status === 'CANCELLED_SAFE' || status === 'CANCELLED_PENALTY';
+  };
+
+  // Helper functions for capacity management
+  const getActiveStudents = () => {
+    if (!realTrainingData?.students) return [];
+    return realTrainingData.students.filter(s => !isStudentCancelled(s.status));
+  };
+
+  const getCancelledStudents = () => {
+    if (!realTrainingData?.students) return [];
+    return realTrainingData.students.filter(s => isStudentCancelled(s.status));
+  };
+
+  const getCapacityInfo = () => {
+    const activeCount = getActiveStudents().length;
+    const maxParticipants = realTrainingData?.training_type?.max_participants || null;
+    
+    return {
+      current: activeCount,
+      max: maxParticipants,
+      hasLimit: maxParticipants !== null,
+      isFull: maxParticipants ? activeCount >= maxParticipants : false,
+      available: maxParticipants ? maxParticipants - activeCount : null
+    };
+  };
+
+  // Get students that can be added (not already in this training and active)
+  const getAvailableStudents = () => {
+    if (!allStudents || !realTrainingData) return [];
+    
+    const currentStudentIds = new Set(realTrainingData.students.map(s => s.student_id));
+    
+    return allStudents.filter(student => 
+      student.is_active && !currentStudentIds.has(student.id)
+    );
   };
 
   useEffect(() => {
@@ -146,6 +190,31 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
     } catch (err) {
         console.error('[RealTrainingModal] Failed to cancel student:', err);
         displaySnackbar('Ошибка при отмене записи', 'error');
+    }
+  };
+
+  // Add student handlers
+  const handleAddStudent = async () => {
+    if (!selectedStudentToAdd || !realTrainingData) return;
+    
+    try {
+      await addStudentToTraining({
+        training_id: realTrainingData.id,
+        student_id: selectedStudentToAdd.id
+      }).unwrap();
+      
+      dispatch(calendarApiV2.util.invalidateTags([{ type: 'RealTrainingV2', id: realTrainingData.id }]));
+      displaySnackbar(`Студент ${selectedStudentToAdd.first_name} ${selectedStudentToAdd.last_name} добавлен на тренировку`, 'success');
+      
+      // Close dialog and reset selection
+      setAddStudentDialogOpen(false);
+      setSelectedStudentToAdd(null);
+    } catch (err: any) {
+      console.error('[RealTrainingModal] Failed to add student:', err);
+      displaySnackbar(
+        err?.data?.detail || 'Ошибка при добавлении студента', 
+        'error'
+      );
     }
   };
 
@@ -407,19 +476,43 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
                 <Typography variant="h6" sx={{ fontWeight: 600, color: borderColor }}>Ученики</Typography>
                 <Typography variant="body2" sx={{ color: alpha(theme.palette.text.primary, 0.7) }}>
                   {(() => {
-                    const students = realTrainingData.students || [];
-                    const activeStudents = students.filter(s => !isStudentCancelled(s.status));
-                    const cancelledStudents = students.filter(s => isStudentCancelled(s.status));
+                    const capacity = getCapacityInfo();
+                    const cancelledCount = getCancelledStudents().length;
                     
-                    if (cancelledStudents.length > 0) {
-                      return `${activeStudents.length} активных, ${cancelledStudents.length} отменено`;
-                    } else {
-                      return `${activeStudents.length} записано`;
+                    let statusText = `${capacity.current}`;
+                    if (capacity.hasLimit) {
+                      statusText += `/${capacity.max}`;
                     }
+                    statusText += ' записано';
+                    
+                    if (cancelledCount > 0) {
+                      statusText += `, ${cancelledCount} отменено`;
+                    }
+                    
+                    return statusText;
                   })()}
                 </Typography>
               </Box>
             </Box>
+            
+            {/* Add Student Button */}
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<PersonAddIcon />}
+              onClick={() => setAddStudentDialogOpen(true)}
+              disabled={getCapacityInfo().isFull}
+              sx={{ 
+                borderColor: borderColor,
+                color: borderColor,
+                '&:hover': {
+                  borderColor: borderColor,
+                  backgroundColor: alpha(borderColor, 0.1)
+                }
+              }}
+            >
+              Добавить
+            </Button>
           </Box>
           <Box sx={{ p: 2.5 }}>{renderStudentList()}</Box>
         </Box>
@@ -577,6 +670,352 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
       </DialogContent>
       <DialogActions>
         <Button onClick={() => setShowSalaryDetails(false)}>Закрыть</Button>
+      </DialogActions>
+    </Dialog>
+
+    {/* Add Student Dialog */}
+    <Dialog 
+      open={addStudentDialogOpen} 
+      onClose={() => setAddStudentDialogOpen(false)} 
+      maxWidth="md" 
+      fullWidth
+      PaperProps={{ 
+        sx: { 
+          borderRadius: 3, 
+          backgroundColor: theme.palette.background.paper, 
+          boxShadow: `0 25px 80px ${alpha(theme.palette.common.black, 0.3)}`, 
+          border: `1px solid ${alpha(borderColor, 0.3)}`, 
+          overflow: 'hidden',
+          minHeight: '500px'
+        } 
+      }} 
+      BackdropProps={{ 
+        sx: { backgroundColor: 'rgba(0, 0, 0, 0.8)' } 
+      }}
+    >
+      <DialogTitle sx={{ 
+        background: `linear-gradient(135deg, ${borderColor} 0%, ${alpha(borderColor, 0.8)} 100%)`, 
+        color: '#ffffff', 
+        py: 3, 
+        px: 3, 
+        position: 'relative', 
+        overflow: 'hidden',
+        '&::before': { 
+          content: '""', 
+          position: 'absolute', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          background: `radial-gradient(circle at 20% 80%, ${alpha('#ffffff', 0.1)} 0%, transparent 50%)` 
+        } 
+      }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5, textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+              Добавить студента
+            </Typography>
+            {realTrainingData && (
+              <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.9rem' }}>
+                {realTrainingData.training_type?.name} • {dayjs(realTrainingData.training_date).format('D MMMM YYYY')} в {realTrainingData.start_time.substring(0,5)}
+              </Typography>
+            )}
+          </Box>
+          <IconButton 
+            onClick={() => setAddStudentDialogOpen(false)} 
+            sx={{ 
+              color: '#ffffff', 
+              backgroundColor: alpha('#ffffff', 0.1), 
+              backdropFilter: 'blur(10px)', 
+              '&:hover': { 
+                backgroundColor: alpha('#ffffff', 0.2), 
+                transform: 'scale(1.1)' 
+              }, 
+              transition: 'all 0.2s ease' 
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+
+      <DialogContent sx={{ p: 0, backgroundColor: theme.palette.background.default }}>
+        {/* Capacity Info Card */}
+        {realTrainingData && (
+          <Box sx={{ 
+            p: 3, 
+            borderBottom: `1px solid ${alpha(borderColor, 0.2)}`,
+            background: `linear-gradient(135deg, ${alpha(borderColor, 0.05)} 0%, transparent 100%)`
+          }}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              p: 2.5, 
+              borderRadius: 2, 
+              backgroundColor: theme.palette.background.paper, 
+              border: `2px solid ${alpha(borderColor, 0.3)}`, 
+              boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.15)}` 
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box sx={{ 
+                  p: 1.5, 
+                  borderRadius: 2, 
+                  background: `linear-gradient(135deg, ${borderColor} 0%, ${alpha(borderColor, 0.8)} 100%)`, 
+                  mr: 2, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center' 
+                }}>
+                  <GroupIcon sx={{ color: '#ffffff', fontSize: '1.5rem' }} />
+                </Box>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: borderColor, mb: 0.5 }}>
+                    Вместимость тренировки
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: theme.palette.text.primary }}>
+                    {(() => {
+                      const capacity = getCapacityInfo();
+                      if (capacity.hasLimit) {
+                        return `${capacity.current} / ${capacity.max}`;
+                      } else {
+                        return `${capacity.current}`;
+                      }
+                    })()}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {getCapacityInfo().hasLimit ? 'мест занято' : 'записано (без ограничений)'}
+                  </Typography>
+                </Box>
+              </Box>
+              
+              {getCapacityInfo().available !== null && getCapacityInfo().available! > 0 && (
+                <Chip
+                  label={`${getCapacityInfo().available} свободно`}
+                  color="success"
+                  variant="filled"
+                  sx={{ 
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
+                    height: 32,
+                  }}
+                />
+              )}
+              
+              {getCapacityInfo().isFull && (
+                <Chip
+                  label="Заполнено"
+                  color="error"
+                  variant="filled"
+                  sx={{ 
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
+                    height: 32,
+                  }}
+                />
+              )}
+            </Box>
+            
+            {getCapacityInfo().isFull && (
+              <Alert 
+                severity="warning" 
+                sx={{ 
+                  mt: 2, 
+                  borderRadius: 2,
+                  border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}`,
+                  backgroundColor: alpha(theme.palette.warning.main, 0.1)
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Тренировка заполнена. Нельзя добавить больше студентов.
+                </Typography>
+              </Alert>
+            )}
+          </Box>
+        )}
+
+        {/* Student Selection */}
+        <Box sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.text.primary }}>
+            Выберите студента для добавления
+          </Typography>
+          
+          <Autocomplete
+            options={getAvailableStudents()}
+            getOptionLabel={(student) => `${student.first_name} ${student.last_name}`}
+            value={selectedStudentToAdd}
+            onChange={(_, newValue) => setSelectedStudentToAdd(newValue)}
+            disabled={getCapacityInfo().isFull}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Студент"
+                placeholder="Начните вводить имя студента..."
+                fullWidth
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover fieldset': {
+                      borderColor: borderColor,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: borderColor,
+                    },
+                  },
+                }}
+              />
+            )}
+            renderOption={(props, student) => (
+              <Box 
+                component="li" 
+                {...props} 
+                sx={{ 
+                  p: 2,
+                  '&:hover': {
+                    backgroundColor: alpha(borderColor, 0.1)
+                  }
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  <Box sx={{ 
+                    width: 40, 
+                    height: 40, 
+                    borderRadius: '50%', 
+                    background: `linear-gradient(135deg, ${borderColor} 0%, ${alpha(borderColor, 0.7)} 100%)`, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    mr: 2 
+                  }}>
+                    <PersonIcon sx={{ color: '#ffffff', fontSize: '1.2rem' }} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {student.first_name} {student.last_name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Дата рождения: {dayjs(student.date_of_birth).format('DD.MM.YYYY')}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            )}
+            noOptionsText={
+              <Box sx={{ p: 3, textAlign: 'center' }}>
+                <PersonIcon sx={{ fontSize: '3rem', color: alpha(theme.palette.text.primary, 0.3), mb: 1 }} />
+                <Typography variant="body1" color="text.secondary">
+                  {getAvailableStudents().length === 0 
+                    ? "Нет доступных студентов для добавления" 
+                    : "Студент не найден"}
+                </Typography>
+              </Box>
+            }
+            sx={{
+              '& .MuiAutocomplete-listbox': {
+                padding: 1,
+              },
+              '& .MuiAutocomplete-option': {
+                borderRadius: 1,
+                margin: '2px 0',
+              }
+            }}
+          />
+          
+          {selectedStudentToAdd && (
+            <Box sx={{ 
+              mt: 3, 
+              p: 2.5, 
+              borderRadius: 2, 
+              backgroundColor: alpha(theme.palette.success.main, 0.1), 
+              border: `1px solid ${alpha(theme.palette.success.main, 0.3)}`,
+              transition: 'all 0.3s ease'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box sx={{ 
+                  width: 48, 
+                  height: 48, 
+                  borderRadius: '50%', 
+                  background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${alpha(theme.palette.success.main, 0.8)} 100%)`, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  mr: 2 
+                }}>
+                  <PersonIcon sx={{ color: '#ffffff', fontSize: '1.4rem' }} />
+                </Box>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.success.dark }}>
+                    {selectedStudentToAdd.first_name} {selectedStudentToAdd.last_name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Готов к добавлению на тренировку
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </DialogContent>
+
+      <DialogActions sx={{ 
+        p: 3, 
+        backgroundColor: theme.palette.background.default, 
+        borderTop: `2px solid ${alpha(borderColor, 0.3)}`, 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center' 
+      }}>
+        <Button 
+          onClick={() => setAddStudentDialogOpen(false)} 
+          disabled={isAddingStudent}
+          variant="outlined"
+          sx={{ 
+            borderColor: alpha(borderColor, 0.4), 
+            color: borderColor,
+            borderRadius: 2,
+            px: 3,
+            py: 1,
+            '&:hover': {
+              borderColor: borderColor,
+              backgroundColor: alpha(borderColor, 0.1)
+            }
+          }}
+        >
+          Отмена
+        </Button>
+        <Button 
+          onClick={handleAddStudent} 
+          variant="contained" 
+          disabled={!selectedStudentToAdd || isAddingStudent || getCapacityInfo().isFull}
+          startIcon={isAddingStudent ? <CircularProgress size={20} color="inherit" /> : <PersonAddIcon />}
+          sx={{
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.8)} 100%)`,
+            borderRadius: 2,
+            px: 4,
+            py: 1.5,
+            fontWeight: 600,
+            textTransform: 'none',
+            fontSize: '1rem',
+            boxShadow: `0 8px 25px ${alpha(theme.palette.primary.main, 0.3)}`,
+            '&:hover': {
+              background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${alpha(theme.palette.primary.dark, 0.8)} 100%)`,
+              transform: 'translateY(-2px)',
+              boxShadow: `0 12px 35px ${alpha(theme.palette.primary.main, 0.4)}`,
+            },
+            '&:disabled': {
+              background: theme.palette.action.disabledBackground,
+              color: theme.palette.action.disabled,
+              transform: 'none',
+              boxShadow: 'none'
+            },
+            transition: 'all 0.2s ease'
+          }}
+        >
+          {isAddingStudent ? 'Добавляю студента...' : 'Добавить студента'}
+        </Button>
       </DialogActions>
     </Dialog>
     </>
