@@ -6,30 +6,28 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import dayjs, { Dayjs } from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { CalendarViewMode } from './CalendarV2Page'; // Предполагается, что типы там же
-import { TrainingTemplate, TrainingTemplateCreate } from '../models/trainingTemplate';
-import { RealTraining, RealTrainingCreate } from '../models/realTraining';
-import { TrainingStudentTemplateCreate } from '../models/trainingStudentTemplate';
+import { TrainingTemplate } from '../models/trainingTemplate';
+import { RealTraining } from '../models/realTraining';
 import TrainingTemplateForm from './TrainingTemplateForm'; // Импорт формы
 import TrainingTemplateModal from './TrainingTemplateModal'; // Импортируем модалку для шаблонов
 import RealTrainingModal from './RealTrainingModal'; // Импортируем модалку для реальных тренировок
 
 
-import { useSnackbar } from '../../../hooks/useSnackBar';
-import { 
-  useMoveTrainingTemplateMutation, 
-  useMoveRealTrainingMutation,
-  useCreateTrainingTemplateMutation,
-  useCreateRealTrainingMutation,
-  useCreateTrainingStudentTemplateMutation,
-  useAddStudentToRealTrainingMutation,
-  useGetTrainingTemplatesQuery,
-  useGetRealTrainingsQuery
-} from '../../../store/apis/calendarApi-v2';
-import DraggableTrainingChip from './DraggableTrainingChip';
-import DroppableSlotComponent from './DroppableSlot';
+// API calls now handled by useCalendarDragDrop hook
+import EnhancedDraggableTrainingChip from './EnhancedDraggableTrainingChip';
+import EnhancedDroppableSlot from './EnhancedDroppableSlot';
 import CalendarTrainingChip from './CalendarTrainingChip';
+import PerformanceMonitor from './PerformanceMonitor';
+import { CALENDAR_FEATURE_FLAGS } from '../config/featureFlags';
 import { debugLog } from '../utils/debug';
 import { useAltKey } from '../hooks/useAltKey';
+import { useCalendarEvents } from '../hooks/useCalendarEvents';
+import { useCalendarState, SelectedSlotInfo } from '../hooks/useCalendarState';
+import { useCalendarDragDrop } from '../hooks/useCalendarDragDrop';
+import { generateTimeSlots } from '../utils/slotUtils';
+import { useAutoScroll } from '../hooks/useAutoScroll';
+import { useDragState } from '../hooks/useDragState';
+// Hooks
 
 // Настраиваем dayjs для работы с ISO неделями (понедельник - воскресенье)
 dayjs.extend(isoWeek);
@@ -56,10 +54,7 @@ export function isRealTraining(event: CalendarEvent): event is RealTraining {
   return 'training_date' in event && typeof event.training_date === 'string';
 }
 
-interface SelectedSlotInfo {
-  date: Dayjs;
-  time: string;
-}
+// SelectedSlotInfo is now imported from useCalendarState
 
 
 
@@ -81,14 +76,7 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
     return Array.from({ length: 7 }).map((_, i) => startOfWeek.add(i, 'day'));
   }, [currentDate]);
 
-  const timeSlots = useMemo(() => {
-    const slots = [];
-    // Временная шкала с 06:00 до 22:00 (последний слот 22:00-23:00)
-    for (let hour = 6; hour <= 22; hour++) {
-      slots.push(dayjs().hour(hour).minute(0).format('HH:mm'));
-    }
-    return slots;
-  }, []);
+  const timeSlots = useMemo(() => generateTimeSlots(6, 22), []);
 
   // Выбираем актуальные данные в зависимости от viewMode
   const eventsToDisplay: CalendarEvent[] = useMemo(() => {
@@ -103,248 +91,53 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
     return events;
   }, [viewMode, templatesData, actualData]);
 
-  // Hooks для drag and drop (ПЕРЕМЕЩЕНО СЮДА - до getEventsForSlot)
-  const { displaySnackbar } = useSnackbar();
-  const [moveTrainingTemplate] = useMoveTrainingTemplateMutation();
-  const [moveRealTraining] = useMoveRealTrainingMutation();
-  const [createTrainingTemplate] = useCreateTrainingTemplateMutation();
-  const [createRealTraining] = useCreateRealTrainingMutation();
-  const [createTrainingStudentTemplate] = useCreateTrainingStudentTemplateMutation();
-  const [addStudentToRealTraining] = useAddStudentToRealTrainingMutation();
-  
-  // Инвалидация кеша для обновления UI после дублирования
-  const { refetch: refetchTemplates } = useGetTrainingTemplatesQuery();
-  const { refetch: refetchRealTrainings } = useGetRealTrainingsQuery({
-    startDate: currentDate.startOf('isoWeek').format('YYYY-MM-DD'),
-    endDate: currentDate.endOf('isoWeek').format('YYYY-MM-DD'),
-  });
-  
-  // Состояние драга будет передаваться из внутреннего компонента
-  const [isDragging, setIsDragging] = useState(false);
+  // Use optimized calendar events hook
+  const { getEventsForSlot } = useCalendarEvents(eventsToDisplay, viewMode, currentDate);
 
-  // Глобальный Alt listener - создается только один раз на весь календарь  
+  // Use unified state management
+  // Use unified state management
+  const { state: calendarState, actions: calendarActions } = useCalendarState();
+
+  // Use drag & drop hook
+  const { handleTrainingDrop } = useCalendarDragDrop(viewMode, currentDate);
+
+  // Global Alt key state
   const { isAltPressed, getCurrentAltState, forceResetAltState } = useAltKey();
 
-  // Обработчик перемещения/дублирования тренировок с react-dnd
-  const handleTrainingDrop = useCallback(async (
-    event: CalendarEvent, 
-    sourceDay: Dayjs, 
-    sourceTime: string, 
-    targetDay: Dayjs, 
-    targetTime: string,
-    isDuplicate: boolean = false // Используем переданное значение
-  ) => {
-    // isDuplicate теперь точно определяется в DroppableSlot
-    
-    // Проверяем, изменилось ли положение
-    if (sourceDay.isSame(targetDay, 'day') && sourceTime === targetTime) {
-      return; // Ничего не изменилось
-    }
+  // Drag state for UI updates
+  const [isDragging, setIsDragging] = useState(false);
 
-    debugLog(`🚀 Начинаем ${isDuplicate ? 'дублирование' : 'перемещение'} с react-dnd:`, { 
-      eventId: event.id, 
-      from: `${sourceDay.format('ddd')} ${sourceTime}`,
-      to: `${targetDay.format('ddd')} ${targetTime}`,
-      isDuplicate,
-      ctrlPressed: isDuplicate
-    });
+  // Drag & drop handled by custom hook
 
-    try {
-      if (isDuplicate) {
-        // Логика дублирования
-        if (isTrainingTemplate(event)) {
-          const dayNumber = targetDay.day() === 0 ? 7 : targetDay.day(); // 1-7 (1 - понедельник)
-          
-          // Извлекаем студентов из оригинального шаблона
-          const originalStudents = event.assigned_students || [];
-          
-          const newTemplate: TrainingTemplateCreate = {
-            training_type_id: event.training_type?.id!,
-            responsible_trainer_id: event.responsible_trainer?.id!,
-            day_number: dayNumber,
-            start_time: targetTime,
-          };
-          
-          // Сначала создаем шаблон
-          const createdTemplate = await createTrainingTemplate(newTemplate).unwrap();
-          
-          // Затем добавляем студентов отдельными запросами
-          if (originalStudents.length > 0) {
-            const studentPromises = originalStudents.map(async (studentTemplate) => {
-              // Сохраняем оригинальную start_date - она означает "с какой даты 
-              // студент участвует в данном типе тренировки"
-              const startDate = studentTemplate.start_date;
-              
-              const studentData: TrainingStudentTemplateCreate = {
-                training_template_id: createdTemplate.id,
-                student_id: studentTemplate.student.id,
-                start_date: startDate, // Используем корректную дату
-                is_frozen: studentTemplate.is_frozen,
-              };
-              return createTrainingStudentTemplate(studentData).unwrap();
-            });
-            
-            await Promise.all(studentPromises);
-          }
-          
-          debugLog('🎉 Дублирование шаблона завершено успешно');
-          const studentCount = originalStudents.length;
-          const studentText = studentCount > 0 ? ` (со ${studentCount} студентами)` : '';
-          displaySnackbar(`📋 Шаблон тренировки "${event.training_type?.name}" продублирован${studentText}`, 'success');
-          
-          // Обновляем данные для отображения актуального количества студентов
-          refetchTemplates();
-        } else if (isRealTraining(event)) {
-          const trainingDate = targetDay.format('YYYY-MM-DD');
-          
-          // Извлекаем студентов из оригинальной тренировки
-          const originalStudents = event.students || [];
-          
-          const newTraining: RealTrainingCreate = {
-            training_type_id: event.training_type?.id!,
-            responsible_trainer_id: event.trainer?.id!,
-            training_date: trainingDate,
-            start_time: targetTime,
-          };
-          
-          // Сначала создаем тренировку
-          const createdTraining = await createRealTraining(newTraining).unwrap();
-          
-          // Затем добавляем студентов отдельными запросами
-          if (originalStudents.length > 0) {
-            const studentPromises = originalStudents.map(async (trainingStudent) => {
-              return addStudentToRealTraining({
-                training_id: createdTraining.id,
-                student_id: trainingStudent.student.id,
-              }).unwrap();
-            });
-            
-            await Promise.all(studentPromises);
-          }
-          
-          debugLog('🎉 Дублирование тренировки завершено успешно');
-          const studentCount = originalStudents.length;
-          const studentText = studentCount > 0 ? ` (со ${studentCount} студентами)` : '';
-          displaySnackbar(`📋 Тренировка "${event.training_type?.name}" продублирована${studentText}`, 'success');
-          
-          // Обновляем данные для отображения актуального количества студентов
-          refetchRealTrainings();
-        }
-      } else {
-        // Логика перемещения (существующая)
-        if (isTrainingTemplate(event)) {
-          const dayNumber = targetDay.day() === 0 ? 7 : targetDay.day(); // 1-7 (1 - понедельник)
-          
-          await moveTrainingTemplate({
-            id: event.id,
-            dayNumber,
-            startTime: targetTime,
-          }).unwrap();
-          
-          debugLog('🎉 Перемещение шаблона завершено успешно');
-          displaySnackbar(`✅ Шаблон тренировки "${event.training_type?.name}" перемещен`, 'success');
-        } else if (isRealTraining(event)) {
-          const trainingDate = targetDay.format('YYYY-MM-DD');
-          
-          await moveRealTraining({
-            id: event.id,
-            trainingDate,
-            startTime: targetTime,
-          }).unwrap();
-          
-          debugLog('🎉 Перемещение тренировки завершено успешно');
-          displaySnackbar(`✅ Тренировка "${event.training_type?.name}" перемещена`, 'success');
-        }
-      }
-    } catch (error: any) {
-      console.error(`❌ Ошибка при ${isDuplicate ? 'дублировании' : 'перемещении'} тренировки:`, error);
-      const errorMessage = error?.data?.detail || error?.message || 'Неизвестная ошибка';
-      displaySnackbar(`❌ Не удалось ${isDuplicate ? 'продублировать' : 'переместить'} тренировку: ${errorMessage}`, 'error');
-    }
-  }, [moveTrainingTemplate, moveRealTraining, createTrainingTemplate, createRealTraining, createTrainingStudentTemplate, addStudentToRealTraining, displaySnackbar, refetchTemplates, refetchRealTrainings]);
+  // Remove the old getEventsForSlot - now handled by useCalendarEvents hook
 
-  const getEventsForSlot = useCallback((day: Dayjs, time: string): CalendarEvent[] => {
-    const slotHour = parseInt(time.split(':')[0]);
-    const slotMinute = parseInt(time.split(':')[1]);
-    const slotKey = `${day.format('ddd')} ${time}`;
-
-    let filteredEvents: CalendarEvent[] = [];
-
-    if (viewMode === 'scheduleTemplate') {
-      filteredEvents = eventsToDisplay.filter(event => {
-        if (isTrainingTemplate(event)) {
-          // day_number: 1-7 (1 - Пн), day.day(): 0-6 (0 - Вс), поэтому +1 для соответствия
-          const eventStartTime = event.start_time.substring(0, 5); // "HH:MM"
-          const matches = event.day_number === (day.day() === 0 ? 7 : day.day()) && eventStartTime === time;
-          
-          if (matches) {
-            debugLog(`📍 Слот ${slotKey}: найден шаблон #${event.id} "${event.training_type?.name}"`);
-          }
-          
-          return matches;
-        }
-        return false;
-      });
-    } else if (viewMode === 'actualTrainings') {
-      filteredEvents = eventsToDisplay.filter(event => {
-        if (isRealTraining(event)) {
-          const eventStart = dayjs(`${event.training_date}T${event.start_time}`);
-          const matches = eventStart.isSame(day, 'day') &&
-                 eventStart.hour() === slotHour &&
-                 eventStart.minute() === slotMinute;
-                 
-          if (matches) {
-            debugLog(`📍 Слот ${slotKey}: найдена тренировка #${event.id} "${event.training_type?.name}"`);
-          }
-          
-          return matches;
-        }
-        return false;
-      });
-    }
-    
-    // Логируем только если есть события в слоте
-    if (filteredEvents.length > 0) {
-      debugLog(`🎯 Рендер слота ${slotKey}: ${filteredEvents.length} событий`);
-    }
-    
-    return filteredEvents;
-  }, [eventsToDisplay, viewMode]);
-
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedSlotInfo, setSelectedSlotInfo] = useState<SelectedSlotInfo | null>(null);
-
-  // Состояния для детального модального окна
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
-  const [selectedEventType, setSelectedEventType] = useState<'template' | 'real' | null>(null);
+  // Replaced individual useState with unified state management
+  // const [isFormOpen, setIsFormOpen] = useState(false);
+  // const [selectedSlotInfo, setSelectedSlotInfo] = useState<SelectedSlotInfo | null>(null);
+  // const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  // const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+  // const [selectedEventType, setSelectedEventType] = useState<'template' | 'real' | null>(null);
   
   // Убрали hoveredSlot состояние для улучшения производительности - используем чистый CSS hover
 
   const handleSlotClick = useCallback((_event: React.MouseEvent<HTMLElement>, day: Dayjs, time: string, _eventsInSlot: CalendarEvent[]) => {
     // В режиме шаблонов всегда разрешаем создание новых тренировок (независимо от количества существующих)
     if (viewMode === 'scheduleTemplate') {
-      setSelectedSlotInfo({ date: day, time });
-      setIsFormOpen(true);
+      calendarActions.openCreateForm({ date: day, time });
     }
-  }, [viewMode]);
+  }, [viewMode, calendarActions]);
 
   const handleOpenDetailModal = useCallback((eventData: CalendarEvent) => {
-    setSelectedEventId(eventData.id);
-    setSelectedEventType(isTrainingTemplate(eventData) ? 'template' : 'real');
-    setIsDetailModalOpen(true);
-  }, []);
+    calendarActions.openEventModal(eventData.id, isTrainingTemplate(eventData) ? 'template' : 'real');
+  }, [calendarActions]);
 
   const handleCloseDetailModal = useCallback(() => {
-    setIsDetailModalOpen(false);
-    setSelectedEventId(null);
-    setSelectedEventType(null);
-  }, []);
+    calendarActions.closeEventModal();
+  }, [calendarActions]);
 
   const handleCloseForm = useCallback(() => {
-    setIsFormOpen(false);
-    setSelectedSlotInfo(null);
-  }, []);
+    calendarActions.closeCreateForm();
+  }, [calendarActions]);
 
 
 
@@ -392,11 +185,11 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
           handleCloseDetailModal,
           handleCloseForm,
           responsiveStyles,
-          selectedSlotInfo,
-          isFormOpen,
-          isDetailModalOpen,
-          selectedEventId,
-          selectedEventType,
+          selectedSlotInfo: calendarState.createForm.selectedSlot,
+          isFormOpen: calendarState.createForm.isOpen,
+          isDetailModalOpen: calendarState.eventModal.isOpen,
+          selectedEventId: calendarState.eventModal.eventId,
+          selectedEventType: calendarState.eventModal.type,
           daysOfWeek,
           timeSlots,
           isMobile,
@@ -409,6 +202,11 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
           forceResetAltState,
         }}
       />
+      
+      {/* Performance monitoring - easily removable via feature flag */}
+      {CALENDAR_FEATURE_FLAGS.enablePerformanceMonitor && (
+        <PerformanceMonitor enabled={CALENDAR_FEATURE_FLAGS.enablePerformanceMonitor} />
+      )}
     </DndProvider>
   );
 });
@@ -460,124 +258,56 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
     isAltPressed, getCurrentAltState, forceResetAltState
   } = props;
 
-  // Рефы для контейнеров скролла
-  const paperScrollRef = useRef<HTMLDivElement>(null);
-  const autoScrollIntervalRef = useRef<number | null>(null);
+  // Optimized drag state and auto-scroll with enhanced top area
+  const paperScrollRef = useRef<HTMLDivElement | null>(null);
+  const { actions: dragActions } = useDragState();
+  const { handleMouseMove: handleAutoScroll } = useAutoScroll(
+    paperScrollRef as React.RefObject<HTMLElement>,
+    {
+      topThreshold: 220, // Larger top area for easier upward scrolling
+      threshold: 150,    // Other edges
+      speed: 15,
+      maxSpeed: 45,
+      acceleration: 1.5,
+      showDebugZones: CALENDAR_FEATURE_FLAGS.showAutoScrollDebugZones,
+    }
+  );
 
-  // Теперь можем использовать useDragLayer внутри DndProvider
+  // Optimized drag layer with throttled updates
   const { isDraggingGlobal, clientOffset } = useDragLayer((monitor) => ({
     isDraggingGlobal: monitor.isDragging(),
     clientOffset: monitor.getClientOffset(),
   }));
 
-  // Хук для автоскролла
+  // Handle auto-scroll with optimized mouse tracking
   useEffect(() => {
-    if (!isDraggingGlobal || !clientOffset || !paperScrollRef.current) {
-      // Очищаем интервал если не драгаем
-      if (autoScrollIntervalRef.current) {
-        window.clearInterval(autoScrollIntervalRef.current);
-        autoScrollIntervalRef.current = null;
-      }
+    if (!isDraggingGlobal || !clientOffset) {
       return;
     }
 
-    const container = paperScrollRef.current;
-    const containerRect = container.getBoundingClientRect();
-    const scrollThreshold = 120; // Зона автоскролла от края viewport
-    const scrollSpeed = 15; // Скорость скролла
-    
-    // Проверяем позицию курсора относительно VIEWPORT (не контейнера!)
-    const mouseY = clientOffset.y;
-    const viewportHeight = window.innerHeight;
-    
-    // Рассчитываем расстояния от краев ЭКРАНА
-    const distanceFromViewportTop = mouseY;
-    const distanceFromViewportBottom = viewportHeight - mouseY;
-    
-    // Проверяем что контейнер виден на экране
-    const containerVisibleTop = Math.max(containerRect.top, 0);
-    const containerVisibleBottom = Math.min(containerRect.bottom, viewportHeight);
-    
-    // Дебаг только при первом срабатывании
-    if (!autoScrollIntervalRef.current) {
-      debugLog('🎯 Autoscroll viewport check:', {
-        mouseY,
-        viewportHeight,
-        distanceFromViewportTop,
-        distanceFromViewportBottom,
-        containerTop: containerRect.top,
-        containerBottom: containerRect.bottom,
-        containerVisibleTop,
-        containerVisibleBottom,
-        canScrollUp: container.scrollTop > 0,
-        canScrollDown: container.scrollTop < (container.scrollHeight - container.clientHeight)
-      });
-    }
-    
-    let shouldScroll = false;
-    let scrollDirection: 'up' | 'down' | null = null;
-    
-    // Автоскролл вверх: курсор близко к верху экрана + можем скроллить вверх
-    if (distanceFromViewportTop < scrollThreshold && 
-        mouseY > containerVisibleTop && // курсор над видимой частью контейнера
-        container.scrollTop > 0) {
-      shouldScroll = true;
-      scrollDirection = 'up';
-      debugLog('🔼 Скролл вверх активирован (viewport)');
-    } 
-    // Автоскролл вниз: курсор близко к низу экрана + можем скроллить вниз  
-    else if (distanceFromViewportBottom < scrollThreshold && 
-             mouseY < containerVisibleBottom && // курсор под видимой частью контейнера
-             container.scrollTop < (container.scrollHeight - container.clientHeight)) {
-      shouldScroll = true;
-      scrollDirection = 'down';
-      debugLog('🔽 Скролл вниз активирован (viewport)');
-    }
-    
-    if (shouldScroll && scrollDirection) {
-      // Очищаем предыдущий интервал
-      if (autoScrollIntervalRef.current) {
-        window.clearInterval(autoScrollIntervalRef.current);
-      }
-      
-      // Запускаем новый интервал для плавного скролла
-      autoScrollIntervalRef.current = window.setInterval(() => {
-        if (scrollDirection === 'up') {
-          container.scrollTop = Math.max(0, container.scrollTop - scrollSpeed);
-        } else if (scrollDirection === 'down') {
-          container.scrollTop = Math.min(
-            container.scrollHeight - container.clientHeight,
-            container.scrollTop + scrollSpeed
-          );
-        }
-      }, 16); // ~60 FPS
-    } else {
-      // Останавливаем скролл если курсор не у края
-      if (autoScrollIntervalRef.current) {
-        window.clearInterval(autoScrollIntervalRef.current);
-        autoScrollIntervalRef.current = null;
-      }
-    }
-  }, [isDraggingGlobal, clientOffset]);
+    // Throttled auto-scroll handling
+    handleAutoScroll(clientOffset.x, clientOffset.y);
+  }, [isDraggingGlobal, clientOffset, handleAutoScroll]);
 
-  // Обновляем состояние в родительском компоненте
+  // Update drag state for UI components
   useEffect(() => {
     setIsDragging(isDraggingGlobal);
+    
     if (isDraggingGlobal) {
       debugLog('🎯 Начался drag - тултипы отключены');
     } else {
       debugLog('🎯 Drag завершен - тултипы включены');
-    }
-  }, [isDraggingGlobal, setIsDragging]);
-
-  // Очистка интервала при размонтировании
-  useEffect(() => {
-    return () => {
-      if (autoScrollIntervalRef.current) {
-        window.clearInterval(autoScrollIntervalRef.current);
+      // Log performance stats when drag ends
+      const stats = dragActions.getPerformanceStats();
+      if (stats) {
+        debugLog('📊 Drag performance:', stats);
       }
-    };
-  }, []);
+    }
+  }, [isDraggingGlobal, setIsDragging, dragActions]);
+
+  // Choose enhanced components for better performance and UX
+  const DroppableSlotComponent = EnhancedDroppableSlot;
+  const DraggableChipComponent = EnhancedDraggableTrainingChip;
 
   return (
       <Paper 
@@ -734,7 +464,7 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
                         paddingRight: viewMode === 'scheduleTemplate' ? '28px' : '0px', // Место для кнопки "+"
                       }}>
                         {visibleEvents.map((eventItem, _) => (
-                          <DraggableTrainingChip
+                          <DraggableChipComponent
                             key={eventItem.id}
                             event={eventItem}
                             day={day}
@@ -745,9 +475,9 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
                               isMobile={isMobile}
                               isTablet={isTablet}
                               onEventClick={handleOpenDetailModal}
-                              // isDragActive передается из DraggableTrainingChip
+                              // isDragActive передается из DraggableChipComponent
                             />
-                          </DraggableTrainingChip>
+                          </DraggableChipComponent>
                         ))}
                         
                         {hiddenEventsCount > 0 && (
