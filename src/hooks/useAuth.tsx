@@ -29,13 +29,13 @@ export function useAuth() {
         if (data?.access_token && data?.refresh_token && !isLoading && !isError) {
             dispatch(setCredentials(data as IAuthResponse))
         }
-    }, [data, isLoading, isError]);
+    }, [data, isLoading, isError, dispatch]);
 
     // Логаут — очищаем токен
     const doLogout = useCallback(() => {
 
         dispatch(logout())
-    }, []);
+    }, [dispatch]);
 
 
     return {

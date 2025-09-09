@@ -15,7 +15,7 @@ export function TrainingTypesDataView() {
     const {data: trainingTypesResponse, isLoading: isLoadingTrainingTypes} = useGetTrainingTypesQuery({});
     const trainingTypes: ITrainingType[] = trainingTypesResponse || [];
     
-    const [_, {isLoading: isUpdatingStatus}] = useUpdateTrainingTypeMutation();
+    const [, {isLoading: isUpdatingStatus}] = useUpdateTrainingTypeMutation();
     
     const [isCreating, setIsCreating] = useState<boolean>(true);
     const [currentTrainingTypeForForm, setCurrentTrainingTypeForForm] = useState<Partial<ITrainingType> | null>(null);
