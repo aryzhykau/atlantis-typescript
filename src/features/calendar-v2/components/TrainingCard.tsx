@@ -44,21 +44,18 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ event, variant = 'full', is
     studentNames = event.students.map(s => `${s.student.first_name || ''} ${s.student.last_name || ''}`.trim()).filter(name => name);
   }
 
-  // Новая цветовая схема - более элегантная и менее яркая
-  const cardBackgroundColor = isInPopover 
-    ? theme.palette.background.paper 
-    : theme.palette.background.paper; // Всегда белый/темный фон
+  // Улучшенная цветовая схема для лучшей читаемости
+  const cardBackgroundColor = theme.palette.background.paper; // Всегда используем стандартный фон темы
   
-  const cardBorderColor = typeColor;
-  const cardBorderWidth = isStackedPreview ? '1px' : '2px';
+  // Используем цвет типа тренировки только для левой границы
+  const leftBorderColor = typeColor;
+  const leftBorderWidth = isStackedPreview ? '3px' : '4px';
   
-  // Всегда используем стандартный цвет текста для лучшей читаемости
+  // Стандартный цвет текста для максимальной читаемости
   const textColor = theme.palette.text.primary;
   
-  // Более тонкий дизайн без ярких фонов
-  const gradientBackground = !isStackedPreview && !isInPopover
-    ? `linear-gradient(135deg, ${alpha(typeColor, 0.03)} 0%, ${alpha(typeColor, 0.01)} 100%)`
-    : cardBackgroundColor;
+  // Убираем градиенты и прозрачные фоны - только solid цвета
+  const solidBackground = cardBackgroundColor;
 
   const handleExpandButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -72,14 +69,17 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ event, variant = 'full', is
       elevation={isInPopover ? 1 : (isStackedPreview ? 1 : 2)} 
       sx={{
         position: 'relative',
-        background: gradientBackground,
+        background: solidBackground,
         color: textColor, 
-        border: `${cardBorderWidth} solid ${cardBorderColor}`,
         borderRadius: 2,
         overflow: 'hidden',
         cursor: 'pointer',
+        // Убираем основные границы, оставляем только левую цветную
+        border: '1px solid',
+        borderColor: theme.palette.divider,
+        borderLeft: `${leftBorderWidth} solid ${leftBorderColor}`,
         transition: theme.transitions.create(
-          ['transform', 'box-shadow', 'border-color'], 
+          ['transform', 'box-shadow'], 
           {
             duration: theme.transitions.duration.short,
             easing: theme.transitions.easing.easeInOut,
@@ -89,8 +89,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ event, variant = 'full', is
           transform: isStackedPreview ? 'none' : 'translateY(-2px)', 
           boxShadow: isStackedPreview 
             ? 'none' 
-            : `0 4px 12px ${alpha(typeColor, 0.2)}, 0 1px 4px ${alpha(typeColor, 0.1)}`,
-          borderColor: alpha(typeColor, 0.8),
+            : `0 4px 12px ${alpha(leftBorderColor, 0.15)}, 0 1px 4px ${alpha(leftBorderColor, 0.08)}`,
         },
         width: '100%',
         height: '100%',
@@ -99,17 +98,6 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ event, variant = 'full', is
         justifyContent: isStackedPreview ? 'center' : 'space-between',
         boxSizing: 'border-box',
         p: 0,
-        // Стильная левая полоска вместо верхней
-        '&::before': !isStackedPreview ? {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          bottom: 0,
-          width: '4px',
-          background: typeColor,
-          zIndex: 1,
-        } : {},
       }}
     >
       {/* Контент отображается только если это не stacked_preview */}
@@ -144,7 +132,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ event, variant = 'full', is
             sx={{ 
               height: '100%', 
               p: isInPopover ? 0.5 : 1,
-              pl: isInPopover ? 0.5 : 1.5, // Отступ слева для цветной полоски
+              pl: isInPopover ? 1 : 1.5, // Увеличенный отступ слева для цветной левой границы
               boxSizing: 'border-box',
             }}
           >
@@ -251,26 +239,17 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ event, variant = 'full', is
             left: 0,
             right: 0,
             bottom: 0,
-            background: alpha(typeColor, 0.08),
+            background: solidBackground, // Используем solid фон вместо прозрачного
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              bottom: 0,
-              width: '3px',
-              background: typeColor,
-              zIndex: 1,
-            }
+            // Левая граница уже добавлена в Paper
           }}
         >
           <Typography 
             variant="caption" 
             sx={{ 
-              color: typeColor,
+              color: leftBorderColor,
               fontWeight: 600,
               fontSize: '0.7rem',
               textAlign: 'center',
