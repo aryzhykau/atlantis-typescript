@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Box, Typography, Fab, Dialog, DialogContent, DialogTitle, IconButton, CircularProgress } from '@mui/material';
+import { Box, Typography, Fab, CircularProgress } from '@mui/material';
 import { useGetClientsQuery } from '../../store/apis/clientsApi';
 import { IClientUserGet, IClientUserFormValues } from '../../features/clients/models/client';
 import { ClientMobileCard } from '../../features/clients/components/ClientMobileCard';
 import AddIcon from '@mui/icons-material/Add';
 import { Link } from 'react-router-dom';
-import CloseIcon from '@mui/icons-material/Close';
 import { ClientsForm } from '../../features/clients/components/ClientsForm';
+import { FormikDialog } from '../../components/forms/layout';
 import dayjs from 'dayjs';
 
 
@@ -62,33 +62,21 @@ export function MobileClients() {
                 <AddIcon />
             </Fab>
 
-            <Dialog open={openEditModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
-                <DialogTitle>
-                    Редактировать клиента
-                    <IconButton
-                        aria-label="close"
-                        onClick={handleCloseModal}
-                        sx={{
-                            position: 'absolute',
-                            right: 8,
-                            top: 8,
-                            color: (theme) => theme.palette.grey[500],
-                        }}
-                    >
-                        <CloseIcon />
-                    </IconButton>
-                </DialogTitle>
-                <DialogContent>
-                    {initialFormValues && clientToEdit && (
-                        <ClientsForm
-                            initialValues={initialFormValues}
-                            isEdit={true}
-                            clientId={clientToEdit.id}
-                            onClose={handleCloseModal}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
+            <FormikDialog
+                open={openEditModal}
+                onClose={handleCloseModal}
+                title="✏️ Редактировать клиента"
+                maxWidth="sm"
+            >
+                {initialFormValues && clientToEdit && (
+                    <ClientsForm
+                        initialValues={initialFormValues}
+                        isEdit={true}
+                        clientId={clientToEdit.id}
+                        onClose={handleCloseModal}
+                    />
+                )}
+            </FormikDialog>
         </Box>
     );
 }

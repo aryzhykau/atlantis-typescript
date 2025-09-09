@@ -1,4 +1,4 @@
-import { Box, Dialog, DialogContent, Typography, IconButton, alpha } from "@mui/material";
+import { Box, Dialog, DialogContent } from "@mui/material";
 import { ClientsDataGrid } from "../../features/clients/components/ClientsDataGrid";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -7,8 +7,7 @@ import { ClientDeleteModal } from "../../features/clients/components/ClientDelet
 import { useClients } from "../../features/clients/hooks/clientManagementHooks";
 import { useSnackbar } from "../../hooks/useSnackBar";
 import { IClientUserFormValues } from "../../features/clients/models/client";
-import { useGradients } from "../../features/trainer-mobile/hooks/useGradients";
-import { useTheme } from "@mui/material";
+import { FormikDialog } from "../../components/forms/layout";
 import dayjs from "dayjs";
 
 
@@ -16,8 +15,6 @@ export function ClientsLayout() {
     const navigate = useNavigate();
     const { deleteClient, refetchClients } = useClients();
     const { displaySnackbar } = useSnackbar();
-    const gradients = useGradients();
-    const theme = useTheme();
 
     // Состояние модального окна
     const [modalOpen, setModalOpen] = useState<boolean>(false);
@@ -92,78 +89,35 @@ export function ClientsLayout() {
             />
 
            
-            <Dialog 
-                open={modalOpen} 
-                onClose={handleModalClose} 
-                maxWidth="md" 
-                fullWidth 
-                PaperProps={{ 
-                    sx: { 
-                        m: 1, 
-                        borderRadius: 3,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        overflow: 'hidden',
-                    } 
-                }}
-            >
-                {!isDeletingModal ? (
-                    <>
-                        {/* Градиентный заголовок модального окна */}
-                        <Box
-                            sx={{
-                                p: 3,
-                                background: gradients.primary,
-                                color: 'white',
-                                position: 'relative',
-                                overflow: 'hidden',
-                                '&::before': {
-                                    content: '""',
-                                    position: 'absolute',
-                                    top: 0, left: 0, right: 0, bottom: 0,
-                                    background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-                                    opacity: theme.palette.mode === 'dark' ? 0.18 : 0.3,
-                                }
-                            }}
-                        >
-                            <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <Typography variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
-                                    {isClientEdit ? '✏️ Редактировать клиента' : '👤 Добавить нового клиента'}
-                                </Typography>
-                                <IconButton
-                                    aria-label="Закрыть"
-                                    onClick={handleModalClose}
-                                    sx={{
-                                        color: 'white',
-                                        ml: 2,
-                                        '&:hover': {
-                                            background: alpha('#ffffff', 0.15),
-                                        }
-                                    }}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                                </IconButton>
-                            </Box>
-                        </Box>
-                        
-                        {/* Контент модального окна */}
-                        <DialogContent sx={{ p: 3, '&:first-of-type': { pt: 0 } }}>
-                            <ClientsForm 
-                                onClose={handleModalClose} 
-                                isEdit={isClientEdit} 
-                                title={formTitle} 
-                                initialValues={formInitValues} 
-                                clientId={clientId}
-                            />
-                        </DialogContent>
-                    </>
-                ) : (
-                    <ClientDeleteModal 
-                        onConfirm={handleDeleteConfirm} 
-                        onCancel={handleDeleteCancel}
+            {!isDeletingModal ? (
+                <FormikDialog
+                    open={modalOpen}
+                    onClose={handleModalClose}
+                    title={isClientEdit ? '✏️ Редактировать клиента' : '👤 Добавить нового клиента'}
+                    maxWidth="md"
+                >
+                    <ClientsForm 
+                        onClose={handleModalClose} 
+                        isEdit={isClientEdit} 
+                        title={formTitle} 
+                        initialValues={formInitValues} 
+                        clientId={clientId}
                     />
-                )}
-            </Dialog>
+                </FormikDialog>
+            ) : (
+                <Dialog 
+                    open={modalOpen} 
+                    onClose={handleModalClose} 
+                    maxWidth="sm"
+                >
+                    <DialogContent>
+                        <ClientDeleteModal 
+                            onConfirm={handleDeleteConfirm} 
+                            onCancel={handleDeleteCancel}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
         </Box>
     );
 }
