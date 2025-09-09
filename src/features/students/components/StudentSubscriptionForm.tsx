@@ -1,19 +1,16 @@
-import * as yup from "yup";
+import { Formik, Form } from "formik";
+import { Box, Typography, Divider, MenuItem } from "@mui/material";
 
-import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
-import {Field, Form, Formik} from "formik";
-import {Box, Button,  Divider, Typography} from "@mui/material";
-
-
-import {Select,} from "formik-mui";
-
-
-import {useSubscriptions} from "../../subscriptions/hooks/useSubscriptions.ts";
-import MenuItem from "@mui/material/MenuItem";
-import { useGetStudentsQuery} from "../../../store/apis/studentsApi.ts";
-import {IStudent} from "../models/student.ts";
-import {useEffect} from "react";
+import { useSnackbar } from "../../../hooks/useSnackBar.tsx";
+import { useSubscriptions } from "../../subscriptions/hooks/useSubscriptions.ts";
+import { useGetStudentsQuery } from "../../../store/apis/studentsApi.ts";
+import { IStudent } from "../models/student.ts";
+import { useEffect } from "react";
 import { IStudentSubscriptionCreatePayload } from "../../subscriptions/models/subscription.ts";
+
+import { FormikSelectField } from "../../../components/forms/fields/FormikSelectField";
+import { FormActions } from "../../../components/forms/layout/FormActions";
+import { subscriptionSchemas } from "../../../utils/validationSchemas";
 
 
 
@@ -40,9 +37,7 @@ export function StudentSubscriptionForm({student, onClose }: ClientsFormProps) {
     const { subscriptions } = useSubscriptions();
 
 
-    const validationSchema = yup.object({
-        subscription_id: yup.number().required("Выберите абонемент")
-    });
+    const validationSchema = subscriptionSchemas.addToStudent;
 
 
     const handleSubmit = async (values: typeof defaultValues, {resetForm}: {resetForm: () => void}) => {
@@ -76,10 +71,7 @@ export function StudentSubscriptionForm({student, onClose }: ClientsFormProps) {
 
     }
 
-    const sxFormControl = {
-        margin: 2,
-        width: '100%',
-    };
+
 
     return (
         <>
@@ -95,36 +87,30 @@ export function StudentSubscriptionForm({student, onClose }: ClientsFormProps) {
                             flexDirection="column"
                             gap={2}
                             padding={3}
-                            bgcolor="paper"
-                            borderRadius={2}
                         >
                             {/* Заголовок */}
-                            <Typography variant="h4" textAlign="center">Выбор абонемента для клиента {student.first_name} {student.last_name}</Typography>
-                            <Divider sx = {{my: "16px"}}/>
-                            <Field
-                                component={Select}
-                                formControl={{ sx: sxFormControl }}
-                                formHelperText={"Выберите абонемент"}
-                                id="subscription_id"
-                                name="subscription_id"
-                                labelId="subscription_id"
-                                label="Абонемент"
-                            >
-                                {subscriptions.map(subscription => {
-                                    return <MenuItem key={subscription.id} value={subscription.id}>{subscription.name}</MenuItem>
-                                })}
-                            </Field>
+                            <Typography variant="h4" textAlign="center">
+                                Выбор абонемента для клиента {student.first_name} {student.last_name}
+                            </Typography>
+                            <Divider sx={{ my: 2 }} />
 
-                            {/* Кнопка */}
-                            <Button
-                                sx={{ mt: 2, height: 50 ,width: "50%", mx: "auto" }}
-                                type="submit"
-                                variant="contained"
-                                color="primary"
-                                disabled={isSubmitting}
+                            <FormikSelectField
+                                name="subscription_id"
+                                label="Абонемент"
+                                required
                             >
-                                Добавить абонемент клиенту
-                            </Button>
+                                {subscriptions.map(subscription => (
+                                    <MenuItem key={subscription.id} value={subscription.id}>
+                                        {subscription.name}
+                                    </MenuItem>
+                                ))}
+                            </FormikSelectField>
+
+                            <FormActions
+                                onCancel={onClose}
+                                submitText="Добавить абонемент клиенту"
+                                isSubmitting={isSubmitting}
+                            />
                         </Box>
                     </Form>
                 )}

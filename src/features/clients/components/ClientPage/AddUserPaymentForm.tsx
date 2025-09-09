@@ -1,13 +1,14 @@
-import { Button } from "@mui/material";
-import { Box, Divider, IconButton, Typography   } from "@mui/material";
-import { Formik } from "formik";
-import { Form , Field} from "formik";
+import { Box, IconButton, Typography } from "@mui/material";
+import { Formik, Form } from "formik";
 import { useSnackbar } from "../../../../hooks/useSnackBar";
 import { useCreatePaymentMutation } from "../../../../store/apis/paymentsApi";
 import { IPayment } from "../../../payments/models/payment";
 import * as Yup from "yup";
-import { TextField } from "formik-mui";
 import CloseIcon from "@mui/icons-material/Close";
+
+// Form Components
+import { FormikTextField, FormikNumberField } from "../../../../components/forms/fields";
+import { FormActions } from "../../../../components/forms/layout";
 
 interface AddPaymentFormProps {
   initialValues: IPayment;
@@ -43,36 +44,38 @@ export const AddUserPaymentForm = ({initialValues, client_name, onClose }: AddPa
             validationSchema={PaymentSchema}
             onSubmit={handleSubmit}
         >
-            <Form>
-              <Box sx={{display: "flex", flexDirection: "column", gap: 3}}>
-                <Box sx={{display: "flex", flexDirection: "row", gap: 2, alignItems: "center", justifyContent: "space-between"}}>
-                    <Typography variant="h6">Добавить платеж клиенту {client_name}</Typography>
-                    <IconButton onClick={onClose}>
-                        <CloseIcon />
-                    </IconButton>
-                </Box>
-                <Divider />
-                <Box sx={{display: "flex", flexDirection: "column", gap: 2}}>
-                    <Field
-                      component={TextField}
-                        name="description"
-                        label="Примечание (необязательно)"
-                    />
-                    <Field
-                        component={TextField}
-                        type="number"
-                        name="amount"
-                        label="Сумма платежа"
-                    />
-                    <Box sx={{display: "flex", flexDirection: "row", gap: 2, justifyContent: "flex-end"}}>
-                    <Button type="submit" variant="contained" color="primary">
-                        Добавить платеж
-                    </Button>
-                </Box>
-                </Box>
-                
-              </Box>
-            </Form>
+            {({ isSubmitting }) => (
+                <Form>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                        <Box sx={{ display: "flex", flexDirection: "row", gap: 2, alignItems: "center", justifyContent: "space-between" }}>
+                            <Typography variant="h6">Добавить платеж клиенту {client_name}</Typography>
+                            <IconButton onClick={onClose}>
+                                <CloseIcon />
+                            </IconButton>
+                        </Box>
+                        
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                            <FormikTextField
+                                name="description"
+                                label="Примечание"
+                                placeholder="Добавьте описание платежа (необязательно)"
+                            />
+                            
+                            <FormikNumberField
+                                name="amount"
+                                label="Сумма платежа"
+                                required
+                            />
+
+                            <FormActions
+                                submitText="Добавить платеж"
+                                isSubmitting={isSubmitting}
+                                onCancel={onClose}
+                            />
+                        </Box>
+                    </Box>
+                </Form>
+            )}
         </Formik>
     )
 }

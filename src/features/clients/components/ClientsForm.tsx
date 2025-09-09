@@ -1,26 +1,24 @@
-import * as yup from "yup";
-import {useClients} from "../hooks/clientManagementHooks.ts";
-import {useSnackbar} from "../../../hooks/useSnackBar.tsx";
-import {Field, FieldArray, Form, Formik, FormikProps} from "formik";
-import {
-    Box, 
-    Button, 
-    alpha,
-    CircularProgress,
-    Grid
-} from "@mui/material";
+import { Form, Formik, FormikProps } from "formik";
+import { Box, Grid } from "@mui/material";
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import { useGradients } from '../../trainer-mobile/hooks/useGradients';
-import { useTheme } from '@mui/material';
-
-import {DatePicker} from "formik-mui-x-date-pickers";
-import {TextField, Checkbox} from "formik-mui";
-import { IClientUserFormValues, ClientUpdate, IClientCreatePayload } from "../models/client.ts";
-import * as Yup from "yup";
-import { FormikTelInput } from "../../../components/FormikTelInput.tsx";
 import { parsePhoneNumber } from 'libphonenumber-js';
+
+import { useClients } from "../hooks/clientManagementHooks.ts";
+import { useSnackbar } from "../../../hooks/useSnackBar.tsx";
+import { IClientUserFormValues, ClientUpdate, IClientCreatePayload } from "../models/client.ts";
+import { clientSchemas } from "../../../utils/validationSchemas";
+
+// Form Components
+import {
+  FormikTextField,
+  FormikTelInput,
+  FormikDatePicker,
+  FormikCheckboxField,
+  FormikFieldArray
+} from "../../../components/forms/fields";
+import { FormActions } from "../../../components/forms/layout";
 
 
 dayjs.extend(utc);
@@ -59,25 +57,8 @@ interface ClientsFormProps {
 export function ClientsForm({initialValues = defaultValues, isEdit = false, clientId = null, onClose }: ClientsFormProps) {
     const {createClient, updateClient, refetchClients} = useClients()
     const {displaySnackbar} = useSnackbar();
-    const theme = useTheme();
-    const gradients = useGradients();
 
-    const validationSchema = yup.object({
-        first_name: yup.string().required("Имя обязательно"),
-        last_name: yup.string().required("Фамилия обязательна"),
-        email: yup.string().email("Введите корректный email").required("Email обязателен"),
-        phone: yup.string().required("Телефон обязателен"),
-        date_of_birth: yup.date().required("Дата рождения обязательна"),
-        whatsapp_number: yup.string(),
-        is_student: yup.boolean(),
-        students: Yup.array().of(
-            Yup.object().shape({
-                first_name: Yup.string().required('Имя обязательно'),
-                last_name: Yup.string().required('Фамилия обязательна'),
-                date_of_birth: yup.date().required("Дата рождения обязательна"),
-            })
-        ).notRequired()
-    });
+    const validationSchema = isEdit ? clientSchemas.update : clientSchemas.create;
 
     const handleSubmit = async (values: IClientUserFormValues, {resetForm}: {resetForm: () =>  void}) => {
         try {
@@ -169,96 +150,108 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
                 <Form>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                         {/* Основная информация */}
-                        <Grid container spacing={1} sx={{ mb: 1 }}>
+                        <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
-                                <Field name="first_name" label="Имя" component={TextField} fullWidth required variant="outlined" size="small" />
+                                <FormikTextField 
+                                    name="first_name" 
+                                    label="Имя" 
+                                    required 
+                                />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <Field name="last_name" label="Фамилия" component={TextField} fullWidth required variant="outlined" size="small" />
+                                <FormikTextField 
+                                    name="last_name" 
+                                    label="Фамилия" 
+                                    required 
+                                />
                             </Grid>
                         </Grid>
 
                         {/* Контактная информация */}
-                        <Grid container spacing={1} sx={{ mb: 1 }}>
+                        <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
-                                <Field name="email" label="Email" component={TextField} fullWidth required variant="outlined" size="small" />
+                                <FormikTextField 
+                                    name="email" 
+                                    label="Email" 
+                                    type="email"
+                                    required 
+                                />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <FormikTelInput name="phone" label="Телефон" fullWidth required defaultCountry="SK" variant="outlined" size="small" />
+                                <FormikTelInput 
+                                    name="phone" 
+                                    label="Телефон" 
+                                    required 
+                                    defaultCountry="SK" 
+                                />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <FormikTelInput name="whatsapp_number" label="WhatsApp" fullWidth defaultCountry="SK" helperText="Номер WhatsApp, если отличается от основного телефона" variant="outlined" size="small" />
+                                <FormikTelInput 
+                                    name="whatsapp_number" 
+                                    label="WhatsApp" 
+                                    defaultCountry="SK" 
+                                    helperText="Номер WhatsApp, если отличается от основного телефона" 
+                                />
                             </Grid>
                         </Grid>
 
                         {/* Личная информация */}
-                        <Field name="date_of_birth" label="Дата рождения" component={DatePicker} views={["year", "month", "date"]} textField={{helperText: "Укажите дату рождения"}} inputFormat="dd.MM.yyyy" InputLabelProps={{shrink: true}} fullWidth required size="small" sx={{ mb: 1 }} />
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <FormikDatePicker 
+                                    name="date_of_birth" 
+                                    label="Дата рождения" 
+                                    views={['year', 'month', 'day']}
+                                />
+                            </Grid>
+                        </Grid>
 
                         {/* Статус студента и дети клиента (только при создании) */}
                         {!isEdit && (
                             <>
-                                <Box sx={{ mb: 1 }}>
-                                    <Field name="is_student" type="checkbox" component={Checkbox} /> Сам посещает тренировки
-                                </Box>
-                                <FieldArray name="students" render={arrayHelpers => (
-                                    <Box>
-                                        {arrayHelpers.form.values.students && arrayHelpers.form.values.students.length > 0 && arrayHelpers.form.values.students.map((_: any, index: number) => (
-                                            <Grid container spacing={1} alignItems="center" key={index} sx={{ mb: 0.5 }}>
-                                                <Grid item xs={12} sm={3}>
-                                                    <Field name={`students[${index}].first_name`} label="Имя" component={TextField} fullWidth variant="outlined" size="small" />
-                                                </Grid>
-                                                <Grid item xs={12} sm={3}>
-                                                    <Field name={`students[${index}].last_name`} label="Фамилия" component={TextField} fullWidth variant="outlined" size="small" />
-                                                </Grid>
-                                                <Grid item xs={12} sm={4}>
-                                                    <Field name={`students[${index}].date_of_birth`} label="Дата рождения" component={DatePicker} views={["year", "month", "date"]} textField={{helperText: ""}} inputFormat="dd.MM.yyyy" InputLabelProps={{shrink: true}} fullWidth size="small" />
-                                                </Grid>
-                                                <Grid item xs={12} sm={2}>
-                                                    <Button variant="outlined" color="error" size="small" onClick={() => arrayHelpers.remove(index)} sx={{ minWidth: 0, px: 0.5 }}>✕</Button>
-                                                </Grid>
+                                <FormikCheckboxField 
+                                    name="is_student" 
+                                    label="Сам посещает тренировки" 
+                                />
+                                
+                                <FormikFieldArray 
+                                    name="students"
+                                    label="Дети клиента"
+                                    addButtonText="+ Добавить ребёнка"
+                                    emptyItem={{ first_name: '', last_name: '', date_of_birth: null, gender: 'M' }}
+                                >
+                                    {(index: number) => (
+                                        <Grid container spacing={2} alignItems="center">
+                                            <Grid item xs={12} sm={3}>
+                                                <FormikTextField 
+                                                    name={`students[${index}].first_name`} 
+                                                    label="Имя" 
+                                                />
                                             </Grid>
-                                        ))}
-                                        <Button variant="outlined" size="small" onClick={() => arrayHelpers.push({ first_name: '', last_name: '', date_of_birth: null })} sx={{ mt: 0.5, minWidth: 0, px: 1 }}>
-                                            + Добавить ребёнка
-                                        </Button>
-                                    </Box>
-                                )} />
+                                            <Grid item xs={12} sm={3}>
+                                                <FormikTextField 
+                                                    name={`students[${index}].last_name`} 
+                                                    label="Фамилия" 
+                                                />
+                                            </Grid>
+                                            <Grid item xs={12} sm={4}>
+                                                <FormikDatePicker 
+                                                    name={`students[${index}].date_of_birth`} 
+                                                    label="Дата рождения" 
+                                                    views={['year', 'month', 'day']}
+                                                />
+                                            </Grid>
+                                        </Grid>
+                                    )}
+                                </FormikFieldArray>
                             </>
                         )}
 
-                        {/* Кнопка сохранения */}
-                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                disabled={isSubmitting}
-                                sx={{
-                                    background: gradients.primary,
-                                    color: 'white',
-                                    fontWeight: 600,
-                                    textTransform: 'none',
-                                    px: 4,
-                                    py: 1.5,
-                                    borderRadius: 3,
-                                    fontSize: '1.1rem',
-                                    '&:hover': {
-                                        background: alpha(theme.palette.primary.main, 0.8),
-                                    },
-                                    '&:disabled': {
-                                        background: theme.palette.action.disabled,
-                                    }
-                                }}
-                            >
-                                {isSubmitting ? (
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <CircularProgress size={20} sx={{ color: 'white' }} />
-                                        Сохранение...
-                                    </Box>
-                                ) : (
-                                    isEdit ? 'Обновить клиента' : 'Создать клиента'
-                                )}
-                            </Button>
-                        </Box>
+                        <FormActions
+                            submitText={isEdit ? 'Обновить клиента' : 'Создать клиента'}
+                            isSubmitting={isSubmitting}
+                            onCancel={onClose}
+                        />
                     </Box>
                 </Form>
             )}

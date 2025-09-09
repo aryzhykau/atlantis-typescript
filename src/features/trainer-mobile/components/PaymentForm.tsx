@@ -9,20 +9,17 @@ import {
   CircularProgress,
   alpha,
   useTheme,
-  Autocomplete,
-  TextField,
 } from '@mui/material';
 import {
   Person,
-  Euro,
   Add as AddIcon,
   Payment as PaymentIcon,
   Close,
 } from '@mui/icons-material';
-import { Formik, Form, Field } from 'formik';
-import { TextField as FormikTextField } from 'formik-mui';
-import * as Yup from 'yup';
+import { Formik, Form } from 'formik';
+import { FormikAutocomplete, FormikNumberField } from '../../../components/forms/fields';
 import { useGradients } from '../hooks/useGradients';
+import { paymentSchemas } from '../../../utils/validationSchemas';
 
 interface Student {
   id: number;
@@ -36,25 +33,19 @@ interface Student {
 }
 
 interface PaymentFormData {
-  student_id: number;
+  student: Student | null;
   amount: string;
 }
 
 interface PaymentFormProps {
   students: Student[];
-  onSubmit: (values: PaymentFormData) => Promise<void>;
+  onSubmit: (values: { student_id: number; amount: string; }) => Promise<void>;
   isLoading?: boolean;
   showForm: boolean;
   onToggleForm: () => void;
 }
 
-const PaymentSchema = Yup.object({
-  student_id: Yup.number().required('Выберите студента'),
-  amount: Yup.number()
-    .required('Введите сумму')
-    .positive('Сумма должна быть больше 0')
-    .min(0.01, 'Минимальная сумма 0.01 €'),
-});
+const PaymentSchema = paymentSchemas.create;
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
   students,
@@ -68,7 +59,14 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const handleFormSubmit = async (values: PaymentFormData, { resetForm }: any) => {
     try {
-      await onSubmit(values);
+      if (!values.student) return;
+      
+      const submitData = {
+        student_id: values.student.id,
+        amount: values.amount,
+      };
+      
+      await onSubmit(submitData);
       resetForm();
       onToggleForm();
     } catch (error) {
@@ -134,29 +132,21 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           ) : (
             <Formik
               initialValues={{
-                student_id: 0,
+                student: null,
                 amount: '',
               }}
               validationSchema={PaymentSchema}
               onSubmit={handleFormSubmit}
             >
-              {({ isSubmitting, values, setFieldValue, errors, touched }) => (
+              {({ isSubmitting }) => (
                 <Form>
                   <Grid container spacing={3}>
                     <Grid item xs={12}>
-                      <Autocomplete
+                      <FormikAutocomplete<Student>
+                        name="student"
+                        label="Выберите студента"
                         options={students}
                         getOptionLabel={(option) => `${option.first_name} ${option.last_name}`}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Выберите студента"
-                            error={touched.student_id && !!errors.student_id}
-                            helperText={touched.student_id && errors.student_id}
-                            size="medium"
-                            fullWidth
-                          />
-                        )}
                         renderOption={(props, option) => (
                           <Box component="li" {...props}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 0.5 }}>
@@ -184,28 +174,22 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                             </Box>
                           </Box>
                         )}
-                        onChange={(_, newValue) => {
-                          setFieldValue('student_id', newValue?.id || 0);
-                        }}
                         isOptionEqualToValue={(option, value) => option.id === value.id}
-                        size="medium"
-                        fullWidth
+                        textFieldProps={{
+                          size: "medium",
+                          fullWidth: true
+                        }}
                       />
                     </Grid>
 
                     <Grid item xs={12}>
-                      <Field
-                        component={FormikTextField}
+                      <FormikNumberField
                         name="amount"
                         label="Сумма платежа"
-                        type="number"
-                        fullWidth
-                        size="medium"
-                        InputProps={{
-                          startAdornment: <Euro sx={{ mr: 1, color: theme.palette.text.secondary }} />,
-                          sx: { borderRadius: 2 }
-                        }}
-                        inputProps={{ min: 0, step: 0.01 }}
+                        suffix="€"
+                        min={0}
+                        step={0.01}
+                        decimalPlaces={2}
                       />
                     </Grid>
 
@@ -215,7 +199,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                         variant="contained"
                         fullWidth
                         size="large"
-                        disabled={isSubmitting || isLoading || !values.student_id || !values.amount}
+                        disabled={isSubmitting || isLoading}
                         sx={{ 
                           background: gradients.success,
                           borderRadius: 2,

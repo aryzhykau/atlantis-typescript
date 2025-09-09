@@ -1,15 +1,22 @@
 import React from 'react';
-import { Formik, Form, Field } from 'formik';
-import * as Yup from 'yup';
-import { TextField, Button, Grid, Box, Typography, IconButton, FormControlLabel, Switch, CircularProgress, alpha, useTheme } from '@mui/material';
-import { DatePicker } from "formik-mui-x-date-pickers";
+import { Formik, Form } from 'formik';
+import { Grid, Typography } from '@mui/material';
+import { Person } from '@mui/icons-material';
+import { 
+  FormikDialog, 
+  FormikTextField, 
+  FormikDatePicker, 
+  FormikTelInput, 
+  FormikNumberField, 
+  FormikSwitch,
+  FormActions 
+} from '../../../components/forms';
+import { useFormSubmission } from '../../../hooks/forms';
+import { trainerSchemas } from '../../../utils/validationSchemas';
 import { ITrainerCreatePayload, ITrainerUpdatePayload, ITrainerResponse } from "../models/trainer.ts";
 import { parsePhoneNumber } from 'libphonenumber-js';
-import { FormikTelInput } from '../../../components/FormikTelInput.tsx';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import CloseIcon from '@mui/icons-material/Close';
-import { useGradients } from '../../trainer-mobile/hooks/useGradients.ts';
 
 dayjs.extend(utc);
 
@@ -22,16 +29,6 @@ interface TrainerFormValues {
     salary: number | null;
     is_fixed_salary: boolean;
 }
-
-const validationSchema = Yup.object({
-    first_name: Yup.string().required('Имя обязательно для заполнения'),
-    last_name: Yup.string().required('Фамилия обязательна для заполнения'),
-    email: Yup.string().email('Неверный формат email').required('Email обязателен для заполнения'),
-    phone: Yup.string().required('Телефон обязателен для заполнения'),
-    date_of_birth: Yup.date().nullable().required('Дата рождения обязательна'),
-    salary: Yup.number().nullable().min(0, 'Зарплата не может быть отрицательной'),
-    is_fixed_salary: Yup.boolean().required(),
-});
 
 const getInitialValues = (trainer?: Partial<ITrainerResponse>): TrainerFormValues => {
     if (trainer && trainer.id) { // Ensure we are in edit mode
@@ -74,112 +71,152 @@ interface TrainerFormProps {
 
 
 export function TrainerForm({ title, initialValues, onSubmit, isEdit, onClose, isLoading }: TrainerFormProps) {
-    
-    const theme = useTheme();
-    const gradients = useGradients();
     const formInitialValues = React.useMemo(() => getInitialValues(initialValues), [initialValues]);
 
-    const handleFormSubmit = async (values: TrainerFormValues) => {
-        const phoneInfo = values.phone ? parsePhoneNumber(values.phone) : null;
-        const payload = {
-            ...values,
-            date_of_birth: values.date_of_birth ? values.date_of_birth.format('YYYY-MM-DD') : null,
-            phone_country_code: phoneInfo?.countryCallingCode || null,
-            phone_number: phoneInfo?.nationalNumber || null,
-        };
-        delete (payload as any).phone;
+    // Form submission hook
+    const { submit, isLoading: isSubmissionLoading } = useFormSubmission({
+        successMessage: isEdit ? 'Тренер успешно обновлен' : 'Тренер успешно создан',
+        onSuccess: onClose,
+    });
 
-        if (isEdit) {
-            onSubmit(payload as ITrainerUpdatePayload, initialValues?.id);
-        } else {
-            onSubmit(payload as ITrainerCreatePayload);
-        }
+    const handleFormSubmit = async (values: TrainerFormValues) => {
+        await submit(async () => {
+            const phoneInfo = values.phone ? parsePhoneNumber(values.phone) : null;
+            const payload = {
+                ...values,
+                date_of_birth: values.date_of_birth ? values.date_of_birth.format('YYYY-MM-DD') : null,
+                phone_country_code: phoneInfo?.countryCallingCode || null,
+                phone_number: phoneInfo?.nationalNumber || null,
+            };
+            delete (payload as any).phone;
+
+            if (isEdit) {
+                onSubmit(payload as ITrainerUpdatePayload, initialValues?.id);
+            } else {
+                onSubmit(payload as ITrainerCreatePayload);
+            }
+        });
     };
 
-    return (
-        <Formik
-            initialValues={formInitialValues}
-            validationSchema={validationSchema}
-            onSubmit={handleFormSubmit}
-            enableReinitialize // Keep this to populate form on edit
-        >
-            {({ isSubmitting, values, touched, errors }) => (
-                <Form>
-                    <Box sx={{ p: 3 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                            <Typography variant="h5" sx={{ fontWeight: 700 }}>{title}</Typography>
-                            <IconButton onClick={onClose}><CloseIcon /></IconButton>
-                        </Box>
+    const combinedIsLoading = isLoading || isSubmissionLoading;
 
-                        <Grid container spacing={2}>
+    return (
+        <FormikDialog
+            open={true}
+            onClose={onClose}
+            title={title}
+            subtitle={isEdit ? "Редактирование информации о тренере" : "Добавление нового тренера"}
+            icon={<Person />}
+            maxWidth="md"
+        >
+            <Formik
+                initialValues={formInitialValues}
+                validationSchema={isEdit ? trainerSchemas.update : trainerSchemas.create}
+                onSubmit={handleFormSubmit}
+                enableReinitialize
+            >
+                {({ isSubmitting, values }) => (
+                    <Form>
+                        <Grid container spacing={3}>
                             {/* --- Основная информация --- */}
-                            <Grid item xs={12}> <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>Основная информация</Typography> </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <Field as={TextField} name="first_name" label="Имя" fullWidth required variant="outlined" size="small" error={touched.first_name && !!errors.first_name} helperText={touched.first_name && errors.first_name} />
+                            <Grid item xs={12}>
+                                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                                    Основная информация
+                                </Typography>
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <Field as={TextField} name="last_name" label="Фамилия" fullWidth required variant="outlined" size="small" error={touched.last_name && !!errors.last_name} helperText={touched.last_name && errors.last_name} />
+                                <FormikTextField
+                                    name="first_name"
+                                    label="Имя"
+                                    fullWidth
+                                    required
+                                />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <Field name="date_of_birth" label="Дата рождения" component={DatePicker} views={["year", "month", "day"]} format="DD.MM.YYYY"
+                                <FormikTextField
+                                    name="last_name"
+                                    label="Фамилия"
+                                    fullWidth
+                                    required
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormikDatePicker
+                                    name="date_of_birth"
+                                    label="Дата рождения"
+                                    views={["year", "month", "day"]}
+                                    format="DD.MM.YYYY"
                                     slotProps={{
                                         textField: {
-                                            fullWidth: true, required: true, size: "small", variant: "outlined",
-                                            error: touched.date_of_birth && !!errors.date_of_birth,
-                                            helperText: touched.date_of_birth && errors.date_of_birth
+                                            fullWidth: true,
+                                            required: true,
                                         }
                                     }}
                                 />
                             </Grid>
 
-                             {/* --- Контактная информация --- */}
-                             <Grid item xs={12}> <Typography variant="h6" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Контактная информация</Typography> </Grid>
-                             <Grid item xs={12} sm={6}>
-                                <Field as={TextField} name="email" type="email" label="Email" fullWidth required variant="outlined" size="small" error={touched.email && !!errors.email} helperText={touched.email && errors.email} />
+                            {/* --- Контактная информация --- */}
+                            <Grid item xs={12}>
+                                <Typography variant="h6" sx={{ mt: 2, mb: 2, fontWeight: 600 }}>
+                                    Контактная информация
+                                </Typography>
                             </Grid>
-                             <Grid item xs={12} sm={6}>
-                                <FormikTelInput name="phone" label="Телефон" fullWidth required defaultCountry="SK" variant="outlined" size="small" />
+                            <Grid item xs={12} sm={6}>
+                                <FormikTextField
+                                    name="email"
+                                    type="email"
+                                    label="Email"
+                                    fullWidth
+                                    required
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormikTelInput
+                                    name="phone"
+                                    label="Телефон"
+                                    fullWidth
+                                    required
+                                    defaultCountry="SK"
+                                />
                             </Grid>
 
                             {/* --- Зарплата --- */}
-                            <Grid item xs={12}> <Typography variant="h6" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Зарплата</Typography> </Grid>
                             <Grid item xs={12}>
-                                 <FormControlLabel
-                                     control={ <Field as={Switch} type="checkbox" name="is_fixed_salary" /> }
-                                     label="Фиксированная месячная зарплата"
-                                 />
+                                <Typography variant="h6" sx={{ mt: 2, mb: 2, fontWeight: 600 }}>
+                                    Зарплата
+                                </Typography>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <FormikSwitch
+                                    name="is_fixed_salary"
+                                    label="Фиксированная месячная зарплата"
+                                />
                             </Grid>
                             {values.is_fixed_salary && (
                                 <Grid item xs={12} sm={6}>
-                                    <Field as={TextField} name="salary" type="number" label={"Месячная зарплата (€)"} fullWidth variant="outlined" size="small" error={touched.salary && !!errors.salary} helperText={touched.salary && errors.salary} />
+                                    <FormikNumberField
+                                        name="salary"
+                                        label="Месячная зарплата"
+                                        suffix="€"
+                                        min={0}
+                                        decimalPlaces={2}
+                                        fullWidth
+                                    />
                                 </Grid>
                             )}
-                        </Grid>
 
-                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                disabled={isSubmitting || isLoading}
-                                sx={{
-                                    background: gradients.primary,
-                                    color: 'white', fontWeight: 600, textTransform: 'none',
-                                    px: 4, py: 1.5, borderRadius: 3, fontSize: '1.1rem',
-                                    '&:hover': { background: alpha(theme.palette.primary.main, 0.8) },
-                                    '&:disabled': { background: theme.palette.action.disabled }
-                                }}
-                            >
-                                {isSubmitting ? (
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <CircularProgress size={20} sx={{ color: 'white' }} />
-                                        Сохранение...
-                                    </Box>
-                                ) : (isEdit ? 'Обновить тренера' : 'Создать тренера')}
-                            </Button>
-                        </Box>
-                    </Box>
-                </Form>
-            )}
-        </Formik>
+                            <Grid item xs={12}>
+                                <FormActions
+                                    onCancel={onClose}
+                                    submitText={isEdit ? 'Обновить тренера' : 'Создать тренера'}
+                                    isLoading={combinedIsLoading || isSubmitting}
+                                    disabled={combinedIsLoading || isSubmitting}
+                                />
+                            </Grid>
+                        </Grid>
+                    </Form>
+                )}
+            </Formik>
+        </FormikDialog>
     );
 }
