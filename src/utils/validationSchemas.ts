@@ -98,17 +98,6 @@ export const subscriptionSchemas = {
   }),
 };
 
-// Payment form schemas
-export const paymentSchemas = {
-  create: Yup.object({
-    student: Yup.object().nullable().required('Выберите студента'),
-    amount: Yup.number()
-      .required('Введите сумму')
-      .positive('Сумма должна быть больше 0')
-      .min(0.01, 'Минимальная сумма 0.01 €'),
-  }),
-};
-
 // Student form schemas
 export const studentSchemas = {
   create: Yup.object({
@@ -276,6 +265,20 @@ export const clientSchemas = {
           .required('Пол обязателен для заполнения'),
       })
     ),
+  }),
+};
+
+// Payment form schemas
+export const paymentSchemas = {
+  create: Yup.object({
+    student: Yup.object({
+      id: commonValidations.id,
+      first_name: commonValidations.shortName,
+      last_name: commonValidations.shortName,
+    }).nullable().required('Необходимо выбрать студента'),
+    amount: Yup.string()
+      .matches(/^\d+(\.\d{1,2})?$/, 'Введите корректную сумму')
+      .required('Сумма обязательна'),
   }),
 };
 

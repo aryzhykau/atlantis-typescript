@@ -12,7 +12,7 @@ import { TrainingStudentTemplateCreate } from '../models/trainingStudentTemplate
 import TrainingTemplateForm from './TrainingTemplateForm'; // Импорт формы
 import TrainingTemplateModal from './TrainingTemplateModal'; // Импортируем модалку для шаблонов
 import RealTrainingModal from './RealTrainingModal'; // Импортируем модалку для реальных тренировок
-import { calculateCapacity, formatCapacityText, shouldShowCapacityBadge } from '../utils/capacityUtils';
+
 
 import { useSnackbar } from '../../../hooks/useSnackBar';
 import { 
@@ -27,6 +27,7 @@ import {
 } from '../../../store/apis/calendarApi-v2';
 import DraggableTrainingChip from './DraggableTrainingChip';
 import DroppableSlotComponent from './DroppableSlot';
+import CalendarTrainingChip from './CalendarTrainingChip';
 import { debugLog } from '../utils/debug';
 import { useAltKey } from '../hooks/useAltKey';
 
@@ -60,185 +61,7 @@ interface SelectedSlotInfo {
   time: string;
 }
 
-// Мемоизированный компонент для Training Chip (вынесен отдельно для оптимизации)
-const TrainingChip = memo<{ 
-  event: CalendarEvent; 
-  isMobile: boolean; 
-  isTablet: boolean;
-  onEventClick: (event: CalendarEvent) => void;
-  isDragActive?: boolean;
-}>(({ event, isMobile, isTablet, onEventClick, isDragActive = false }) => {
-  const theme = useTheme();
-  
-  // Мемоизируем тяжелые вычисления
-  const chipData = useMemo(() => {
-    const typeColor = event.training_type?.color || theme.palette.primary.main;
-    let trainerName = 'Без тренера';
-    let studentCount = 0;
-    const maxParticipants = event.training_type?.max_participants || null;
 
-    // Получаем информацию о тренере
-    if (isTrainingTemplate(event) && event.responsible_trainer) {
-      trainerName = `${event.responsible_trainer.first_name || ''} ${event.responsible_trainer.last_name ? event.responsible_trainer.last_name.charAt(0) + '.' : ''}`.trim();
-    } else if (isRealTraining(event) && event.trainer) {
-      trainerName = `${event.trainer.first_name || ''} ${event.trainer.last_name ? event.trainer.last_name.charAt(0) + '.' : ''}`.trim();
-    }
-
-    // Получаем количество студентов
-    if (isTrainingTemplate(event) && event.assigned_students) {
-      studentCount = event.assigned_students.length;
-    } else if (isRealTraining(event) && event.students) {
-      studentCount = event.students.length;
-    }
-
-    // Рассчитываем информацию о загруженности
-    const capacityInfo = calculateCapacity(studentCount, maxParticipants);
-    const capacityText = formatCapacityText(capacityInfo);
-    const showCapacityBadge = shouldShowCapacityBadge(capacityInfo);
-
-    return {
-      typeColor,
-      trainerName,
-      studentCount,
-      maxParticipants,
-      capacityInfo,
-      capacityText,
-      showCapacityBadge
-    };
-  }, [event, theme.palette.primary.main]);
-
-  // Мемоизируем tooltip content
-  const tooltipContent = useMemo(() => (
-    <Box sx={{ textAlign: 'center' }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-        {event.training_type?.name || 'Тренировка'}
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 0.25 }}>
-        👨 {chipData.trainerName}
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 0.25 }}>
-        👥 Студентов: {chipData.capacityText}
-      </Typography>
-      {chipData.maxParticipants && chipData.maxParticipants < 999 && (
-        <Typography variant="body2" sx={{ 
-          color: chipData.capacityInfo.isFull ? '#ffcdd2' : '#e8f5e8',
-          fontSize: '0.75rem'
-        }}>
-          {chipData.capacityInfo.isFull ? '⚠️ Группа переполнена' : 
-           chipData.capacityInfo.percentage >= 90 ? '⚠️ Почти заполнена' :
-           chipData.capacityInfo.percentage >= 70 ? '⚡ Заполняется' : '✅ Есть свободные места'}
-        </Typography>
-      )}
-    </Box>
-  ), [event.training_type?.name, chipData]);
-
-  // Красивые hover эффекты с оптимизацией производительности
-  const chipSx = useMemo(() => ({
-    backgroundColor: alpha(chipData.typeColor, 0.1),
-    border: `2px solid ${chipData.typeColor}`,
-    borderRadius: 1,
-    px: 0.75,
-    py: 0.25,
-    cursor: 'pointer',
-    maxWidth: isMobile ? '80px' : (isTablet ? '100px' : '120px'),
-    width: 'fit-content',
-    // Оптимизированные transitions без transform (только background и border)
-    transition: 'background 0.2s ease-out, border-color 0.2s ease-out',
-    '&:hover': {
-      background: `linear-gradient(135deg, ${alpha(chipData.typeColor, 0.8)}, ${alpha(chipData.typeColor, 0.6)})`,
-      borderColor: chipData.typeColor,
-      borderRadius: 4, // Более круглые при наведении
-      '& .chip-text': {
-        color: theme.palette.getContrastText(alpha(chipData.typeColor, 0.7)),
-        fontWeight: 700,
-      },
-      '& .trainer-text': {
-        color: alpha(theme.palette.getContrastText(alpha(chipData.typeColor, 0.7)), 0.9),
-      },
-    },
-  }), [chipData.typeColor, isMobile, isTablet, theme.palette]);
-
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    onEventClick(event);
-  }, [event, onEventClick]);
-
-  return (
-    <Tooltip 
-      title={isDragActive ? '' : tooltipContent} 
-      arrow 
-      placement="top"
-      enterDelay={300}
-      leaveDelay={100}
-      disableHoverListener={isDragActive}
-      disableFocusListener={isDragActive}
-      disableTouchListener={isDragActive}
-      open={isDragActive ? false : undefined}
-    >
-      <Box onClick={handleClick} sx={chipSx}>
-        <Typography
-          variant="caption"
-          className="chip-text"
-          sx={{
-            fontSize: isMobile ? '0.6rem' : '0.65rem',
-            fontWeight: 600,
-            color: chipData.typeColor,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: 'block',
-            lineHeight: 1.2,
-            transition: 'color 0.2s ease-out, font-weight 0.2s ease-out',
-          }}
-        >
-          {event.training_type?.name || 'Тренировка'}
-        </Typography>
-        {!isMobile && (
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            width: '100%'
-          }}>
-            <Typography
-              variant="caption"
-              className="trainer-text"
-              sx={{
-                fontSize: '0.6rem',
-                color: alpha(chipData.typeColor, 0.8),
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                flex: 1,
-                transition: 'color 0.2s ease-out',
-              }}
-            >
-              {chipData.trainerName}
-            </Typography>
-            {chipData.showCapacityBadge && (
-              <Box
-                sx={{
-                  backgroundColor: chipData.capacityInfo.color,
-                  color: 'white',
-                  fontSize: '0.5rem',
-                  fontWeight: 600,
-                  borderRadius: '6px',
-                  px: 0.5,
-                  py: 0.125,
-                  minWidth: '16px',
-                  textAlign: 'center',
-                  ml: 0.5,
-                }}
-              >
-                {chipData.capacityText}
-              </Box>
-            )}
-          </Box>
-        )}
-      </Box>
-    </Tooltip>
-  );
-});
 
 const CalendarShell: React.FC<CalendarShellProps> = memo(({
   currentDate,
@@ -917,7 +740,7 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
                             day={day}
                             time={time}
                           >
-                            <TrainingChip 
+                            <CalendarTrainingChip 
                               event={eventItem} 
                               isMobile={isMobile}
                               isTablet={isTablet}
@@ -939,16 +762,18 @@ const CalendarContent: React.FC<CalendarContentProps> = memo((props) => {
                           >
                             <Box
                               sx={{
-                                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                                border: `2px dashed ${alpha(theme.palette.primary.main, 0.5)}`,
+                                backgroundColor: alpha(theme.palette.background.paper, 0.95), // Match chip background
+                                borderLeft: `3px solid ${theme.palette.primary.main}`, // Only thin left border
                                 borderRadius: 2,
                                 px: 1,
                                 py: 0.5,
                                 cursor: 'pointer',
                                 textAlign: 'center',
-                                transition: 'background-color 0.15s ease-out',
+                                transition: 'transform 0.15s ease-out, box-shadow 0.15s ease-out, background-color 0.15s ease-out',
                                 '&:hover': {
-                                  backgroundColor: alpha(theme.palette.primary.main, 0.15),
+                                  transform: 'translateY(-1px)',
+                                  backgroundColor: theme.palette.background.paper,
+                                  boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.12)}`,
                                 },
                               }}
                             >

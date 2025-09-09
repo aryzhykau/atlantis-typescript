@@ -20,3 +20,4 @@ export type { FormikDatePickerProps } from './FormikDatePicker';
 export type { FormikSwitchProps } from './FormikSwitch';
 export type { FormikFieldArrayProps } from './FormikFieldArray';
 export type { FormikColorPickerProps } from './FormikColorPicker';
+export type { FormikAutocompleteProps } from './FormikAutocomplete';
