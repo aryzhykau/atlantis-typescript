@@ -30,6 +30,7 @@ interface TrainerInfoCardProps {
     trainer: ITrainerResponse;
     onEdit: () => void;
     onStatusChange: () => void;
+    showSalary?: boolean;
 }
 
 interface InfoItemProps {
@@ -128,7 +129,7 @@ const InfoItem: React.FC<InfoItemProps> = ({ icon, label, value, color = 'primar
     return content;
 };
 
-export const TrainerInfoCard: React.FC<TrainerInfoCardProps> = ({ trainer, onEdit, onStatusChange }) => {
+export const TrainerInfoCard: React.FC<TrainerInfoCardProps> = ({ trainer, onEdit, onStatusChange, showSalary = true }) => {
     const theme = useTheme();
     const gradients = useGradients();
 
@@ -291,31 +292,35 @@ export const TrainerInfoCard: React.FC<TrainerInfoCardProps> = ({ trainer, onEdi
                     />
                 </Box>
 
-                <Box sx={{ mb: 3 }}>
-                    <InfoItem
-                        icon={<AttachMoneyOutlinedIcon />}
-                        label="Оклад"
-                        value={trainer.salary !== null ? `${trainer.salary} €` : 'Не указан'}
-                        color="success"
-                    />
-                </Box>
-
-                <Box>
-                    <InfoItem
-                        icon={<WorkOutlineIcon />}
-                        label="Тип оклада"
-                        value={
-                            <Chip 
-                                label={trainer.is_fixed_salary ? 'Фиксированный' : 'Процентный'} 
-                                size="small" 
-                                color={trainer.is_fixed_salary ? 'info' : 'default'}
-                                variant="outlined"
-                                sx={{ ml: 0.5 }}
+{showSalary && (
+                    <>
+                        <Box sx={{ mb: 3 }}>
+                            <InfoItem
+                                icon={<AttachMoneyOutlinedIcon />}
+                                label="Оклад"
+                                value={trainer.salary !== null ? `${trainer.salary} €` : 'Не указан'}
+                                color="success"
                             />
-                        }
-                        color="info"
-                    />
-                </Box>
+                        </Box>
+
+                        <Box>
+                            <InfoItem
+                                icon={<WorkOutlineIcon />}
+                                label="Тип оклада"
+                                value={
+                                    <Chip 
+                                        label={trainer.is_fixed_salary ? 'Фиксированный' : 'Процентный'} 
+                                        size="small" 
+                                        color={trainer.is_fixed_salary ? 'info' : 'default'}
+                                        variant="outlined"
+                                        sx={{ ml: 0.5 }}
+                                    />
+                                }
+                                color="info"
+                            />
+                        </Box>
+                    </>
+                )}
             </Box>
         </Paper>
     );

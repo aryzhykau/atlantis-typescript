@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Box, Button, Typography, TextField, Paper, FormControlLabel, Switch, InputAdornment, alpha, Dialog, DialogContent, IconButton } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Link as RouterLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import { useGetTrainersQuery, useCreateTrainerMutation, useUpdateTrainerMutation } from '../../../store/apis/trainersApi';
 import { ITrainerResponse, ITrainerCreatePayload, ITrainerUpdatePayload } from '../models/trainer';
@@ -11,14 +11,17 @@ import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
 import { useSnackbar } from '../../../hooks/useSnackBar';
-import { trainerColums } from '../tables/trainersColumns';
+import { getTrainerColumns } from '../tables/trainersColumns';
+import { useCurrentUser } from '../../../hooks/usePermissions';
 
 export function TrainersListPage() {
     const { data: trainersListResponse, isLoading, isError, error } = useGetTrainersQuery();
     const [createTrainer] = useCreateTrainerMutation();
     const [updateTrainer] = useUpdateTrainerMutation();
+    const navigate = useNavigate();
 
     const { displaySnackbar } = useSnackbar();
+    const { user } = useCurrentUser();
 
     const gradients = useGradients();
     const theme = useTheme();
@@ -84,13 +87,36 @@ export function TrainersListPage() {
         return trainers.sort((a, b) => a.id - b.id); 
     }, [trainersListResponse, searchText, showOnlyActive]);
 
+    // Handle row click to navigate to trainer page
+    const handleRowClick = (params: any) => {
+        // Don't navigate if clicking on email or phone columns
+        if (params.field === 'email' || params.field === 'phone') {
+            return;
+        }
+        navigate(`/home/trainers/${params.row.id}`);
+    };
+
+    // Get role-based columns
+    const roleBasedColumns = getTrainerColumns(user?.role);
+    
     const columns: GridColDef<ITrainerResponse>[] = [
         {
             field: 'id',
             headerName: 'ID',
             width: 90,
             renderCell: (params: GridRenderCellParams<ITrainerResponse>) => (
-                <RouterLink to={`/home/trainers/${params.row.id}`} style={{ color: theme.palette.primary.main, textDecoration: 'none', fontWeight: 500 }}>{params.value}</RouterLink>
+                <Typography 
+                    sx={{ 
+                        color: theme.palette.primary.main, 
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        '&:hover': {
+                            textDecoration: 'underline'
+                        }
+                    }}
+                >
+                    {params.value}
+                </Typography>
             ),
         },
         {
@@ -99,26 +125,44 @@ export function TrainersListPage() {
             flex: 1,
             minWidth: 150,
             valueGetter: (_value: any, row: ITrainerResponse) => `${row.first_name || ''} ${row.last_name || ''}`,
-        },
-        ...trainerColums.filter(col => !['first_name', 'last_name', 'id'].includes(col.field)),
-        {
-            field: 'actions',
-            headerName: 'Действия',
-            sortable: false,
-            filterable: false,
-            disableColumnMenu: true,
-            flex: 1,
-            minWidth: 150,
             renderCell: (params: GridRenderCellParams<ITrainerResponse>) => (
-                <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => handleOpenModal(params.row)}
+                <Typography 
+                    sx={{ 
+                        cursor: 'pointer',
+                        '&:hover': {
+                            color: theme.palette.primary.main
+                        }
+                    }}
                 >
-                    Редактировать
-                </Button>
+                    {params.value}
+                </Typography>
             ),
-        }
+        },
+        ...roleBasedColumns
+            .filter((col: any) => !['first_name', 'last_name', 'id'].includes(col.field))
+            .map((col: any) => {
+                // Modify email and phone columns to prevent row click navigation
+                if (col.field === 'email' || col.field === 'phone') {
+                    return {
+                        ...col,
+                        renderCell: (params: GridRenderCellParams<ITrainerResponse>) => (
+                            <Typography 
+                                onClick={(e) => e.stopPropagation()}
+                                sx={{ 
+                                    cursor: 'default',
+                                    userSelect: 'text'
+                                }}
+                            >
+                                {col.field === 'phone' 
+                                    ? `${params.row.phone_country_code} ${params.row.phone_number}`
+                                    : params.value
+                                }
+                            </Typography>
+                        )
+                    };
+                }
+                return col;
+            }),
     ];
 
     if (isLoading && !trainersListResponse) { 
@@ -241,6 +285,7 @@ export function TrainersListPage() {
                         },
                     }}
                     disableRowSelectionOnClick
+                    onCellClick={handleRowClick}
                     sx={{
                         borderRadius: 3,
                         background: isDark ? alpha(theme.palette.background.paper, 0.85) : 'white',
@@ -255,6 +300,7 @@ export function TrainersListPage() {
                         },
                         '& .MuiDataGrid-row': {
                             transition: 'background 0.2s',
+                            cursor: 'pointer',
                         },
                         '& .MuiDataGrid-row:hover': {
                             background: alpha(theme.palette.primary.main, isDark ? 0.13 : 0.07),
@@ -268,10 +314,6 @@ export function TrainersListPage() {
                         },
                         '& .MuiDataGrid-selectedRowCount': {
                             display: 'none',
-                        },
-                        '& .MuiDataGrid-actionsCell': {
-                            display: 'flex',
-                            gap: 1,
                         },
                     }}
                 />
