@@ -57,9 +57,15 @@ export const useCalendarContainer = ({
     calendarActions.openEventModal(event.id, eventType);
   };
 
+  const handleViewAllEventsClick = (day: Dayjs, time: string, events: CalendarEvent[]) => {
+    const isTemplate = viewMode === 'scheduleTemplate';
+    calendarActions.openSlotEventsList(day, time, events, isTemplate);
+  };
+
   const handlers = {
     handleSlotClick,
     handleEventClick,
+    handleViewAllEventsClick,
     handleTrainingDrop,
   };
 

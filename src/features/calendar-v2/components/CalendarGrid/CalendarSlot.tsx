@@ -18,6 +18,7 @@ interface CalendarSlotProps {
   maxVisibleEvents: number;
   onSlotClick: (day: Dayjs, time: string, events: CalendarEvent[]) => void;
   onEventClick: (event: CalendarEvent) => void;
+  onViewAllEvents: (day: Dayjs, time: string, events: CalendarEvent[]) => void;
   responsiveStyles: any;
 }
 
@@ -33,6 +34,7 @@ export const CalendarSlot: React.FC<CalendarSlotProps> = ({
   maxVisibleEvents,
   onSlotClick,
   onEventClick,
+  onViewAllEvents,
   responsiveStyles,
 }) => {
   const theme = useTheme();
@@ -47,6 +49,12 @@ export const CalendarSlot: React.FC<CalendarSlotProps> = ({
   const handleSlotClickInternal = (e: React.MouseEvent) => {
     e.preventDefault();
     onSlotClick(day, time, events);
+  };
+
+  const handleViewAllEventsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onViewAllEvents(day, time, events);
   };
 
   return (
@@ -110,7 +118,7 @@ export const CalendarSlot: React.FC<CalendarSlotProps> = ({
           {/* Overflow indicator */}
           {hiddenEventsCount > 0 && (
             <Tooltip 
-              title={isDragging ? '' : `Ещё ${hiddenEventsCount} тренировок. Кликните чтобы увидеть все.`}
+              title={isDragging ? '' : `Ещё ${hiddenEventsCount} событий. Кликните чтобы увидеть все.`}
               arrow 
               placement="top"
               disableHoverListener={isDragging}
@@ -131,7 +139,7 @@ export const CalendarSlot: React.FC<CalendarSlotProps> = ({
                     backgroundColor: alpha(theme.palette.primary.main, 0.1),
                   },
                 }}
-                onClick={handleSlotClickInternal}
+                onClick={handleViewAllEventsClick}
               >
                 <Typography 
                   variant="caption" 

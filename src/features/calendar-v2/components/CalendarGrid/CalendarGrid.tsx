@@ -16,6 +16,7 @@ interface CalendarGridProps {
   eventsToDisplay: CalendarEvent[];
   onSlotClick: (day: Dayjs, time: string, events: CalendarEvent[]) => void;
   onEventClick: (event: CalendarEvent) => void;
+  onViewAllEvents: (day: Dayjs, time: string, events: CalendarEvent[]) => void;
 }
 
 /**
@@ -28,6 +29,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   eventsToDisplay,
   onSlotClick,
   onEventClick,
+  onViewAllEvents,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -76,6 +78,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             getEventsForSlot={getEventsForSlot}
             onSlotClick={onSlotClick}
             onEventClick={onEventClick}
+            onViewAllEvents={onViewAllEvents}
             responsiveStyles={responsiveStyles}
           />
         ))}

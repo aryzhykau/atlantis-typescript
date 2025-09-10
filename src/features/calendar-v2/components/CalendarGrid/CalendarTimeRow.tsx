@@ -12,6 +12,7 @@ interface CalendarTimeRowProps {
   getEventsForSlot: (day: Dayjs, time: string) => CalendarEvent[];
   onSlotClick: (day: Dayjs, time: string, events: CalendarEvent[]) => void;
   onEventClick: (event: CalendarEvent) => void;
+  onViewAllEvents: (day: Dayjs, time: string, events: CalendarEvent[]) => void;
   responsiveStyles: any;
 }
 
@@ -25,6 +26,7 @@ export const CalendarTimeRow: React.FC<CalendarTimeRowProps> = ({
   getEventsForSlot,
   onSlotClick,
   onEventClick,
+  onViewAllEvents,
   responsiveStyles,
 }) => {
   const theme = useTheme();
@@ -76,6 +78,7 @@ export const CalendarTimeRow: React.FC<CalendarTimeRowProps> = ({
             maxVisibleEvents={maxChips}
             onSlotClick={onSlotClick}
             onEventClick={onEventClick}
+            onViewAllEvents={onViewAllEvents}
             responsiveStyles={responsiveStyles}
           />
         );

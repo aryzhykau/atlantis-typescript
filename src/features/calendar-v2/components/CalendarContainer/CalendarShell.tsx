@@ -70,6 +70,7 @@ const CalendarShell: React.FC<CalendarShellProps> = memo(({
             eventsToDisplay={eventsToDisplay}
             onSlotClick={handlers.handleSlotClick}
             onEventClick={handlers.handleEventClick}
+            onViewAllEvents={handlers.handleViewAllEventsClick}
           />
           
           <CalendarModals
