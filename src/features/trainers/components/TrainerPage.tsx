@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
     Box, 
     Typography, 
-    CircularProgress, 
     IconButton, 
     Paper, 
     Tabs, 
@@ -14,6 +13,7 @@ import {
     DialogContent,
     alpha
 } from '@mui/material';
+import { MiniSpringLoader } from '../../../components/loading/MiniSpringLoader';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useGetTrainerByIdQuery, useUpdateTrainerStatusMutation, useUpdateTrainerMutation } from '../../../store/apis/trainersApi';
 import { useSnackbar } from '../../../hooks/useSnackBar';
@@ -241,11 +241,7 @@ export function TrainerPage() {
     };
 
     if (isLoading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-                <CircularProgress />
-            </Box>
-        );
+        return <MiniSpringLoader />;
     }
 
     if (!trainer) {
