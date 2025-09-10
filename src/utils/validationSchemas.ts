@@ -282,6 +282,49 @@ export const paymentSchemas = {
   }),
 };
 
+// Admin form schemas
+export const adminSchemas = {
+  create: Yup.object({
+    first_name: Yup.string()
+      .min(2, 'Имя должно содержать минимум 2 символа')
+      .max(50, 'Имя не должно превышать 50 символов')
+      .required('Имя обязательно'),
+    last_name: Yup.string()
+      .min(2, 'Фамилия должна содержать минимум 2 символа')
+      .max(50, 'Фамилия не должна превышать 50 символов')
+      .required('Фамилия обязательна'),
+    date_of_birth: Yup.date()
+      .max(new Date(), 'Дата рождения не может быть в будущем')
+      .required('Дата рождения обязательна'),
+    email: Yup.string()
+      .email('Неверный формат email')
+      .required('Email обязателен'),
+    phone: Yup.string()
+      .min(5, 'Номер телефона должен содержать минимум 5 символов')
+      .required('Номер телефона обязателен'),
+  }),
+  
+  update: Yup.object({
+    first_name: Yup.string()
+      .min(2, 'Имя должно содержать минимум 2 символа')
+      .max(50, 'Имя не должно превышать 50 символов')
+      .required('Имя обязательно'),
+    last_name: Yup.string()
+      .min(2, 'Фамилия должна содержать минимум 2 символа')
+      .max(50, 'Фамилия не должна превышать 50 символов')
+      .required('Фамилия обязательна'),
+    date_of_birth: Yup.date()
+      .max(new Date(), 'Дата рождения не может быть в будущем')
+      .nullable(),
+    email: Yup.string()
+      .email('Неверный формат email')
+      .required('Email обязателен'),
+    phone: Yup.string()
+      .min(5, 'Номер телефона должен содержать минимум 5 символов')
+      .required('Номер телефона обязателен'),
+  }),
+};
+
 // Utility function to make fields optional
 export const makeFieldsOptional = (
   schema: Yup.ObjectSchema<any>, 

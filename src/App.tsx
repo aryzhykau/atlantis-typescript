@@ -67,6 +67,13 @@ function App() {
                                                   </Route>
                                               );
                                           }
+                                          if (item.link === "admin-management") {
+                                              return (
+                                                  <Route key={item.link} path={item.link}>
+                                                      <Route index element={isMobile ? item.mobilePage : item.page} />
+                                                  </Route>
+                                              );
+                                          }
                                           return <Route key={item.link} path={item.link} element={isMobile ? item.mobilePage : item.page} />;
                                       })
                                   }

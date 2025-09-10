@@ -4,4 +4,5 @@ export interface IMenuItems {
     icon: React.ReactNode;
     page: React.ReactNode;
     mobilePage: React.ReactNode;
+    ownerOnly?: boolean;
 }
