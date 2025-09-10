@@ -2,8 +2,6 @@ import React, { useMemo, useCallback, memo } from 'react';
 import { Box, Typography, Tooltip, useTheme, alpha } from '@mui/material';
 import { CalendarEvent } from '../types';
 import { createEventDisplayData, createTooltipContent, getResponsiveChipStyles } from '../utils/eventDisplayUtils';
-import { borderBottom, borderRadius } from '@mui/system';
-import { BorderRightRounded } from '@mui/icons-material';
 
 interface CalendarTrainingChipProps {
   event: CalendarEvent;

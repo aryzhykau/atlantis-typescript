@@ -1,6 +1,7 @@
-import {Box, Typography, IconButton, Drawer, Dialog, DialogTitle, DialogContent, DialogActions, Button} from "@mui/material";
+import {Box, Typography, IconButton, Drawer, Dialog, DialogTitle, DialogContent, DialogActions, Button, Tooltip, useTheme} from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
-import {Logout} from '@mui/icons-material';
+import {Logout, LightMode as LightModeIcon, DarkMode as DarkModeIcon} from '@mui/icons-material';
+import { useThemeMode } from '../theme/ThemeModeProvider';
 import {useState} from "react";
 import {MobileSideBar} from "../components/sideBar/MobileSidebar.tsx";
 import {useAuth} from "../hooks/useAuth.tsx";
@@ -9,6 +10,8 @@ export function MobileHomeLayout({children}:{children: React.ReactNode}) {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
     const { doLogout } = useAuth();
+    const theme = useTheme();
+    const { toggleMode } = useThemeMode();
     
     const toggleDrawer = (value: boolean) => setDrawerOpen(value);
 
@@ -63,18 +66,25 @@ export function MobileHomeLayout({children}:{children: React.ReactNode}) {
                 </Drawer>
             </Box>
             <Box sx={{position: 'absolute', top: 20, right: 20}}>
-                <IconButton
-                    color="inherit"
-                    onClick={handleLogoutClick}
-                    sx={{ 
-                        color: 'error.main',
-                        '&:hover': {
-                            backgroundColor: 'error.light + 20',
-                        }
-                    }}
-                >
-                    <Logout />
-                </IconButton>
+                <Box sx={{display: 'flex', gap: 1}}>
+                    <Tooltip title="Переключить тему">
+                        <IconButton onClick={() => toggleMode?.()}>
+                            {theme.palette.mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+                        </IconButton>
+                    </Tooltip>
+                    <IconButton
+                        color="inherit"
+                        onClick={handleLogoutClick}
+                        sx={{ 
+                            color: 'error.main',
+                            '&:hover': {
+                                backgroundColor: 'error.light + 20',
+                            }
+                        }}
+                    >
+                        <Logout />
+                    </IconButton>
+                </Box>
             </Box>
         </Box>
         <Box>
