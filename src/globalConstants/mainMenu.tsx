@@ -7,7 +7,7 @@ import PaymentsIcon from '@mui/icons-material/Payments';
 import SchoolIcon from '@mui/icons-material/School';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import {ClientsLayout} from "../layouts/clients/Clients.tsx";
-import { TrainersListPage } from "../features/trainers/components/TrainersListPage.tsx";
+import { UnifiedTrainersDataGrid } from "../features/trainers/components/UnifiedTrainersDataGrid.tsx";
 import {DashboardLayout} from "../layouts/Dashboard.tsx";
 import { TrainingSettings } from "../layouts/trainingTypesSubscriptions/TrainingSettings.tsx";
 import {MobileClients} from "../layouts/clients/MobileClients.tsx";
@@ -53,8 +53,8 @@ export const MenuItems: IMenuItems[] = [
         title: "Тренеры",
         link: "trainers",
         icon: <SportsIcon/>,
-        page: <TrainersListPage/>,
-        mobilePage: <TrainersListPage/>
+        page: <UnifiedTrainersDataGrid/>,
+        mobilePage: <UnifiedTrainersDataGrid/>
     },
     {
         title: "Тренировки и абонементы",
