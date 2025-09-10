@@ -130,7 +130,7 @@ export function SideBar({width, isCollapsed = false, onToggle}: SideBarProps) {
                         </Typography>
                     </>
                 ) : (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', overflow }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <Typography 
                             variant="h5" 
                             sx={{ 
