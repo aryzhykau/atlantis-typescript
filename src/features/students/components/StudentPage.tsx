@@ -227,13 +227,10 @@ export function StudentPage() {
     }
 
     // Статистика студента
-    const activeSubscriptions = enrichedStudentSubscriptions.filter(sub => 
-        dayjs().isBetween(dayjs(sub.start_date), dayjs(sub.end_date), null, '[]')
-    );
-    const totalSessions = enrichedStudentSubscriptions.reduce((sum, sub) => sum + (sub.sessions_left || 0), 0);
-    const frozenSubscriptions = enrichedStudentSubscriptions.filter(sub => 
-        sub.freeze_start_date && sub.freeze_end_date
-    );
+    const activeSubscriptions = enrichedStudentSubscriptions.filter(sub => sub.status === 'ACTIVE');
+    const totalSessions = enrichedStudentSubscriptions
+        .filter(sub => sub.status === 'ACTIVE') // Считаем только активные сессии
+        .reduce((sum, sub) => sum + (sub.sessions_left || 0), 0);
 
     return (
         <Box sx={{ minHeight: '100vh', background: theme.palette.background.default }}>
@@ -414,10 +411,10 @@ export function StudentPage() {
                             >
                                 <EventAvailableIcon sx={{ fontSize: 32, mb: 1, opacity: 0.9 }} />
                                 <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                    {frozenSubscriptions.length}
+                                    {enrichedStudentSubscriptions.length}
                                 </Typography>
                                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                    Замороженных
+                                    Всего абонементов
                                 </Typography>
                             </Paper>
                         </Grid>

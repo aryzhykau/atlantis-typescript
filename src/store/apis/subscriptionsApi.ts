@@ -49,8 +49,19 @@ export const subscriptionsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (_, __, { subscriptionId }) => [{ type: 'Subscription', id: subscriptionId }, { type: 'Subscription', id: 'LIST' }],
         }),
-        getStudentSubscriptions: builder.query<IStudentSubscriptionResponse[], { studentId: number }>({
-            query: ({ studentId }) => `/subscriptions/student/${studentId}`,
+        getStudentSubscriptions: builder.query<IStudentSubscriptionResponse[], { 
+            studentId: number; 
+            status?: string; 
+            includeExpired?: boolean 
+        }>({
+            query: ({ studentId, status, includeExpired = true }) => {
+                const params = new URLSearchParams();
+                if (status) params.append('status', status);
+                if (includeExpired !== undefined) params.append('include_expired', includeExpired.toString());
+                
+                const queryString = params.toString();
+                return `/subscriptions/student/${studentId}${queryString ? `?${queryString}` : ''}`;
+            },
             providesTags: (result, __, { studentId }) => 
                 result
                     ? [
