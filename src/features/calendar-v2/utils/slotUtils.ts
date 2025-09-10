@@ -3,7 +3,8 @@
  */
 
 import dayjs, { Dayjs } from 'dayjs';
-import { CalendarEvent, isTrainingTemplate, isRealTraining } from '../components/CalendarShell';
+import { CalendarEvent } from '../types';
+import { isTrainingTemplate, isRealTraining } from '../types/typeGuards';
 
 /**
  * Creates a unique key for a calendar slot

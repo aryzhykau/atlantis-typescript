@@ -4,7 +4,8 @@
 
 import { useCallback } from 'react';
 import { Dayjs } from 'dayjs';
-import { CalendarEvent, isTrainingTemplate, isRealTraining } from '../components/CalendarShell';
+import { CalendarEvent } from '../types';
+import { isTrainingTemplate, isRealTraining } from '../types/typeGuards';
 import { CalendarViewMode } from '../components/CalendarV2Page';
 import { 
   useMoveTrainingTemplateMutation, 
@@ -37,7 +38,7 @@ export interface UseDragDropReturn {
  * Hook for managing calendar drag & drop operations
  */
 export const useCalendarDragDrop = (
-  viewMode: CalendarViewMode,
+  _viewMode: CalendarViewMode,
   currentDate: Dayjs
 ): UseDragDropReturn => {
   const { displaySnackbar } = useSnackbar();
@@ -106,22 +107,31 @@ export const useCalendarDragDrop = (
       // Create template first
       const createdTemplate = await createTrainingTemplate(newTemplate).unwrap();
       
-      // Add students if any
-      if (originalStudents.length > 0) {
-        const studentPromises = originalStudents.map(async (studentTemplate) => {
-          const studentData: TrainingStudentTemplateCreate = {
-            training_template_id: createdTemplate.id,
-            student_id: studentTemplate.student.id,
-            start_date: studentTemplate.start_date,
-            is_frozen: studentTemplate.is_frozen,
-          };
-          return createTrainingStudentTemplate(studentData).unwrap();
-        });
-        
-        await Promise.all(studentPromises);
-      }
-      
-      debugLog('🎉 Дублирование шаблона завершено успешно');
+        // Add students if any
+        if (originalStudents.length > 0) {
+          const studentPromises = originalStudents.map(async (studentTemplate) => {
+            try {
+              const studentData: TrainingStudentTemplateCreate = {
+                training_template_id: createdTemplate.id,
+                student_id: studentTemplate.student.id,
+                start_date: studentTemplate.start_date,
+                is_frozen: studentTemplate.is_frozen,
+              };
+              return await createTrainingStudentTemplate(studentData).unwrap();
+            } catch (error) {
+              console.warn(`Failed to add student template ${studentTemplate.student.id}:`, error);
+              return null; // Return null for failed additions
+            }
+          });
+          
+          const results = await Promise.allSettled(studentPromises);
+          const successCount = results.filter(r => r.status === 'fulfilled' && r.value !== null).length;
+          const failCount = originalStudents.length - successCount;
+          
+          if (failCount > 0) {
+            console.warn(`${failCount} student templates failed to be added to template ${createdTemplate.id}`);
+          }
+        }      debugLog('🎉 Дублирование шаблона завершено успешно');
       const studentCount = originalStudents.length;
       const studentText = studentCount > 0 ? ` (со ${studentCount} студентами)` : '';
       displaySnackbar(`📋 Шаблон тренировки "${event.training_type?.name}" продублирован${studentText}`, 'success');
@@ -144,13 +154,24 @@ export const useCalendarDragDrop = (
       // Add students if any
       if (originalStudents.length > 0) {
         const studentPromises = originalStudents.map(async (trainingStudent) => {
-          return addStudentToRealTraining({
-            training_id: createdTraining.id,
-            student_id: trainingStudent.student.id,
-          }).unwrap();
+          try {
+            return await addStudentToRealTraining({
+              training_id: createdTraining.id,
+              student_id: trainingStudent.student.id,
+            }).unwrap();
+          } catch (error) {
+            console.warn(`Failed to add student ${trainingStudent.student.id}:`, error);
+            return null; // Return null for failed additions
+          }
         });
         
-        await Promise.all(studentPromises);
+        const results = await Promise.allSettled(studentPromises);
+        const successCount = results.filter(r => r.status === 'fulfilled' && r.value !== null).length;
+        const failCount = originalStudents.length - successCount;
+        
+        if (failCount > 0) {
+          console.warn(`${failCount} students failed to be added to training ${createdTraining.id}`);
+        }
       }
       
       debugLog('🎉 Дублирование тренировки завершено успешно');

@@ -7,6 +7,7 @@ import { useTheme, useMediaQuery } from '@mui/material';
 
 export interface ResponsiveCalendarStyles {
   gridTemplateColumns: string;
+  timeColumnWidth: string;
   fontSize: string;
   slotHeight: string;
   cardPadding: string;
@@ -26,32 +27,37 @@ export const useResponsiveCalendarStyles = (): ResponsiveCalendarStyles => {
   const responsiveStyles = useMemo((): ResponsiveCalendarStyles => {
     let breakpoint: 'mobile' | 'tablet' | 'desktop' = 'desktop';
     let gridTemplateColumns: string;
+    let timeColumnWidth: string;
     let fontSize: string;
     let slotHeight: string;
     let cardPadding: string;
 
     if (isMobile) {
       breakpoint = 'mobile';
-      gridTemplateColumns = '60px repeat(7, minmax(80px, 1fr))';
+      timeColumnWidth = '50px';
+      gridTemplateColumns = '50px repeat(7, 1fr)';
       fontSize = '0.7rem';
-      slotHeight = '80px';
-      cardPadding = '2px';
+      slotHeight = '90px';
+      cardPadding = '4px';
     } else if (isTablet) {
       breakpoint = 'tablet';
-      gridTemplateColumns = '80px repeat(7, minmax(100px, 1fr))';
+      timeColumnWidth = '70px';
+      gridTemplateColumns = '70px repeat(7, 1fr)';
       fontSize = '0.8rem';
-      slotHeight = '100px';
-      cardPadding = '4px';
+      slotHeight = '120px';
+      cardPadding = '6px';
     } else {
       breakpoint = 'desktop';
-      gridTemplateColumns = '100px repeat(7, minmax(140px, 1fr))';
+      timeColumnWidth = '90px';
+      gridTemplateColumns = '90px repeat(7, 1fr)';
       fontSize = '0.9rem';
-      slotHeight = '110px';
-      cardPadding = '6px';
+      slotHeight = '130px';
+      cardPadding = '8px';
     }
 
     return {
       gridTemplateColumns,
+      timeColumnWidth,
       fontSize,
       slotHeight,
       cardPadding,

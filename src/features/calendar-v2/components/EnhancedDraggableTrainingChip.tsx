@@ -5,7 +5,7 @@
 import React, { memo, useRef, useCallback, useMemo } from 'react';
 import { useDrag, DragPreviewImage } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
-import { CalendarEvent } from './CalendarShell';
+import { CalendarEvent } from '../types';
 import { Dayjs } from 'dayjs';
 import { useAltKey } from '../hooks/useAltKey';
 import { debugLog } from '../utils/debug';

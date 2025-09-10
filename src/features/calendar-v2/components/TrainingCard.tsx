@@ -4,7 +4,8 @@ import { useTheme, alpha } from '@mui/material/styles';
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import SportsIcon from '@mui/icons-material/Sports';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { CalendarEvent, isRealTraining, isTrainingTemplate } from './CalendarShell';
+import { CalendarEvent } from '../types';
+import { isTrainingTemplate, isRealTraining } from '../types/typeGuards';
 
 interface TrainingCardProps {
   event: CalendarEvent;

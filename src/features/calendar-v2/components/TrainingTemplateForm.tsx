@@ -2,7 +2,7 @@ import React, { useMemo, memo } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, CircularProgress, 
   Typography, Chip, IconButton, Box,
-  useTheme, alpha, Divider, Paper, Card, CardContent
+  useTheme, alpha, Divider, Paper, Card, CardContent, Autocomplete, TextField
 } from '@mui/material';
 import { FormikAutocomplete, FormikDatePicker } from '../../../components/forms/fields';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -86,6 +86,19 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
   
   const trainers = trainersData?.trainers || [];
   const studentOptions = students || [];
+  
+  // Filter and deduplicate training types
+  const uniqueTrainingTypes = useMemo(() => {
+    if (!trainingTypes) return [];
+    
+    // Filter out training types with empty names and deduplicate by id
+    const filtered = trainingTypes.filter(type => type && type.name && type.name.trim() !== '');
+    const unique = filtered.filter((type, index, self) => 
+      self.findIndex(t => t.id === type.id) === index
+    );
+    
+    return unique;
+  }, [trainingTypes]);
 
   const initialValues: FormValues = {
     trainingType: null,
@@ -157,7 +170,7 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
           onSubmit={handleSubmit}
           enableReinitialize={false}
         >
-          {({ values, isSubmitting, dirty, isValid }) => {
+          {({ values, isSubmitting, dirty, isValid, setFieldValue, setFieldTouched, errors, touched }) => {
             // Мемоизируем borderColor чтобы избежать пересчета при каждом рендере
             const borderColor = useMemo(() => 
               values.trainingType?.color || theme.palette.primary.main, 
@@ -249,15 +262,23 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                       </Box>
                       <Divider sx={{ mb: 2 }} />
                       
-                      <FormikAutocomplete<ITrainingType>
-                        name="trainingType"
-                        label="Выберите тип тренировки"
-                        options={trainingTypes || []}
+                      <Autocomplete
+                        options={uniqueTrainingTypes}
                         getOptionLabel={(option) => option?.name || ''}
                         isOptionEqualToValue={(option, value) => value !== null && option.id === value.id}
-                        isLoading={isLoadingTypes}
+                        loading={isLoadingTypes}
+                        value={values.trainingType}
+                        onChange={(_, newValue) => {
+                          setFieldValue('trainingType', newValue);
+                          setFieldTouched('trainingType', true);
+                        }}
                         renderOption={(props: any, option: ITrainingType) => (
-                          <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box 
+                            component="li" 
+                            {...props} 
+                            key={option.id} 
+                            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                          >
                             <Box 
                               sx={{ 
                                 width: 16, 
@@ -272,22 +293,29 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                             )}
                           </Box>
                         )}
-                        textFieldProps={{
-                          fullWidth: true,
-                          InputProps: values.trainingType ? {
-                            startAdornment: (
-                              <Box 
-                                sx={{ 
-                                  width: 20, 
-                                  height: 20, 
-                                  borderRadius: '50%', 
-                                  backgroundColor: values.trainingType.color || theme.palette.grey[400],
-                                  mr: 1
-                                }} 
-                              />
-                            )
-                          } : undefined
-                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Выберите тип тренировки"
+                            fullWidth
+                            error={touched.trainingType && Boolean(errors.trainingType)}
+                            helperText={touched.trainingType && errors.trainingType}
+                            InputProps={{
+                              ...params.InputProps,
+                              startAdornment: values.trainingType ? (
+                                <Box 
+                                  sx={{ 
+                                    width: 20, 
+                                    height: 20, 
+                                    borderRadius: '50%', 
+                                    backgroundColor: values.trainingType.color || theme.palette.grey[400],
+                                    mr: 1
+                                  }} 
+                                />
+                              ) : params.InputProps.startAdornment
+                            }}
+                          />
+                        )}
                       />
                     </CardContent>
                   </Card>

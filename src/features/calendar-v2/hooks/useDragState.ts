@@ -4,7 +4,7 @@
  */
 
 import { useReducer, useCallback, useRef } from 'react';
-import { CalendarEvent } from '../components/CalendarShell';
+import { CalendarEvent } from '../types';
 import { Dayjs } from 'dayjs';
 
 export interface DragState {

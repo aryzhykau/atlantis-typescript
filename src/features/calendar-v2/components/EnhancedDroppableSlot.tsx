@@ -6,7 +6,7 @@ import React, { memo, useMemo, useCallback, useState } from 'react';
 import { useDrop } from 'react-dnd';
 import { Box, Fade, useTheme, alpha } from '@mui/material';
 import { Dayjs } from 'dayjs';
-import { CalendarEvent } from './CalendarShell';
+import { CalendarEvent } from '../types';
 
 interface EnhancedDroppableSlotProps {
   day: Dayjs;

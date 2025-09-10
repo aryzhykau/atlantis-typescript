@@ -118,7 +118,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
               
               const patchResult = dispatch(
                 calendarApiV2.util.updateQueryData('getTrainingTemplates', queryArgs, (draft) => {
-                  debugLog('📝 Обновляем кеш с параметрами:', queryArgs, 'найдено элементов:', draft.length);
+                  debugLog(`📝 Обновляем кеш с параметрами: ${JSON.stringify(queryArgs)}, найдено элементов: ${draft.length}`);
                   const template = draft.find(t => t.id === id);
                   if (template) {
                     debugLog('✅ Нашли шаблон в кеше, обновляем:', template);
@@ -310,7 +310,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
               
               const patchResult = dispatch(
                 calendarApiV2.util.updateQueryData('getRealTrainings', queryArgs, (draft) => {
-                  debugLog('📝 Обновляем кеш с параметрами:', queryArgs, 'найдено элементов:', draft.length);
+                  debugLog(`📝 Обновляем кеш с параметрами: ${JSON.stringify(queryArgs)}, найдено элементов: ${draft.length}`);
                   const training = draft.find(t => t.id === id);
                   if (training) {
                     debugLog('✅ Нашли тренировку в кеше, обновляем:', training);

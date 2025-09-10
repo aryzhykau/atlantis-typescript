@@ -3,7 +3,8 @@
  */
 
 import { Theme } from '@mui/material/styles';
-import { CalendarEvent, isTrainingTemplate, isRealTraining } from '../components/CalendarShell';
+import { CalendarEvent } from '../types';
+import { isTrainingTemplate, isRealTraining } from '../types/typeGuards';
 import { calculateCapacity, formatCapacityText, shouldShowCapacityBadge } from './capacityUtils';
 
 export interface EventDisplayData {

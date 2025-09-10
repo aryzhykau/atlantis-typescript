@@ -4,7 +4,7 @@
 
 import { useMemo } from 'react';
 import { Dayjs } from 'dayjs';
-import { CalendarEvent } from '../components/CalendarShell';
+import { CalendarEvent } from '../types';
 import { CalendarViewMode } from '../components/CalendarV2Page';
 import { createEventSlotMap, getEventsForSlot } from '../utils/slotUtils';
 import { debugLog } from '../utils/debug';
