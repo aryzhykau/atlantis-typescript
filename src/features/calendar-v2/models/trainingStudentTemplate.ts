@@ -7,7 +7,9 @@
 export interface ClientBasicInfo {
   first_name?: string;
   last_name?: string;
-  phone?: string;
+  phone_country_code?: string;
+  phone_number?: string;
+  phone?: string; // Combined phone for convenience
   email?: string; // Email тоже может быть полезен
   // Можно добавить id клиента, если потребуется
 }

@@ -4,7 +4,7 @@ import { alpha } from '@mui/material/styles';
 import { CellComponentProps, PhoneData } from '../types';
 
 interface PhoneCellProps extends CellComponentProps {
-  value: string | PhoneData;
+  value: string | PhoneData | null | undefined;
   enableAccessibility?: boolean;
 }
 
@@ -12,6 +12,15 @@ export const PhoneCell: React.FC<PhoneCellProps> = ({
   value, 
   enableAccessibility = true,
 }) => {
+  // Handle null/undefined/empty values
+  if (!value || (typeof value === 'string' && value.trim() === '')) {
+    return (
+      <Typography variant="body2" color="text.secondary">
+        —
+      </Typography>
+    );
+  }
+
   const formatPhone = (phone: string | PhoneData): string => {
     if (typeof phone === 'string') {
       return phone;
@@ -32,7 +41,7 @@ export const PhoneCell: React.FC<PhoneCellProps> = ({
     return (
       <Tooltip title="Нажмите для звонка" placement="top">
         <Link
-          href={getPhoneHref(value)}
+          href={getPhoneHref(value as string | PhoneData)}
           underline="none"
           sx={{
             display: 'flex',

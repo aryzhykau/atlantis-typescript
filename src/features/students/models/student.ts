@@ -5,9 +5,11 @@ export interface IStudentParentClientData {
   id: number;
   first_name: string;
   last_name: string;
-  phone: string;
+  phone_country_code: string;
+  phone_number: string;
   email: string;
   balance: number;
+  phone?: string; // Combined phone number property (computed on backend)
 }
 
 // Базовые поля студента, общие для разных интерфейсов
