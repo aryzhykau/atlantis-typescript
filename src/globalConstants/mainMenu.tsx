@@ -16,7 +16,7 @@ import { StudentsListPage } from '../features/students/components/StudentsListPa
 import CalendarV2Page from "../features/calendar-v2/components/CalendarV2Page.tsx";
 import MobileCalendarV2Page from "../features/calendar-v2/components/MobileCalendarV2Page.tsx";
 import CallIcon from '@mui/icons-material/Call';
-import { ClientContactsDataGrid } from "../features/client-contacts/components/ClientContactsDataGrid.tsx";
+import { UnifiedClientContactsDataGrid } from "../features/client-contacts/components/UnifiedClientContactsDataGrid";
 import AdminManagementPage from "../features/admin-management/components/AdminManagementPage.tsx";
 import AdminIcon from '@mui/icons-material/AdminPanelSettings';
 
@@ -39,8 +39,8 @@ export const MenuItems: IMenuItems[] = [
         title: "Контакты клиентов",
         link: "client-contacts",
         icon: <CallIcon />,
-        page: <ClientContactsDataGrid />,
-        mobilePage: <ClientContactsDataGrid />
+        page: <UnifiedClientContactsDataGrid />,
+        mobilePage: <UnifiedClientContactsDataGrid />
     },
     {
         title: "Ученики",

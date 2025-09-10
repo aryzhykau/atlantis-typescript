@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Tabs, Tab } from "@mui/material";
-import { InvoicesDataView } from "../../features/invoices/components/InvoicesDataView.tsx";
-import PaymentHistoryDataGrid from "../../features/payments/components/PaymentHistoryDataGrid.tsx";
+import { UnifiedInvoicesDataView } from "../../features/invoices/components/UnifiedInvoicesDataView";
+import { UnifiedPaymentHistoryDataGrid } from "../../features/payments/components/UnifiedPaymentHistoryDataGrid";
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -45,10 +45,10 @@ const InvoicesPayments: React.FC = () => {
                 </Tabs>
             </Box>
             <TabPanel value={tabValue} index={0}>
-                <InvoicesDataView />
+                <UnifiedInvoicesDataView />
             </TabPanel>
             <TabPanel value={tabValue} index={1}>
-                <PaymentHistoryDataGrid />
+                <UnifiedPaymentHistoryDataGrid />
             </TabPanel>
         </Box>
     );

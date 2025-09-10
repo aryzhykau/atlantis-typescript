@@ -1,8 +1,11 @@
 import { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { 
   createClickableColumn, 
+  createEmailColumn, 
+  createPhoneColumn, 
   createDateColumn, 
-  createStatusColumn 
+  createStatusColumn,
+  DateCell
 } from "../../../components/UnifiedDataGrid";
 import { Typography, Chip, Link } from "@mui/material";
 import dayjs from 'dayjs';
@@ -110,6 +113,16 @@ export const createEnhancedStudentColumns = (): GridColDef[] => [
           />
     ),
   },
+
+  createPhoneColumn("client_phone", "Телефон родителя", {}, {
+    width: 150,
+    valueGetter: (_value, row) => row.client?.phone || '',
+  }),
+
+  createEmailColumn("client_email", "Email родителя", {}, {
+    width: 200,
+    valueGetter: (_value, row) => row.client?.email || '',
+  }),
 
   createStatusColumn("is_active", "Статус", {
     width: 120,

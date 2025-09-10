@@ -1,14 +1,14 @@
 import {Box} from "@mui/material";
-import {TrainingTypesDataView} from "../../features/trainingTypes/components/TrainingTypesDataView.tsx";
-import {SubscriptionsDataView} from "../../features/subscriptions/components/SubscriptionsDataView.tsx";
+import {UnifiedTrainingTypesDataView} from "../../features/trainingTypes/components/UnifiedTrainingTypesDataView";
+import {UnifiedSubscriptionsDataView} from "../../features/subscriptions/components/UnifiedSubscriptionsDataView";
 
 
 export function TrainingSettings() {
 
     return (
-        <Box display={"flex"} justifyContent={"space-between"} alignItems={"flex-start"}>
-            <TrainingTypesDataView />
-            <SubscriptionsDataView />
+        <Box display={"flex"} justifyContent={"space-between"} alignItems={"flex-start"} sx={{ p: 3, gap: 3 }}>
+            <UnifiedTrainingTypesDataView />
+            <UnifiedSubscriptionsDataView />
         </Box>
     )
 }
