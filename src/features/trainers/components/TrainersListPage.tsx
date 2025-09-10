@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Box, Button, Typography, TextField, Paper, FormControlLabel, Switch, InputAdornment, alpha, Dialog, DialogContent, IconButton } from '@mui/material';
-import CircularProgress from '@mui/material/CircularProgress';
+import { MiniSpringLoader } from '../../../components/loading/MiniSpringLoader';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
@@ -166,7 +166,7 @@ export function TrainersListPage() {
     ];
 
     if (isLoading && !trainersListResponse) { 
-        return <Box display="flex" justifyContent="center" alignItems="center" sx={{ width: '100%', height: '80vh' }}><CircularProgress /></Box>;
+        return <MiniSpringLoader />;
     }
 
     if (isError) {

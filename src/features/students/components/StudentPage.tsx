@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
     Box, 
     Typography, 
-    CircularProgress, 
     Grid, 
     Paper, 
     IconButton, 
@@ -12,6 +11,7 @@ import {
     Tabs,
     Tab
 } from '@mui/material';
+import { MiniSpringLoader } from '../../../components/loading/MiniSpringLoader';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import { useGetStudentByIdQuery, useUpdateStudentMutation } from '../../../store/apis/studentsApi';
@@ -215,11 +215,7 @@ export function StudentPage() {
     if (isLoadingStudent || (student && (isLoadingAllBaseSubscriptions || isLoadingStudentSubscriptions && !studentSubscriptionsData))) {
         // Показываем основной лоадер, если грузится студент, 
         // или если студент загружен, но еще грузятся его абонементы или базовые абонементы
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-                <CircularProgress />
-            </Box>
-        );
+        return <MiniSpringLoader />;
     }
 
     if (!student) {
