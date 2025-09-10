@@ -7,7 +7,7 @@ import PaymentsIcon from '@mui/icons-material/Payments';
 import SchoolIcon from '@mui/icons-material/School';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import {ClientsLayout} from "../layouts/clients/Clients.tsx";
-import { TrainersListPage } from "../features/trainers/components/TrainersListPage.tsx";
+import { UnifiedTrainersDataGrid } from "../features/trainers/components/UnifiedTrainersDataGrid.tsx";
 import {DashboardLayout} from "../layouts/Dashboard.tsx";
 import { TrainingSettings } from "../layouts/trainingTypesSubscriptions/TrainingSettings.tsx";
 import {MobileClients} from "../layouts/clients/MobileClients.tsx";
@@ -16,7 +16,7 @@ import { StudentsListPage } from '../features/students/components/StudentsListPa
 import CalendarV2Page from "../features/calendar-v2/components/CalendarV2Page.tsx";
 import MobileCalendarV2Page from "../features/calendar-v2/components/MobileCalendarV2Page.tsx";
 import CallIcon from '@mui/icons-material/Call';
-import { ClientContactsDataGrid } from "../features/client-contacts/components/ClientContactsDataGrid.tsx";
+import { UnifiedClientContactsDataGrid } from "../features/client-contacts/components/UnifiedClientContactsDataGrid";
 import AdminManagementPage from "../features/admin-management/components/AdminManagementPage.tsx";
 import AdminIcon from '@mui/icons-material/AdminPanelSettings';
 
@@ -39,8 +39,8 @@ export const MenuItems: IMenuItems[] = [
         title: "Контакты клиентов",
         link: "client-contacts",
         icon: <CallIcon />,
-        page: <ClientContactsDataGrid />,
-        mobilePage: <ClientContactsDataGrid />
+        page: <UnifiedClientContactsDataGrid />,
+        mobilePage: <UnifiedClientContactsDataGrid />
     },
     {
         title: "Ученики",
@@ -53,8 +53,8 @@ export const MenuItems: IMenuItems[] = [
         title: "Тренеры",
         link: "trainers",
         icon: <SportsIcon/>,
-        page: <TrainersListPage/>,
-        mobilePage: <TrainersListPage/>
+        page: <UnifiedTrainersDataGrid/>,
+        mobilePage: <UnifiedTrainersDataGrid/>
     },
     {
         title: "Тренировки и абонементы",

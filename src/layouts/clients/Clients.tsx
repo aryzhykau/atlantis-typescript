@@ -1,5 +1,5 @@
 import { Box, Dialog, DialogContent } from "@mui/material";
-import { ClientsDataGrid } from "../../features/clients/components/ClientsDataGrid";
+import { UnifiedClientsDataGrid } from "../../features/clients/components/UnifiedClientsDataGrid";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { ClientsForm } from "../../features/clients/components/ClientsForm";
@@ -8,7 +8,6 @@ import { useClients } from "../../features/clients/hooks/clientManagementHooks";
 import { useSnackbar } from "../../hooks/useSnackBar";
 import { IClientUserFormValues } from "../../features/clients/models/client";
 import { FormikDialog } from "../../components/forms/layout";
-import dayjs from "dayjs";
 
 
 export function ClientsLayout() {
@@ -37,23 +36,8 @@ export function ClientsLayout() {
         setFormInitValues(undefined);
     };
 
-    const handleEditClient = (clientId: number, clientData: IClientUserFormValues) => {
-        setIsDeletingModal(false);
-        setFormTitle("Изменение клиента");
-        setClientId(clientId);
-        setIsClientEdit(true);
-        setModalOpen(true);
-        setFormInitValues({
-            ...clientData,
-            date_of_birth: clientData.date_of_birth ? dayjs(clientData.date_of_birth) : null
-        });
-    };
-
-    const handleDeleteClient = (clientId: number) => {
-        setIsDeletingModal(true);
-        setModalOpen(true);
-        setClientId(clientId);
-    };
+    // Note: Edit and delete functionality moved to row-level interactions
+    // These handlers can be re-implemented when needed for specific workflows
 
     // Обработчики модальных окон
     const handleDeleteConfirm = async () => {
@@ -81,11 +65,9 @@ export function ClientsLayout() {
 
     return (
         <Box sx={{ display: "flex", flexDirection: "column" }}>
-            <ClientsDataGrid 
+            <UnifiedClientsDataGrid 
                 onClientSelect={handleClientSelect}
                 onAddClient={handleAddClient}
-                onEditClient={handleEditClient}
-                onDeleteClient={handleDeleteClient}
             />
 
            

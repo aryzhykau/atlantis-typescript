@@ -2,6 +2,8 @@ import React, { useMemo, useCallback, memo } from 'react';
 import { Box, Typography, Tooltip, useTheme, alpha } from '@mui/material';
 import { CalendarEvent } from '../types';
 import { createEventDisplayData, createTooltipContent, getResponsiveChipStyles } from '../utils/eventDisplayUtils';
+import { borderBottom, borderRadius } from '@mui/system';
+import { BorderRightRounded } from '@mui/icons-material';
 
 interface CalendarTrainingChipProps {
   event: CalendarEvent;
@@ -55,7 +57,7 @@ export const CalendarTrainingChip = memo<CalendarTrainingChipProps>(({
   const chipSx = useMemo(() => ({
     backgroundColor: alpha(chipData.typeColor, 0.08),
     borderLeft: `3px solid ${chipData.typeColor}`,
-    borderRadius: 1,
+    borderRadius: "0 8px 8px 0",
     px: 0.75,
     py: 0.25,
     cursor: 'pointer',
