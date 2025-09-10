@@ -114,9 +114,23 @@ export const createEnhancedStudentColumns = (): GridColDef[] => [
     ),
   },
 
-  createPhoneColumn("client_phone", "Телефон родителя", {}, {
+  createPhoneColumn("client_phone", "Телефон родителя", {
+    enableAccessibility: true,
+  }, {
     width: 150,
-    valueGetter: (_value, row) => row.client?.phone || '',
+    valueGetter: (_value, row) => {
+      // Prefer the combined phone field if available, otherwise construct it
+      if (row.client?.phone) {
+        return row.client.phone;
+      }
+      if (row.client?.phone_country_code && row.client?.phone_number) {
+        return {
+          countryCode: row.client.phone_country_code,
+          number: row.client.phone_number
+        };
+      }
+      return null;
+    },
   }),
 
   createEmailColumn("client_email", "Email родителя", {}, {

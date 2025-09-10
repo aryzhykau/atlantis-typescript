@@ -53,7 +53,11 @@ export const UnifiedStudentsDataGrid: React.FC = () => {
           `${student.first_name} ${student.last_name}`,
           student.client?.first_name,
           student.client?.last_name,
-          `${student.client?.first_name} ${student.client?.last_name}`
+          `${student.client?.first_name} ${student.client?.last_name}`,
+          student.client?.phone || 
+          (student.client?.phone_country_code && student.client?.phone_number ? 
+            `${student.client.phone_country_code} ${student.client.phone_number}` : ''),
+          student.client?.phone_number
         ].some(field => field?.toLowerCase().includes(searchLower))
       );
     }

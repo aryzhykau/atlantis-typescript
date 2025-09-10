@@ -235,9 +235,15 @@ export const StudentParentInfoCard: React.FC<StudentParentInfoCardProps> = ({ pa
                     <InfoItem
                         icon={<PhoneIcon />}
                         label="Телефон"
-                        value={parentData.phone || 'Не указан'}
+                        value={parentData.phone || 
+                          (parentData.phone_country_code && parentData.phone_number ? 
+                            `${parentData.phone_country_code} ${parentData.phone_number}` : 
+                            'Не указан')}
                         color="success"
-                        href={parentData.phone ? `tel:${parentData.phone}` : undefined}
+                        href={parentData.phone || 
+                          (parentData.phone_country_code && parentData.phone_number ? 
+                            `tel:${parentData.phone_country_code}${parentData.phone_number}` : 
+                            undefined)}
                     />
                 </Box>
 
