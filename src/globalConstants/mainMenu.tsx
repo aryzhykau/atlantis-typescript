@@ -17,6 +17,8 @@ import CalendarV2Page from "../features/calendar-v2/components/CalendarV2Page.ts
 import MobileCalendarV2Page from "../features/calendar-v2/components/MobileCalendarV2Page.tsx";
 import CallIcon from '@mui/icons-material/Call';
 import { ClientContactsDataGrid } from "../features/client-contacts/components/ClientContactsDataGrid.tsx";
+import AdminManagementPage from "../features/admin-management/components/AdminManagementPage.tsx";
+import AdminIcon from '@mui/icons-material/AdminPanelSettings';
 
 export const MenuItems: IMenuItems[] = [
     {
@@ -74,5 +76,13 @@ export const MenuItems: IMenuItems[] = [
         icon: <CalendarTodayIcon />,
         page: <CalendarV2Page />,
         mobilePage: <MobileCalendarV2Page />
+    },
+    {
+        title: "Управление администраторами",
+        link: "admin-management",
+        icon: <AdminIcon />,
+        page: <AdminManagementPage />,
+        mobilePage: <AdminManagementPage />,
+        ownerOnly: true
     }
 ];

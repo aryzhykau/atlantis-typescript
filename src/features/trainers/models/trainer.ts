@@ -5,6 +5,7 @@ export enum UserRole {
     CLIENT = "CLIENT",
     TRAINER = "TRAINER",
     ADMIN = "ADMIN",
+    OWNER = "OWNER",
 }
 
 // Базовые данные тренера, общие для создания и ответа

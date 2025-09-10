@@ -4,13 +4,16 @@ import {Link} from "react-router-dom";
 import {IMenuItems} from "../../models/mainMenu.ts";
 import {useState} from "react";
 import {useLocation} from "react-router-dom";
-
-
+import {useCurrentUser} from "../../hooks/usePermissions";
+import {getFilteredMenuItems} from "../../utils/menuUtils";
 
 export function MobileSideBar() {
     const location = useLocation();
+    const currentUser = useCurrentUser();
+    const filteredMenuItems = getFilteredMenuItems(MenuItems, currentUser?.user?.role);
+    
     const [selectedIndex, setSelectedIndex] = useState(() => {
-        return MenuItems.findIndex((item) => item.link === location.pathname.split("/")[2]);
+        return filteredMenuItems.findIndex((item) => item.link === location.pathname.split("/")[2]);
     });
 
     const handleListItemClick = (
@@ -22,9 +25,8 @@ export function MobileSideBar() {
     return <Box sx={{ display: "flex", flexDirection: "column", width:"100%", alignItems: "center"}}>
             <Typography variant={"h4"} py="15px">Меню</Typography>
 
-
             <List sx={{m: 0, "@media (min-width:600px)":{py: "36px",width:"100%"}}}>
-                {MenuItems.map((item: IMenuItems, idx: number) =>
+                {filteredMenuItems.map((item: IMenuItems, idx: number) =>
 
                     <ListItem key={item.link} sx={{ width:"100%", p:0}}>
                         <ListItemButton

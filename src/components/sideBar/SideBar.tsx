@@ -5,6 +5,8 @@ import {IMenuItems} from "../../models/mainMenu.ts";
 import {useState} from "react";
 import {useLocation} from "react-router-dom";
 import {ChevronLeft, ChevronRight} from "@mui/icons-material";
+import {useCurrentUser} from "../../hooks/usePermissions";
+import {getFilteredMenuItems} from "../../utils/menuUtils";
 
 interface SideBarProps {
     width: number;
@@ -15,8 +17,11 @@ interface SideBarProps {
 export function SideBar({width, isCollapsed = false, onToggle}: SideBarProps) {
     const theme = useTheme();
     const location = useLocation();
+    const { user } = useCurrentUser();
+    const filteredMenuItems = getFilteredMenuItems(MenuItems, user?.role);
+    
     const [selectedIndex, setSelectedIndex] = useState(() => {
-        return MenuItems.findIndex((item) => item.link === location.pathname.split("/")[2]);
+        return filteredMenuItems.findIndex((item) => item.link === location.pathname.split("/")[2]);
     });
 
     // Градиенты в стиле дизайн-системы тренеров
@@ -150,7 +155,7 @@ export function SideBar({width, isCollapsed = false, onToggle}: SideBarProps) {
                 py: 1,
                 width: "100%"
             }}>
-                {MenuItems.map((item: IMenuItems, idx: number) => (
+                {filteredMenuItems.map((item: IMenuItems, idx: number) => (
                     <ListItem 
                         key={item.link} 
                         sx={{ 

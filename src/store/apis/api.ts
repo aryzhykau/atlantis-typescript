@@ -72,5 +72,8 @@ export const baseApi = createApi({
         'TrainerStats',
         'Expenses',
         'TrainerSalary',
+        'Admin',
+        'AdminStats',
+        'OwnerStats',
     ],
 });
