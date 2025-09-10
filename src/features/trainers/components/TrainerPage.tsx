@@ -25,6 +25,7 @@ import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import { useTheme } from '@mui/material';
 import TrainerPaymentsTab from './TrainerPaymentsTab';
 import TrainerSalaryTab from './TrainerSalaryTab';
+import { useIsOwner } from '../../../hooks/usePermissions';
 
 // Иконки для статистики
 import PersonIcon from '@mui/icons-material/Person';
@@ -108,14 +109,15 @@ interface TrainerStatsProps {
     salary: number;
     isActive: boolean;
     isFixedSalary: boolean;
+    showSalary?: boolean;
 }
 
-const TrainerStats: React.FC<TrainerStatsProps> = ({ age, salary, isActive, isFixedSalary }) => {
+const TrainerStats: React.FC<TrainerStatsProps> = ({ age, salary, isActive, isFixedSalary, showSalary = true }) => {
     const gradients = useGradients();
     
     return (
         <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={6} sm={3}>
+            <Grid item xs={showSalary ? 6 : 12} sm={showSalary ? 3 : 4}>
                 <StatCard
                     icon={<PersonIcon sx={{ fontSize: 32 }} />}
                     value={`${age} лет`}
@@ -123,23 +125,27 @@ const TrainerStats: React.FC<TrainerStatsProps> = ({ age, salary, isActive, isFi
                     gradient={gradients.primary}
                 />
             </Grid>
-            <Grid item xs={6} sm={3}>
-                <StatCard
-                    icon={<TrendingUpIcon sx={{ fontSize: 32 }} />}
-                    value={`${salary} €`}
-                    label="Оклад"
-                    gradient={gradients.success}
-                />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-                <StatCard
-                    icon={<WorkIcon sx={{ fontSize: 32 }} />}
-                    value={isFixedSalary ? "Фиксированный" : "Процентный"}
-                    label="Тип оклада"
-                    gradient={gradients.info}
-                />
-            </Grid>
-            <Grid item xs={6} sm={3}>
+            {showSalary && (
+                <>
+                    <Grid item xs={6} sm={3}>
+                        <StatCard
+                            icon={<TrendingUpIcon sx={{ fontSize: 32 }} />}
+                            value={`${salary} €`}
+                            label="Оклад"
+                            gradient={gradients.success}
+                        />
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                        <StatCard
+                            icon={<WorkIcon sx={{ fontSize: 32 }} />}
+                            value={isFixedSalary ? "Фиксированный" : "Процентный"}
+                            label="Тип оклада"
+                            gradient={gradients.info}
+                        />
+                    </Grid>
+                </>
+            )}
+            <Grid item xs={showSalary ? 6 : 12} sm={showSalary ? 3 : 4}>
                 <StatCard
                     icon={<CheckCircleOutlineIcon sx={{ fontSize: 32 }} />}
                     value={isActive ? "Активен" : "Неактивен"}
@@ -157,6 +163,7 @@ export function TrainerPage() {
     const { displaySnackbar } = useSnackbar();
     const theme = useTheme();
     const gradients = useGradients();
+    const isOwner = useIsOwner();
     const [activeTab, setActiveTab] = React.useState(0);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTrainerData, setEditingTrainerData] = useState<Partial<ITrainerResponse> | null>(null);
@@ -310,6 +317,7 @@ export function TrainerPage() {
                 salary={salary}
                 isActive={isActive}
                 isFixedSalary={isFixedSalary}
+                showSalary={isOwner}
             />
 
             {/* Стилизованные табы */}
@@ -353,7 +361,7 @@ export function TrainerPage() {
                     <Tab label="📊 Обзор" {...a11yProps(0)} />
                     <Tab label="🏋️ Тренировки" {...a11yProps(1)} />
                     <Tab label="💰 Платежи" {...a11yProps(2)} />
-                    {!isFixedSalary && <Tab label="💸 Зарплата" {...a11yProps(3)} />}
+                    {!isFixedSalary && isOwner && <Tab label="💸 Зарплата" {...a11yProps(3)} />}
                 </Tabs>
             </Paper>
 
@@ -363,7 +371,8 @@ export function TrainerPage() {
                         <TrainerInfoCard 
                             trainer={trainer} 
                             onEdit={handleOpenEditModal} 
-                            onStatusChange={handleChangeStatus} 
+                            onStatusChange={handleChangeStatus}
+                            showSalary={isOwner}
                         />
                     </Grid>
                     {/* Можно добавить другие карточки сюда, например, для статистики или связанных данных */}
@@ -378,7 +387,7 @@ export function TrainerPage() {
                 <TrainerPaymentsTab trainerId={trainer.id} />
             </TabPanel>
 
-            {!isFixedSalary && (
+            {!isFixedSalary && isOwner && (
                 <TabPanel value={activeTab} index={3}>
                     <TrainerSalaryTab trainerId={trainer.id} />
                 </TabPanel>

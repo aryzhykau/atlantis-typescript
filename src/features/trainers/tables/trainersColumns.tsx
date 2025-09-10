@@ -2,9 +2,12 @@ import {GridColDef} from "@mui/x-data-grid";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import dayjs from "dayjs";
+import { UserRole } from "../models/trainer";
+
 const fieldWidth = 150;
 
-export const trainerColums: GridColDef[] = [
+// Base columns that are shown to all roles
+const baseColumns: GridColDef[] = [
     {
         field: "first_name",
         headerName: "Имя",
@@ -45,29 +48,6 @@ export const trainerColums: GridColDef[] = [
         valueGetter: (_value, row) => `${row.phone_country_code} ${row.phone_number}`,
     },
     {
-        field: "salary",
-        headerName: "Зарплата",
-        width: fieldWidth,
-        align: "center",
-        headerAlign: "center",
-
-        valueGetter: (value) => (value ? `${value}€` : "Нет данных"),
-
-        sortable: true,
-    },
-    {
-        field: "is_fixed_salary",
-        headerName: "Фиксированная зарплата",
-        align: 'center',
-        display: "flex",
-        headerAlign: "center",
-
-        sortable: true,
-        renderCell: (params) => (
-            params.row.is_fixed_salary ? <CheckCircleIcon color="success"/> : <RemoveCircleIcon color="error"/>
-        )
-    },
-    {
         field: "created_at",
         headerName: "Добавлен",
         width: fieldWidth,
@@ -91,4 +71,44 @@ export const trainerColums: GridColDef[] = [
             return `${day}.${month}.${year}`;
         }
     },
-]
+];
+
+// Salary columns that are only shown to owners
+const salaryColumns: GridColDef[] = [
+    {
+        field: "salary",
+        headerName: "Зарплата",
+        width: fieldWidth,
+        align: "center",
+        headerAlign: "center",
+        valueGetter: (value) => (value ? `${value}€` : "Нет данных"),
+        sortable: true,
+    },
+    {
+        field: "is_fixed_salary",
+        headerName: "Фиксированная зарплата",
+        align: 'center',
+        display: "flex",
+        headerAlign: "center",
+        sortable: true,
+        renderCell: (params) => (
+            params.row.is_fixed_salary ? <CheckCircleIcon color="success"/> : <RemoveCircleIcon color="error"/>
+        )
+    },
+];
+
+// Function to get columns based on user role
+export const getTrainerColumns = (userRole?: string): GridColDef[] => {
+    const columns = [...baseColumns];
+    
+    // Only owners can see salary information
+    if (userRole === UserRole.OWNER) {
+        // Insert salary columns after phone column (index 4)
+        columns.splice(5, 0, ...salaryColumns);
+    }
+    
+    return columns;
+};
+
+// Legacy export for backward compatibility
+export const trainerColums = baseColumns;
