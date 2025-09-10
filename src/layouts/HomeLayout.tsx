@@ -1,12 +1,13 @@
-import {Box, Toolbar, Typography, Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, useTheme, alpha} from "@mui/material";
+import {Box, Toolbar, Typography, Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, useTheme, alpha, Tooltip} from "@mui/material";
 import {IUser} from "../models/user.ts";
 import {MenuItems} from "../globalConstants/mainMenu.tsx";
 import {SideBar} from "../components/sideBar/SideBar.tsx";
 import {useLocation} from "react-router-dom";
 import {IMenuItems} from "../models/mainMenu.ts";
-import {Logout} from "@mui/icons-material";
 import {useAuth} from "../hooks/useAuth.tsx";
 import {useState, useEffect} from "react";
+import {Logout, LightMode as LightModeIcon, DarkMode as DarkModeIcon} from "@mui/icons-material";
+import { useThemeMode } from '../theme/ThemeModeProvider';
 import useMobile from "../hooks/useMobile.tsx";
 
 const sideBarWidth = 240;// Ширина сайдбара
@@ -20,6 +21,7 @@ export interface HomeLayoutProps {
 
 export default function HomeLayout({ children,  data, isLoading }: HomeLayoutProps) {
     const theme = useTheme();
+    const { toggleMode } = useThemeMode();
     const location = useLocation();
     const { doLogout } = useAuth();
     const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
@@ -146,6 +148,21 @@ export default function HomeLayout({ children,  data, isLoading }: HomeLayoutPro
                                 >
                                     {`${data.first_name} ${data.last_name}`}
                                 </Typography>
+                                    <Tooltip title="Переключить тему">
+                                        <IconButton
+                                            color="inherit"
+                                            onClick={() => toggleMode?.()}
+                                            sx={{
+                                                color: 'white',
+                                                background: alpha('#ffffff', 0.06),
+                                                '&:hover': {
+                                                    background: alpha('#ffffff', 0.14),
+                                                }
+                                            }}
+                                        >
+                                            {theme.palette.mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+                                        </IconButton>
+                                    </Tooltip>
                                 <IconButton
                                     color="inherit"
                                     onClick={handleLogoutClick}

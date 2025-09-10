@@ -2,8 +2,8 @@ import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
 import {LoginPage} from "./pages/login.tsx";
 import {useAuth} from "./hooks/useAuth.tsx";
 import {HomePage} from "./pages/home.tsx";
-import { ThemeProvider, useMediaQuery, CssBaseline } from '@mui/material';
-import { lightTheme, darkTheme } from './theme/ai-theme';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { useThemeMode } from './theme/ThemeModeProvider';
 import {MenuItems} from "./globalConstants/mainMenu.tsx";
 import {IMenuItems} from "./models/mainMenu.ts";
 import {ReactNode} from "react";
@@ -21,8 +21,7 @@ import useMobile from "./hooks/useMobile.tsx";
 
 function App() {
 
-    const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-    const theme = prefersDarkMode ? darkTheme : lightTheme;
+    const { effectiveTheme: theme } = useThemeMode();
 
     const isMobile = useMobile();
     const {isAuthenticated} = useAuth();
