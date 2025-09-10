@@ -14,7 +14,7 @@ import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import dayjs, { Dayjs } from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import 'dayjs/locale/ru';
-import CalendarShell from './CalendarShell';
+import CalendarShell from './CalendarContainer/CalendarShell';
 import CalendarSearchBar, { CalendarFilters } from './CalendarSearchBar';
 import { 
   filterEvents, 
