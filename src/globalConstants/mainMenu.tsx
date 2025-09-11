@@ -15,6 +15,7 @@ import InvoicesPayments from "../layouts/invoicesPyaments/InvoicesPayments.tsx";
 import { StudentsListPage } from '../features/students/components/StudentsListPage.tsx';
 import CalendarV2Page from "../features/calendar-v2/components/CalendarV2Page.tsx";
 import MobileCalendarV2Page from "../features/calendar-v2/components/MobileCalendarV2Page.tsx";
+import MobileFullCalendarV2Page from "../features/calendar-v2/components/MobileFullCalendarV2Page.tsx";
 import CallIcon from '@mui/icons-material/Call';
 import { UnifiedClientContactsDataGrid } from "../features/client-contacts/components/UnifiedClientContactsDataGrid";
 import AdminManagementPage from "../features/admin-management/components/AdminManagementPage.tsx";
@@ -76,6 +77,14 @@ export const MenuItems: IMenuItems[] = [
         icon: <CalendarTodayIcon />,
         page: <CalendarV2Page />,
         mobilePage: <MobileCalendarV2Page />
+    },
+    {
+        title: "Календарь (полный)",
+        link: "calendar-full",
+        icon: <CalendarTodayIcon />,
+        page: <></>,
+        mobilePage: <MobileFullCalendarV2Page />,
+        mobileOnly: true,
     },
     {
         title: "Управление администраторами",
