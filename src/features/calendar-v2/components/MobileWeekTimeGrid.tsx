@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -9,6 +9,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { NormalizedEvent } from '../utils/normalizeEventsForWeek';
 import { useMobileDragDrop } from '../hooks/useMobileDragDrop';
+import { useAutoScroll } from '../hooks/useAutoScroll';
 import MobileDraggableEventCard from './MobileDraggableEventCard';
 import MobileDropZone from './MobileDropZone';
 import EventBottomSheet from './EventBottomSheet';
@@ -31,6 +32,8 @@ interface EventCardProps {
   day: Dayjs;
   time: string;
   isDragAndDropEnabled?: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 }
 
 const EventCard: React.FC<EventCardProps> = ({ 
@@ -41,7 +44,9 @@ const EventCard: React.FC<EventCardProps> = ({
   onIntersectionChange,
   day,
   time,
-  isDragAndDropEnabled = true
+  isDragAndDropEnabled = true,
+  onDragStart,
+  onDragEnd,
 }) => {
   const theme = useTheme();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -91,6 +96,8 @@ const EventCard: React.FC<EventCardProps> = ({
           event={event.raw}
           day={day}
           time={time}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
         >
           <CalendarTrainingChip
             ref={cardRef}
@@ -169,11 +176,39 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
   const [selectedEvent, setSelectedEvent] = useState<NormalizedEvent | NormalizedEvent[] | null>(null);
   const [bottomSheetMode, setBottomSheetMode] = useState<'event' | 'group'>('event');
   
+  // Create ref for the scrollable time grid container
+  const timeGridRef = useRef<HTMLElement>(null!);
+  
   const observerTargets = useRef<Map<string, IntersectionObserver>>(new Map());
   const [visibleEvents, setVisibleEvents] = useState<Set<string>>(new Set());
 
   // Mobile drag and drop functionality
   const { handleEventDrop } = useMobileDragDrop();
+
+  // Auto-scroll functionality for drag operations
+  const { handleMouseMove, stopAutoScroll } = useAutoScroll(timeGridRef, {
+  threshold: 140, // Larger threshold for mobile so pointer slightly outside still triggers
+  topThreshold: 220, // Larger top area for easier upward scrolling
+  outerBuffer: 240, // Extra buffer outside container to trigger scroll when pointer is nearby
+    speed: 8, // Slower speed for better control
+    maxSpeed: 25,
+    acceleration: 1.3,
+  });
+
+  // Handle mouse move for auto-scroll
+  const handleMouseMoveEvent = useCallback((event: React.MouseEvent) => {
+    handleMouseMove(event.clientX, event.clientY);
+  }, [handleMouseMove]);
+
+  // Handle drag start/end for auto-scroll
+  const handleDragStart = useCallback(() => {
+    // Auto-scroll will be triggered by handleMouseMove during drag
+    console.log('Drag started - auto-scroll ready');
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    stopAutoScroll();
+  }, [stopAutoScroll]);
 
   // Generate hours
   const hours = useMemo(() => {
@@ -220,7 +255,7 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
             },
             {
               threshold: [0, 0.3, 0.7, 1.0], // Multiple thresholds for better detection
-              root: null, // Use viewport as root
+              root: timeGridRef.current || null, // Use time grid container as root when available
             }
           );
           observers.set(observerKey, observer);
@@ -293,22 +328,23 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
         </Box>
 
         {/* Event cards for this hour */}
-        <MobileDropZone
-          day={activeDay}
-          time={`${hour.toString().padStart(2, '0')}:00`}
-          onDrop={handleEventDrop}
-          sx={{
-            flex: 1,
-            p: 0.5,
-            display: 'flex',
-            alignItems: 'center',
-            gap: theme.spacing(0.5),
-            overflowX: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            scrollSnapType: 'x mandatory',
-            touchAction: 'manipulation', // Allow both horizontal and vertical touch gestures
-            minWidth: 0,
-            position: 'relative',
+    <MobileDropZone
+      day={activeDay}
+      time={`${hour.toString().padStart(2, '0')}:00`}
+      onDrop={handleEventDrop}
+      sx={{
+    flex: 1,
+  px: 0.5,
+  py: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch',
+    scrollSnapType: 'x mandatory',
+    touchAction: 'manipulation', // Allow both horizontal and vertical touch gestures
+    minWidth: 0,
+    position: 'relative',
             '&::-webkit-scrollbar': {
               display: 'none',
             },
@@ -367,6 +403,8 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
                 day={activeDay}
                 time={`${hour.toString().padStart(2, '0')}:00`}
                 isDragAndDropEnabled={true}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
               />
             );
           })}
@@ -384,24 +422,31 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
         width: '100%',
         minWidth: 0,
         boxSizing: 'border-box',
-        paddingBottom: '132px', // Respect safe area on iOS
+        paddingBottom: 0, // moved safe-area padding into inner scroll container
       }}>
         {/* Time grid */}
         <Box
+          ref={timeGridRef}
+          data-scroll-container="time-grid"
           sx={{
             flex: 1,
+            height: '100%',
             overflowY: 'auto',
+            minHeight: 0, // allow flex child to shrink and enable internal scrolling
             touchAction: 'pan-y pinch-zoom', // Prioritize vertical scrolling and allow pinch zoom
+            WebkitOverflowScrolling: 'touch', // smooth native scrolling on iOS
+            overscrollBehavior: 'contain', // prevent parent/page from scrolling when reaching edges
             backgroundColor: theme.palette.background.default,
             width: '100%',
             minWidth: 0,
             boxSizing: 'border-box',
-            // Add extra bottom padding so rows are not obscured by iOS browser UI
-            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px) ',
+            // Add modest bottom padding so rows are not obscured by iOS browser UI
+            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px) ',
             '--event-card-w': '160px',
             '--peek-w': '20px',
             '--hour-row-h': `${hourHeightPx}px`,
           }}
+          onMouseMove={handleMouseMoveEvent}
         >
           {hours.map(renderHourRow)}
         </Box>

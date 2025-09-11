@@ -82,11 +82,22 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
   
   const { data: trainingTypes, isLoading: isLoadingTypes } = useGetTrainingTypesQuery({});
   const { data: trainersData, isLoading: isLoadingTrainers } = useGetTrainersQuery();
-  const { data: students, isLoading: isLoadingStudents } = useGetStudentsQuery();
+  const { data: students, isLoading: isLoadingStudents, error: studentsError } = useGetStudentsQuery();
   const { displaySnackbar } = useSnackbar();
   
   const trainers = trainersData?.trainers || [];
   const studentOptions = students || [];
+
+  // Debug logging for students
+  React.useEffect(() => {
+    console.log('TrainingTemplateForm - Students debug:', {
+      students,
+      studentsLength: students?.length,
+      isLoadingStudents,
+      studentsError,
+      studentOptions: studentOptions?.length
+    });
+  }, [students, isLoadingStudents, studentsError, studentOptions]);
   
   // Filter and deduplicate training types
   const uniqueTrainingTypes = useMemo(() => {
@@ -393,8 +404,10 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                                         isLoading={isLoadingStudents}
                                         textFieldProps={{
                                           size: "small",
-                                          fullWidth: true
+                                          fullWidth: true,
+                                          placeholder: isLoadingStudents ? 'Загрузка...' : 'Выберите ученика'
                                         }}
+                                        noOptionsText={isLoadingStudents ? 'Загрузка...' : 'Ученики не найдены'}
                                       />
                                     </Grid>
                                     <Grid item xs={10} sm={5}>

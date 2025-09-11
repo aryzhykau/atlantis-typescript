@@ -1,6 +1,7 @@
 import React, { memo, useRef, useCallback, useMemo, useState } from 'react';
 import { useDrag, DragPreviewImage } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
+import { useTheme } from '@mui/material/styles';
 import { CalendarEvent } from '../types';
 import { Dayjs } from 'dayjs';
 import { debugLog } from '../utils/debug';
@@ -31,6 +32,7 @@ const MobileDraggableEventCard: React.FC<MobileDraggableEventCardProps> = memo((
   onDragStart,
   onDragEnd,
 }) => {
+  const theme = useTheme();
   const elementRef = useRef<HTMLDivElement>(null);
   const dragStartTimeRef = useRef<number>(0);
   const [isDragHandlePressed, setIsDragHandlePressed] = useState(false);
@@ -116,12 +118,17 @@ const MobileDraggableEventCard: React.FC<MobileDraggableEventCardProps> = memo((
     };
 
     if (isDragging) {
+      // Create theme-aware shadow color
+      const shadowColor = theme.palette.mode === 'dark' 
+        ? 'rgba(255,255,255,0.2)' 
+        : 'rgba(0,0,0,0.3)';
+        
       return {
         ...baseStyles,
         opacity: 0.7,
         transform: 'scale(1.05)',
         zIndex: 1000,
-        filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))',
+        filter: `drop-shadow(0 8px 16px ${shadowColor})`,
         pointerEvents: 'none', // Prevent interference with drop zones during drag
       };
     }

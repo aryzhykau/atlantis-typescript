@@ -88,7 +88,9 @@ export const CalendarTrainingChip = memo(forwardRef<HTMLDivElement, CalendarTrai
   
   // Chip styles with simplified memoization
   const chipSx = useMemo((): SxProps<Theme> => ({
-    backgroundColor: alpha(chipData.typeColor, 0.08),
+    backgroundColor: theme.palette.mode === 'dark' 
+      ? alpha(chipData.typeColor, 0.12)
+      : alpha(chipData.typeColor, 0.08),
     borderLeft: `3px solid ${chipData.typeColor}`,
     borderRadius: "0 8px 8px 0",
     px: 0.75,
@@ -103,7 +105,9 @@ export const CalendarTrainingChip = memo(forwardRef<HTMLDivElement, CalendarTrai
     transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out',
     '&:hover': {
       transform: 'translateY(-1px)',
-      backgroundColor: alpha(chipData.typeColor, 0.15),
+      backgroundColor: theme.palette.mode === 'dark'
+        ? alpha(chipData.typeColor, 0.2)
+        : alpha(chipData.typeColor, 0.15),
       boxShadow: `0 2px 8px ${alpha(chipData.typeColor, 0.12)}, 0 1px 3px ${alpha(chipData.typeColor, 0.08)}`,
       '& .chip-text': {
         fontWeight: 700,
