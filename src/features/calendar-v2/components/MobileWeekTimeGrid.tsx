@@ -286,7 +286,7 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
             overflowX: 'auto',
             WebkitOverflowScrolling: 'touch',
             scrollSnapType: 'x mandatory',
-            touchAction: 'pan-x',
+            touchAction: 'manipulation', // Allow both horizontal and vertical touch gestures
             minWidth: 0,
             position: 'relative',
             '&::-webkit-scrollbar': {
@@ -366,7 +366,7 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
         sx={{
           flex: 1,
           overflowY: 'auto',
-          touchAction: 'pan-y',
+          touchAction: 'pan-y pinch-zoom', // Prioritize vertical scrolling and allow pinch zoom
           backgroundColor: theme.palette.background.default,
           width: '100%',
           minWidth: 0,
