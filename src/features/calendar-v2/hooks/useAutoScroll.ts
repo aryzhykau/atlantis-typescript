@@ -12,6 +12,7 @@ interface AutoScrollConfig {
   speed: number; // Scroll speed in pixels per frame
   maxSpeed: number; // Maximum scroll speed
   acceleration: number; // Speed increase factor when closer to edge
+  outerBuffer?: number; // Extra buffer outside container to trigger auto-scroll
   showDebugZones?: boolean; // Show visual indicators for scroll zones
 }
 
@@ -26,6 +27,7 @@ const defaultConfig: AutoScrollConfig = {
   speed: 15,
   maxSpeed: 45,
   acceleration: 1.5,
+  outerBuffer: 120,
   showDebugZones: false, // Set to true to see scroll zones visually
 };
 
@@ -60,21 +62,28 @@ export const useAutoScroll = (
 
     const container = containerRef.current;
     const containerRect = container.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
 
-    // Calculate distances from viewport edges (not container edges)
-    const distanceFromTop = mouseY;
-    const distanceFromBottom = viewportHeight - mouseY;
-    const distanceFromLeft = mouseX;
-    const distanceFromRight = viewportWidth - mouseX;
+    // Local coordinates relative to the container (important for non-fullscreen containers)
+    const localX = mouseX - containerRect.left;
+    const localY = mouseY - containerRect.top;
 
-    // Check if mouse is over the scrollable container
+  // Allow detection within a buffer outside the container (outerBuffer)
+  // so dragging just above/below the container still triggers auto-scroll.
+  const outer = finalConfig.outerBuffer ?? finalConfig.threshold;
+  const extendedTop = -outer;
+  const extendedBottom = containerRect.height + outer;
+  const extendedLeft = -outer;
+  const extendedRight = containerRect.width + outer;
+
+    const distanceFromTop = localY;
+    const distanceFromBottom = containerRect.height - localY;
+    const distanceFromLeft = localX;
+    const distanceFromRight = containerRect.width - localX;
+
+    // Consider pointer over container if it's inside the container OR within the threshold buffer around it
     const isOverContainer = (
-      mouseY >= Math.max(containerRect.top, 0) &&
-      mouseY <= Math.min(containerRect.bottom, viewportHeight) &&
-      mouseX >= Math.max(containerRect.left, 0) &&
-      mouseX <= Math.min(containerRect.right, viewportWidth)
+      localY >= extendedTop && localY <= extendedBottom &&
+      localX >= extendedLeft && localX <= extendedRight
     );
 
     if (!isOverContainer) {
@@ -83,7 +92,7 @@ export const useAutoScroll = (
 
     const direction: ScrollDirection = { vertical: null, horizontal: null };
 
-    // Vertical scrolling - use larger threshold for top area
+  // Vertical scrolling - use larger threshold for top area (relative to container)
     if (distanceFromTop < finalConfig.topThreshold && container.scrollTop > 0) {
       direction.vertical = 'up';
     } else if (distanceFromBottom < finalConfig.threshold && 
@@ -107,13 +116,30 @@ export const useAutoScroll = (
     if (!containerRef.current) return;
 
     const container = containerRef.current;
-    const { x: mouseX, y: mouseY } = lastMousePositionRef.current;
+  const { x: mouseX, y: mouseY } = lastMousePositionRef.current;
+  const containerRect = container.getBoundingClientRect();
+  const localY = mouseY - containerRect.top;
+  const localX = mouseX - containerRect.left;
 
     let scrolled = false;
 
     if (direction.vertical) {
-      const distanceFromEdge = direction.vertical === 'up' ? mouseY : window.innerHeight - mouseY;
-      const scrollSpeed = calculateScrollSpeed(distanceFromEdge, direction.vertical);
+      const height = containerRect.height;
+      let scrollSpeed = 0;
+
+      // If pointer is inside container bounds, use normal distance-based speed
+      if (localY >= 0 && localY <= height) {
+        const distanceFromEdge = direction.vertical === 'up' ? localY : (height - localY);
+        scrollSpeed = calculateScrollSpeed(distanceFromEdge, direction.vertical);
+      } else {
+        // Pointer is outside: compute how far outside and map that to a reduced speed
+        const outer = finalConfig.outerBuffer ?? finalConfig.threshold;
+        const outsideDistance = direction.vertical === 'up' ? Math.max(0, -localY) : Math.max(0, localY - height);
+        const proximity = Math.max(0, 1 - (outsideDistance / outer));
+        // Scale speed down when pointer is outside to avoid aggressive jumps
+        const outsideScale = 0.6;
+        scrollSpeed = Math.min(finalConfig.maxSpeed * outsideScale, finalConfig.speed * Math.pow(proximity * finalConfig.acceleration, 2));
+      }
 
       if (scrollSpeed > 0) {
         const scrollDelta = direction.vertical === 'up' ? -scrollSpeed : scrollSpeed;
@@ -126,14 +152,15 @@ export const useAutoScroll = (
         );
 
         if (newScrollTop !== container.scrollTop) {
-          container.scrollTop = newScrollTop;
+          // Use scrollTo for more consistent behavior on mobile
+          container.scrollTo({ top: newScrollTop });
           scrolled = true;
         }
       }
     }
 
     if (direction.horizontal) {
-      const distanceFromEdge = direction.horizontal === 'left' ? mouseX : window.innerWidth - mouseX;
+      const distanceFromEdge = direction.horizontal === 'left' ? localX : (containerRect.width - localX);
       const scrollSpeed = calculateScrollSpeed(distanceFromEdge, direction.horizontal);
 
       if (scrollSpeed > 0) {
@@ -147,7 +174,7 @@ export const useAutoScroll = (
         );
 
         if (newScrollLeft !== container.scrollLeft) {
-          container.scrollLeft = newScrollLeft;
+          container.scrollTo({ left: newScrollLeft });
           scrolled = true;
         }
       }
