@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { useSpring } from '@react-spring/web';
 
 interface Props {
   open: boolean;
@@ -8,48 +7,14 @@ interface Props {
 }
 
 const AnimatedLogoLoader: React.FC<Props> = ({ open, message }) => {
-  // Manage internal visibility to guarantee minimum display time (2s)
-  const [visible, setVisible] = useState<boolean>(open);
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const minMs = 2000;
-
-  useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-    if (open) {
-      setVisible(true);
-      setStartTime(Date.now());
-    } else {
-      if (!startTime) {
-        setVisible(false);
-      } else {
-        const elapsed = Date.now() - startTime;
-        if (elapsed >= minMs) {
-          setVisible(false);
-        } else {
-          timeout = setTimeout(() => setVisible(false), minMs - elapsed);
-        }
-      }
-    }
-    return () => {
-      if (timeout) clearTimeout(timeout);
-    };
-  }, [open, startTime]);
-
-  // small subtle spring that's not directly applied to logo now
-  useSpring({
-    from: { scale: 0.98 },
-    to: { scale: 1 },
-    loop: visible ? { reverse: true } : false,
-    config: { tension: 300, friction: 18 },
-  });
-
-  if (!visible) return null;
+  // Render directly based on `open` prop. Loader disappears when loading finishes.
+  if (!open) return null;
 
   return (
     <Box
   component="div"
-  aria-hidden={!visible}
-  aria-busy={visible}
+  aria-hidden={!open}
+  aria-busy={open}
       sx={{
         position: 'absolute',
         inset: 0,
