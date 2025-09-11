@@ -9,6 +9,7 @@ import {
   useGetTrainingTemplatesQuery,
   useGetRealTrainingsQuery,
 } from '../../../store/apis/calendarApi-v2';
+import AnimatedLogoLoader from './AnimatedLogoLoader';
 import MobileWeekTimeGrid from './MobileWeekTimeGrid';
 import WeekdaySelector from './WeekdaySelector';
 import TabsContainer from './TabsContainer';
@@ -29,11 +30,11 @@ const MobileFullCalendarV2Page: React.FC = () => {
     endDate: weekStart.endOf('isoWeek').format('YYYY-MM-DD'),
   }), [weekStart]);
 
-  const { data: scheduleTemplates } = useGetTrainingTemplatesQuery(undefined, {
+  const { data: scheduleTemplates, isLoading: isLoadingTemplates } = useGetTrainingTemplatesQuery(undefined, {
     skip: viewMode !== 'scheduleTemplate',
   });
 
-  const { data: actualTrainings } = useGetRealTrainingsQuery(realTrainingsParams, {
+  const { data: actualTrainings, isLoading: isLoadingActual } = useGetRealTrainingsQuery(realTrainingsParams, {
     skip: viewMode !== 'actualTrainings',
   });
 
@@ -42,6 +43,8 @@ const MobileFullCalendarV2Page: React.FC = () => {
     const events = viewMode === 'scheduleTemplate' ? scheduleTemplates || [] : actualTrainings || [];
     return normalizeEventsForWeek(events, weekStart);
   }, [viewMode, scheduleTemplates, actualTrainings, weekStart]);
+
+  const isLoading = viewMode === 'scheduleTemplate' ? !!isLoadingTemplates : !!isLoadingActual;
 
   // Ensure selected day is within the current week when week changes
   useEffect(() => {
@@ -83,15 +86,15 @@ const MobileFullCalendarV2Page: React.FC = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
           <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        overflow: 'hidden',
-        p: 1,
-        gap: 0.5,
-      }}
-    >
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              overflow: 'hidden',
+              p: 1,
+              gap: 0.5,
+            }}
+          >
         {/* Tabs Container with Month Picker and View Mode */}
         <TabsContainer
           viewMode={viewMode}
@@ -107,13 +110,16 @@ const MobileFullCalendarV2Page: React.FC = () => {
           onDaySelect={handleDaySelect}
         />
 
-        {/* Time Grid */}
+  {/* Time Grid */}
         <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
           <MobileWeekTimeGrid
             eventsMap={normalizedEvents}
             selectedDay={selectedDay}
           />
         </Box>
+
+  {/* Loader overlay: blocks interactions when fetching templates or real trainings */}
+  <AnimatedLogoLoader open={isLoading} message={viewMode === 'scheduleTemplate' ? 'Загружаются шаблоны...' : 'Загружаются тренировки...'} />
 
         {/* Month Picker Overlay */}
         <MobileMonthPickerOverlay
