@@ -6,7 +6,7 @@ import {useState} from "react";
 import {useLocation} from "react-router-dom";
 import {ChevronLeft, ChevronRight} from "@mui/icons-material";
 import {useCurrentUser} from "../../hooks/usePermissions";
-import {getFilteredMenuItems} from "../../utils/menuUtils";
+import {getFilteredMenuItemsForContext as getFilteredMenuItems} from "../../utils/menuUtils";
 
 interface SideBarProps {
     width: number;
@@ -18,7 +18,7 @@ export function SideBar({width, isCollapsed = false, onToggle}: SideBarProps) {
     const theme = useTheme();
     const location = useLocation();
     const { user } = useCurrentUser();
-    const filteredMenuItems = getFilteredMenuItems(MenuItems, user?.role);
+    const filteredMenuItems = getFilteredMenuItems(MenuItems, user?.role, false);
     
     const [selectedIndex, setSelectedIndex] = useState(() => {
         return filteredMenuItems.findIndex((item) => item.link === location.pathname.split("/")[2]);

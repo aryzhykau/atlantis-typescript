@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -34,6 +35,8 @@ import {
 } from '../../../store/apis/calendarApi-v2';
 import { TrainingStudentTemplate } from '../models/trainingStudentTemplate';
 
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+
 interface MobileCalendarControlsHeaderProps {
   currentDate: Dayjs;
   onDateChange: (date: Dayjs | null) => void;
@@ -42,6 +45,8 @@ interface MobileCalendarControlsHeaderProps {
   onPreviousDay: () => void;
   onNextDay: () => void;
   dayDisplay: string;
+  showBack?: boolean;
+  onBack?: () => void;
 }
 
 const MobileCalendarControlsHeader: React.FC<MobileCalendarControlsHeaderProps> = ({
@@ -52,6 +57,8 @@ const MobileCalendarControlsHeader: React.FC<MobileCalendarControlsHeaderProps> 
   onPreviousDay,
   onNextDay,
   dayDisplay,
+  showBack,
+  onBack,
 }) => {
   return (
     <Paper 
@@ -66,20 +73,35 @@ const MobileCalendarControlsHeader: React.FC<MobileCalendarControlsHeaderProps> 
         border: `1px solid ${theme.palette.divider}`
       })}
     >
-      <Stack spacing={3}>
+  <Stack spacing={3}>
         {/* Навигация по дням */}
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <IconButton 
-            onClick={onPreviousDay} 
-            size="large"
-            sx={{ 
-              backgroundColor: 'primary.main',
-              color: 'primary.contrastText',
-              '&:hover': { backgroundColor: 'primary.dark' }
-            }}
-          >
-            <ChevronLeft />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {showBack && (
+              <IconButton
+                onClick={onBack}
+                size="large"
+                sx={{
+                  backgroundColor: 'transparent',
+                  color: 'text.primary',
+                }}
+              >
+                <ArrowBackIcon />
+              </IconButton>
+            )}
+
+            <IconButton 
+              onClick={onPreviousDay} 
+              size="large"
+              sx={{ 
+                backgroundColor: 'primary.main',
+                color: 'primary.contrastText',
+                '&:hover': { backgroundColor: 'primary.dark' }
+              }}
+            >
+              <ChevronLeft />
+            </IconButton>
+          </Box>
           <Box sx={{ textAlign: 'center', flex: 1 }}>
             <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
               {dayDisplay}
@@ -465,8 +487,14 @@ const MobileCalendarShell: React.FC<MobileCalendarShellProps> = ({
 };
 
 const MobileCalendarV2Page: React.FC = () => {
-  const [currentDate, setCurrentDate] = useState<Dayjs>(dayjs());
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const dateParam = params.get('date');
+  const initialDate = dateParam ? dayjs(dateParam) : dayjs();
+
+  const [currentDate, setCurrentDate] = useState<Dayjs>(initialDate);
   const [viewMode, setViewMode] = useState<CalendarViewMode>('scheduleTemplate');
+  const navigate = useNavigate();
 
   const handleDateChange = (date: Dayjs | null) => {
     if (date) {
@@ -503,6 +531,13 @@ const MobileCalendarV2Page: React.FC = () => {
   const currentDayNumber = useMemo(() => {
     return currentDate.day() === 0 ? 7 : currentDate.day(); // 1 = Monday, 2 = Tuesday, ..., 7 = Sunday
   }, [currentDate]);
+
+  const fromParam = params.get('from');
+  const showBack = fromParam === 'week';
+  const handleBack = () => {
+    // Go back to the mobile full week calendar
+    navigate('/home/calendar-full');
+  };
 
   const {
     data: scheduleTemplates,
@@ -546,6 +581,8 @@ const MobileCalendarV2Page: React.FC = () => {
           onPreviousDay={handlePreviousDay}
           onNextDay={handleNextDay}
           dayDisplay={dayDisplay}
+          showBack={showBack}
+          onBack={handleBack}
         />
         <MobileCalendarShell 
           currentDate={currentDate}

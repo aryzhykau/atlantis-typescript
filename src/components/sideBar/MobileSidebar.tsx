@@ -5,12 +5,12 @@ import {IMenuItems} from "../../models/mainMenu.ts";
 import {useState} from "react";
 import {useLocation} from "react-router-dom";
 import {useCurrentUser} from "../../hooks/usePermissions";
-import {getFilteredMenuItems} from "../../utils/menuUtils";
+import {getFilteredMenuItemsForContext as getFilteredMenuItems} from "../../utils/menuUtils";
 
 export function MobileSideBar() {
     const location = useLocation();
     const currentUser = useCurrentUser();
-    const filteredMenuItems = getFilteredMenuItems(MenuItems, currentUser?.user?.role);
+    const filteredMenuItems = getFilteredMenuItems(MenuItems, currentUser?.user?.role, true);
     
     const [selectedIndex, setSelectedIndex] = useState(() => {
         return filteredMenuItems.findIndex((item) => item.link === location.pathname.split("/")[2]);

@@ -5,4 +5,5 @@ export interface IMenuItems {
     page: React.ReactNode;
     mobilePage: React.ReactNode;
     ownerOnly?: boolean;
+    mobileOnly?: boolean;
 }
