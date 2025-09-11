@@ -360,6 +360,7 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
       width: '100%',
       minWidth: 0,
       boxSizing: 'border-box',
+      paddingBottom: '132px', // Respect safe area on iOS
     }}>
       {/* Time grid */}
       <Box
