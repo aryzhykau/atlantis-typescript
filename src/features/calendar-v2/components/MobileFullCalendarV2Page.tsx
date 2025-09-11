@@ -82,35 +82,52 @@ const MobileFullCalendarV2Page: React.FC = () => {
   const handleCloseTrainingForm = () => {
     setIsTrainingFormOpen(false);
   };
-
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              overflow: 'hidden',
-              p: 1,
-              gap: 0.5,
-            }}
-          >
-        {/* Tabs Container with Month Picker and View Mode */}
-        <TabsContainer
-          viewMode={viewMode}
-          onViewModeChange={handleViewModeChange}
-          onOpenMonthPicker={() => setMonthPickerOpen(true)}
-          onAddTraining={handleAddTraining}
-        />
-        
-        {/* Weekday Selector */}
-        <WeekdaySelector
-          weekStart={weekStart}
-          selectedDay={selectedDay}
-          onDaySelect={handleDaySelect}
-        />
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100vh', // occupy the full viewport so inner scroll doesn't move page header
+          overflow: 'hidden',
+          p: 1,
+          gap: 0.5,
+        }}
+      >
+        {/* Sticky header: Tabs + Weekday selector stay fixed at the top */}
+        <Box
+          sx={(theme) => ({
+            position: 'sticky',
+            top: 0,
+            zIndex: theme.zIndex.appBar + 2,
+            bgcolor: theme.palette.background.paper,
+            WebkitBackdropFilter: 'blur(4px)',
+            // Reset child margins so sticky header size is predictable
+            display: 'flex',
+            flexDirection: 'column',
+            px: 0.5,
+            py: 0.5,
+            boxShadow: '0 6px 18px rgba(0,0,0,0.04)',
+            '& > *': {
+              marginBottom: 0,
+            },
+          })}
+        >
+          <TabsContainer
+            viewMode={viewMode}
+            onViewModeChange={handleViewModeChange}
+            onOpenMonthPicker={() => setMonthPickerOpen(true)}
+            onAddTraining={handleAddTraining}
+          />
 
-  {/* Time Grid */}
+          <WeekdaySelector
+            weekStart={weekStart}
+            selectedDay={selectedDay}
+            onDaySelect={handleDaySelect}
+          />
+        </Box>
+
+        {/* Time Grid (only this area scrolls) */}
         <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
           <MobileWeekTimeGrid
             eventsMap={normalizedEvents}
@@ -118,8 +135,8 @@ const MobileFullCalendarV2Page: React.FC = () => {
           />
         </Box>
 
-  {/* Loader overlay: blocks interactions when fetching templates or real trainings */}
-  <AnimatedLogoLoader open={isLoading} message={viewMode === 'scheduleTemplate' ? 'Загружаются шаблоны...' : 'Загружаются тренировки...'} />
+        {/* Loader overlay: blocks interactions when fetching templates or real trainings */}
+        <AnimatedLogoLoader open={isLoading} message={viewMode === 'scheduleTemplate' ? 'Загружаются шаблоны...' : 'Загружаются тренировки...'} />
 
         {/* Month Picker Overlay */}
         <MobileMonthPickerOverlay

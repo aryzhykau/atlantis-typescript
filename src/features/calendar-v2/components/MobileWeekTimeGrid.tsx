@@ -172,6 +172,8 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
   selectedDay,
 }) => {
   const theme = useTheme();
+  // dynamic adjustment for mobile browser chrome (address/toolbars)
+  const [viewportOffset, setViewportOffset] = useState<number>(0);
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<NormalizedEvent | NormalizedEvent[] | null>(null);
   const [bottomSheetMode, setBottomSheetMode] = useState<'event' | 'group'>('event');
@@ -268,6 +270,35 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
       observers.clear();
     };
   }, [eventsMap, hours, selectedDay]);
+
+  // Listen to visualViewport changes to calculate extra bottom offset (mobile browser chrome)
+  useEffect(() => {
+    const update = () => {
+      const vv = (window as any).visualViewport;
+      if (vv && typeof vv.height === 'number') {
+        // When toolbars are visible the visualViewport height is smaller than window.innerHeight
+        const offset = Math.max(0, window.innerHeight - vv.height);
+        setViewportOffset(offset);
+      } else {
+        setViewportOffset(0);
+      }
+    };
+
+    update();
+    if ((window as any).visualViewport) {
+      (window as any).visualViewport.addEventListener('resize', update);
+      (window as any).visualViewport.addEventListener('scroll', update);
+    }
+    window.addEventListener('resize', update);
+
+    return () => {
+      if ((window as any).visualViewport) {
+        (window as any).visualViewport.removeEventListener('resize', update);
+        (window as any).visualViewport.removeEventListener('scroll', update);
+      }
+      window.removeEventListener('resize', update);
+    };
+  }, []);
 
   const renderHourRow = (hour: number) => {
     const timeLabel = `${hour.toString().padStart(2, '0')}:00`;
@@ -424,8 +455,10 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
         boxSizing: 'border-box',
         paddingBottom: 0, // moved safe-area padding into inner scroll container
       }}>
-        {/* Time grid */}
-        <Box
+  {/* Time grid */}
+  {/** spacerPixel combines fixed buffer with runtime viewport offset */}
+  {/* We'll render a bottom spacer inside the scroll container to ensure last rows are visible */}
+  <Box
           ref={timeGridRef}
           data-scroll-container="time-grid"
           sx={{
@@ -440,8 +473,9 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
             width: '100%',
             minWidth: 0,
             boxSizing: 'border-box',
-            // Add modest bottom padding so rows are not obscured by iOS browser UI
-            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px) ',
+            // Add generous bottom padding so last rows are not obscured by mobile browser UI
+            // Keep safe-area inset and add a buffer to accommodate address bars / toolbars
+            paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + 84px + ${viewportOffset}px)`,
             '--event-card-w': '160px',
             '--peek-w': '20px',
             '--hour-row-h': `${hourHeightPx}px`,
@@ -449,6 +483,13 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
           onMouseMove={handleMouseMoveEvent}
         >
           {hours.map(renderHourRow)}
+          {/* bottom spacer to ensure final rows are not covered by mobile chrome */}
+          {(() => {
+            const spacerPx = 72 + viewportOffset;
+            return (
+              <Box sx={{ height: `calc(env(safe-area-inset-bottom, 0px) + ${spacerPx}px)`, flexShrink: 0 }} />
+            );
+          })()}
         </Box>
 
         {/* Event Bottom Sheet */}
