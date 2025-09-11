@@ -3,12 +3,16 @@ import {
   Box,
   Typography,
   useTheme,
-  Chip,
-  Avatar,
 } from '@mui/material';
 import dayjs, { Dayjs } from 'dayjs';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { NormalizedEvent } from '../utils/normalizeEventsForWeek';
+import { useMobileDragDrop } from '../hooks/useMobileDragDrop';
+import MobileDraggableEventCard from './MobileDraggableEventCard';
+import MobileDropZone from './MobileDropZone';
 import EventBottomSheet from './EventBottomSheet';
+import CalendarTrainingChip from './CalendarTrainingChip';
 
 interface MobileWeekTimeGridProps {
   eventsMap: Record<string, NormalizedEvent[]>;
@@ -24,6 +28,9 @@ interface EventCardProps {
   onClick: () => void;
   isPartiallyHidden?: boolean;
   onIntersectionChange?: (ratio: number) => void;
+  day: Dayjs;
+  time: string;
+  isDragAndDropEnabled?: boolean;
 }
 
 const EventCard: React.FC<EventCardProps> = ({ 
@@ -31,7 +38,10 @@ const EventCard: React.FC<EventCardProps> = ({
   isVisible, 
   onClick, 
   isPartiallyHidden, 
-  onIntersectionChange 
+  onIntersectionChange,
+  day,
+  time,
+  isDragAndDropEnabled = true
 }) => {
   const theme = useTheme();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -63,9 +73,6 @@ const EventCard: React.FC<EventCardProps> = ({
     };
   }, [onIntersectionChange]);
 
-  const trainerInitials = event.trainer
-    ? `${(event.trainer.first_name || '').charAt(0)}${(event.trainer.last_name || '').charAt(0)}`.toUpperCase()
-    : '?';
   
   const typeColor = event.training_type?.color || theme.palette.primary.main;
   
@@ -78,67 +85,75 @@ const EventCard: React.FC<EventCardProps> = ({
   const interpolatedBorderRadius = baseBorderRadius + (maxBorderRadius - baseBorderRadius) * (1 - activeRatio);
   
   return (
-    <Chip
-      ref={cardRef}
-      avatar={
-        <Avatar
-          sx={{
-            bgcolor: typeColor,
-            color: 'white',
-            width: 20,
-            height: 20,
-            fontSize: '0.6rem',
-            fontWeight: 'bold',
-          }}
+    <>
+      {isDragAndDropEnabled ? (
+        <MobileDraggableEventCard
+          event={event.raw}
+          day={day}
+          time={time}
         >
-          {trainerInitials}
-        </Avatar>
-      }
-      label={event.title}
-      onClick={onClick}
-      sx={{
-        height: isPartiallyHidden 
-          ? 'calc(var(--hour-row-h, 44px) - 16px)' 
-          : 'calc(var(--hour-row-h, 44px) - 8px)',
-        justifyContent: 'flex-start',
-        backgroundColor: typeColor + '40',
-        color: typeColor,
-        border: `1px solid ${typeColor}`,
-        borderRadius: `${interpolatedBorderRadius}px`,
-        fontSize: '0.7rem',
-        fontWeight: 600,
-        cursor: 'pointer',
-        minWidth: 'var(--event-card-w, 88px)',
-        scrollSnapAlign: 'start',
-        opacity: isVisible ? 1 : 0.8,
-        transform: isPartiallyHidden 
-          ? 'scale(0.9)' 
-          : isVisible ? 'scale(1)' : 'scale(0.95)',
-        transition: theme.transitions.create(['opacity', 'transform', 'height', 'border-radius'], {
-          duration: theme.transitions.duration.short,
-        }),
-        '&:hover': {
-          backgroundColor: typeColor + '50',
-          transform: isPartiallyHidden ? 'scale(0.95)' : 'scale(1.02)',
-        },
-        '& .MuiChip-label': {
-          paddingLeft: theme.spacing(0.5),
-          paddingRight: theme.spacing(1),
-          fontSize: '0.7rem',
-          fontWeight: 600,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          maxWidth: 'calc(var(--event-card-w, 88px) - 32px)',
-        },
-        '& .MuiChip-avatar': {
-          marginLeft: theme.spacing(0.5),
-          marginRight: 0,
-        },
-        boxShadow: theme.shadows[1],
-        background: `linear-gradient(135deg, ${typeColor}20 0%, ${typeColor}10 100%)`,
-      }}
-    />
+          <CalendarTrainingChip
+            ref={cardRef}
+            event={event.raw}
+            isMobile={true}
+            isTablet={false}
+            onEventClick={onClick}
+            isDragActive={false}
+            showDragHandle={true}
+            sx={{
+              height: isPartiallyHidden 
+                ? 'calc(var(--hour-row-h, 44px) - 16px)' 
+                : 'calc(var(--hour-row-h, 44px) - 8px)',
+              width: '120px', // Fixed width for event cards
+              minWidth: '120px',
+              maxWidth: '120px',
+              scrollSnapAlign: 'start',
+              opacity: isVisible ? 1 : 0.8,
+              transform: isPartiallyHidden 
+                ? 'scale(0.9)' 
+                : isVisible ? 'scale(1)' : 'scale(0.95)',
+              transition: theme.transitions.create(['opacity', 'transform', 'height', 'border-radius'], {
+                duration: theme.transitions.duration.short,
+              }),
+              borderRadius: `${interpolatedBorderRadius}px`,
+              boxShadow: theme.shadows[1],
+              background: `linear-gradient(135deg, ${typeColor}20 0%, ${typeColor}10 100%)`,
+              overflow: 'hidden',
+            }}
+          />
+        </MobileDraggableEventCard>
+      ) : (
+        <CalendarTrainingChip
+          ref={cardRef}
+          event={event.raw}
+          isMobile={true}
+          isTablet={false}
+          onEventClick={onClick}
+          isDragActive={false}
+          showDragHandle={false}
+          sx={{
+            height: isPartiallyHidden 
+              ? 'calc(var(--hour-row-h, 44px) - 16px)' 
+              : 'calc(var(--hour-row-h, 44px) - 8px)',
+            width: '120px', // Fixed width for event cards
+            minWidth: '120px',
+            maxWidth: '120px',
+            scrollSnapAlign: 'start',
+            opacity: isVisible ? 1 : 0.8,
+            transform: isPartiallyHidden 
+              ? 'scale(0.9)' 
+              : isVisible ? 'scale(1)' : 'scale(0.95)',
+            transition: theme.transitions.create(['opacity', 'transform', 'height', 'border-radius'], {
+              duration: theme.transitions.duration.short,
+            }),
+            borderRadius: `${interpolatedBorderRadius}px`,
+            boxShadow: theme.shadows[1],
+            background: `linear-gradient(135deg, ${typeColor}20 0%, ${typeColor}10 100%)`,
+            overflow: 'hidden',
+          }}
+        />
+      )}
+    </>
   );
 };
 
@@ -156,6 +171,9 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
   
   const observerTargets = useRef<Map<string, IntersectionObserver>>(new Map());
   const [visibleEvents, setVisibleEvents] = useState<Set<string>>(new Set());
+
+  // Mobile drag and drop functionality
+  const { handleEventDrop } = useMobileDragDrop();
 
   // Generate hours
   const hours = useMemo(() => {
@@ -275,8 +293,10 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
         </Box>
 
         {/* Event cards for this hour */}
-        <Box
-          data-scroll-container
+        <MobileDropZone
+          day={activeDay}
+          time={`${hour.toString().padStart(2, '0')}:00`}
+          onDrop={handleEventDrop}
           sx={{
             flex: 1,
             p: 0.5,
@@ -344,52 +364,57 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
                 isVisible={isInView}
                 isPartiallyHidden={isPartiallyHidden && totalEvents > 1}
                 onClick={() => handleEventClick(event)}
+                day={activeDay}
+                time={`${hour.toString().padStart(2, '0')}:00`}
+                isDragAndDropEnabled={true}
               />
             );
           })}
-        </Box>
+        </MobileDropZone>
       </Box>
     );
   };
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      height: '100%',
-      width: '100%',
-      minWidth: 0,
-      boxSizing: 'border-box',
-      paddingBottom: '132px', // Respect safe area on iOS
-    }}>
-      {/* Time grid */}
-      <Box
-        sx={{
-          flex: 1,
-          overflowY: 'auto',
-          touchAction: 'pan-y pinch-zoom', // Prioritize vertical scrolling and allow pinch zoom
-          backgroundColor: theme.palette.background.default,
-          width: '100%',
-          minWidth: 0,
-          boxSizing: 'border-box',
-          // Add extra bottom padding so rows are not obscured by iOS browser UI
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px) ',
-          '--event-card-w': '160px',
-          '--peek-w': '20px',
-          '--hour-row-h': `${hourHeightPx}px`,
-        }}
-      >
-        {hours.map(renderHourRow)}
-      </Box>
+    <DndProvider backend={HTML5Backend}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        height: '100%',
+        width: '100%',
+        minWidth: 0,
+        boxSizing: 'border-box',
+        paddingBottom: '132px', // Respect safe area on iOS
+      }}>
+        {/* Time grid */}
+        <Box
+          sx={{
+            flex: 1,
+            overflowY: 'auto',
+            touchAction: 'pan-y pinch-zoom', // Prioritize vertical scrolling and allow pinch zoom
+            backgroundColor: theme.palette.background.default,
+            width: '100%',
+            minWidth: 0,
+            boxSizing: 'border-box',
+            // Add extra bottom padding so rows are not obscured by iOS browser UI
+            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px) ',
+            '--event-card-w': '160px',
+            '--peek-w': '20px',
+            '--hour-row-h': `${hourHeightPx}px`,
+          }}
+        >
+          {hours.map(renderHourRow)}
+        </Box>
 
-      {/* Event Bottom Sheet */}
-      <EventBottomSheet
-        open={bottomSheetOpen}
-        onClose={() => setBottomSheetOpen(false)}
-        eventOrHourGroup={selectedEvent}
-        mode={bottomSheetMode}
-      />
-    </Box>
+        {/* Event Bottom Sheet */}
+        <EventBottomSheet
+          open={bottomSheetOpen}
+          onClose={() => setBottomSheetOpen(false)}
+          eventOrHourGroup={selectedEvent}
+          mode={bottomSheetMode}
+        />
+      </Box>
+    </DndProvider>
   );
 };
 

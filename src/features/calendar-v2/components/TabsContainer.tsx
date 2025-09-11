@@ -6,19 +6,21 @@ import {
   IconButton,
   useTheme,
 } from '@mui/material';
-import { CalendarToday as CalendarIcon } from '@mui/icons-material';
+import { CalendarToday as CalendarIcon, Add as AddIcon } from '@mui/icons-material';
 import { CalendarViewMode } from './CalendarV2Page';
 
 interface TabsContainerProps {
   viewMode: CalendarViewMode;
   onViewModeChange: (mode: CalendarViewMode) => void;
   onOpenMonthPicker?: () => void;
+  onAddTraining?: () => void;
 }
 
 const TabsContainer: React.FC<TabsContainerProps> = ({
   viewMode,
   onViewModeChange,
   onOpenMonthPicker,
+  onAddTraining,
 }) => {
   const theme = useTheme();
 
@@ -96,6 +98,33 @@ const TabsContainer: React.FC<TabsContainerProps> = ({
             value="actualTrainings"
           />
         </Tabs>
+
+        {/* Add Training Button */}
+        {onAddTraining && (
+          <IconButton
+            onClick={onAddTraining}
+            sx={{
+              background: theme.palette.success.main,
+              color: 'white',
+              borderRadius: theme.spacing(1),
+              width: 40,
+              height: 40,
+              transition: theme.transitions.create(['background', 'transform'], {
+                duration: theme.transitions.duration.short,
+              }),
+              '&:hover': {
+                background: theme.palette.success.dark,
+                transform: 'scale(1.1)',
+              },
+              '&:active': {
+                transform: 'scale(0.95)',
+              },
+            }}
+            title="Добавить тренировку"
+          >
+            <AddIcon />
+          </IconButton>
+        )}
       </Box>
     );
   };

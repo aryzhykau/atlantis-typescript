@@ -1,7 +1,8 @@
-import React, { useMemo, useCallback, memo } from 'react';
-import { Box, Typography, Tooltip, useTheme, alpha } from '@mui/material';
+import React, { useMemo, useCallback, memo, forwardRef } from 'react';
+import { Box, Typography, Tooltip, useTheme, alpha, SxProps, Theme, Avatar, Chip } from '@mui/material';
 import { CalendarEvent } from '../types';
 import { createEventDisplayData, createTooltipContent, getResponsiveChipStyles } from '../utils/eventDisplayUtils';
+import MobileDragHandle from './MobileDragHandle';
 
 interface CalendarTrainingChipProps {
   event: CalendarEvent;
@@ -9,15 +10,19 @@ interface CalendarTrainingChipProps {
   isTablet: boolean;
   onEventClick: (event: CalendarEvent) => void;
   isDragActive?: boolean;
+  showDragHandle?: boolean;
+  sx?: SxProps<Theme>;
 }
 
-export const CalendarTrainingChip = memo<CalendarTrainingChipProps>(({ 
+export const CalendarTrainingChip = memo(forwardRef<HTMLDivElement, CalendarTrainingChipProps>(({ 
   event, 
   isMobile, 
   isTablet, 
   onEventClick, 
-  isDragActive = false 
-}) => {
+  isDragActive = false,
+  showDragHandle = false,
+  sx
+}, ref) => {
   const theme = useTheme();
   
   // Simplified event data calculation using utility
@@ -25,6 +30,36 @@ export const CalendarTrainingChip = memo<CalendarTrainingChipProps>(({
 
   // Simplified tooltip content using utility
   const tooltipData = useMemo(() => createTooltipContent(chipData), [chipData]);
+  
+  // Create trainer initials for mobile avatar
+  const trainerInitials = useMemo(() => {
+    return chipData.trainerName
+      ? chipData.trainerName.split(' ').map((n: string) => n.charAt(0)).join('').toUpperCase()
+      : '?';
+  }, [chipData.trainerName]);
+
+  // Calculate student count and capacity for mobile chip
+  const studentCapacityInfo = useMemo(() => {
+    let studentCount = 0;
+    let maxCapacity = 0;
+
+    // Handle different event types
+    if ('students' in event) {
+      // RealTraining
+      studentCount = event.students?.length || 0;
+      maxCapacity = event.training_type?.max_participants || 0;
+    } else if ('assigned_students' in event) {
+      // TrainingTemplate
+      studentCount = event.assigned_students?.length || 0;
+      maxCapacity = event.training_type?.max_participants || 0;
+    }
+
+    return {
+      current: studentCount,
+      max: maxCapacity,
+      label: `${studentCount}/${maxCapacity}`,
+    };
+  }, [event]);
   
   const tooltipContent = useMemo(() => (
     <Box sx={{ textAlign: 'center' }}>
@@ -52,15 +87,19 @@ export const CalendarTrainingChip = memo<CalendarTrainingChipProps>(({
   const responsiveStyles = useMemo(() => getResponsiveChipStyles(isMobile, isTablet), [isMobile, isTablet]);
   
   // Chip styles with simplified memoization
-  const chipSx = useMemo(() => ({
+  const chipSx = useMemo((): SxProps<Theme> => ({
     backgroundColor: alpha(chipData.typeColor, 0.08),
     borderLeft: `3px solid ${chipData.typeColor}`,
     borderRadius: "0 8px 8px 0",
     px: 0.75,
     py: 0.25,
     cursor: 'pointer',
-    maxWidth: responsiveStyles.maxWidth,
-    width: 'fit-content',
+    width: isMobile ? '100%' : 'fit-content', // Full width on mobile
+    height: isMobile ? '100%' : 'auto', // Full height on mobile
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    maxWidth: isMobile ? 'none' : responsiveStyles.maxWidth,
     transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out',
     '&:hover': {
       transform: 'translateY(-1px)',
@@ -73,7 +112,9 @@ export const CalendarTrainingChip = memo<CalendarTrainingChipProps>(({
         color: theme.palette.text.primary,
       },
     },
-  }), [chipData.typeColor, responsiveStyles.maxWidth, theme.palette]);
+    // Merge external sx styles
+    ...(typeof sx === 'object' && !Array.isArray(sx) ? sx : {}),
+  }), [chipData.typeColor, responsiveStyles.maxWidth, theme.palette, sx, isMobile]);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -92,24 +133,83 @@ export const CalendarTrainingChip = memo<CalendarTrainingChipProps>(({
       disableTouchListener={isDragActive}
       open={isDragActive ? false : undefined}
     >
-      <Box onClick={handleClick} sx={chipSx}>
-        <Typography
-          variant="caption"
-          className="chip-text"
-          sx={{
-            fontSize: responsiveStyles.fontSize.main,
-            fontWeight: 600,
-            color: theme.palette.text.primary,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: 'block',
-            lineHeight: 1.2,
-            transition: 'color 0.2s ease-out, font-weight 0.2s ease-out',
-          }}
-        >
-          {chipData.trainingTypeName}
-        </Typography>
+      <Box onClick={handleClick} sx={chipSx} ref={ref}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 0.5,
+          width: '100%',
+          minWidth: 0, // Allow flex children to shrink below their content size
+        }}>
+          {isMobile && (
+            <Avatar
+              sx={{
+                bgcolor: chipData.typeColor,
+                color: 'white',
+                width: 20,
+                height: 20,
+                fontSize: '0.6rem',
+                fontWeight: 'bold',
+                flexShrink: 0, // Don't shrink the avatar
+              }}
+            >
+              {trainerInitials}
+            </Avatar>
+          )}
+          <Typography
+            variant="caption"
+            className="chip-text"
+            sx={{
+              fontSize: responsiveStyles.fontSize.main,
+              fontWeight: 600,
+              color: theme.palette.text.primary,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              flex: 1,
+              minWidth: 0, // Allow text to shrink and show ellipsis
+              lineHeight: 1.2,
+              transition: 'color 0.2s ease-out, font-weight 0.2s ease-out',
+            }}
+          >
+            {chipData.trainingTypeName}
+          </Typography>
+          {showDragHandle && isMobile && (
+            <Box sx={{ flexShrink: 0 }}> {/* Prevent drag handle from shrinking */}
+              <MobileDragHandle
+                inline
+                color={chipData.typeColor}
+                size="small"
+              />
+            </Box>
+          )}
+        </Box>
+        {/* Mobile student capacity chip */}
+        {isMobile && (
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            mt: 0.5,
+          }}>
+            <Chip
+              label={studentCapacityInfo.label}
+              size="small"
+              sx={{
+                height: '16px',
+                fontSize: '0.6rem',
+                backgroundColor: alpha(chipData.typeColor, 0.15),
+                color: chipData.typeColor,
+                border: `1px solid ${alpha(chipData.typeColor, 0.3)}`,
+                '& .MuiChip-label': {
+                  px: 0.5,
+                  py: 0,
+                  fontWeight: 600,
+                },
+              }}
+            />
+          </Box>
+        )}
         {!isMobile && (
           <Box sx={{ 
             display: 'flex', 
@@ -155,6 +255,6 @@ export const CalendarTrainingChip = memo<CalendarTrainingChipProps>(({
       </Box>
     </Tooltip>
   );
-});
+}));
 
 export default CalendarTrainingChip;

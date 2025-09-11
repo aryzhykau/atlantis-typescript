@@ -2,7 +2,7 @@ import React, { useMemo, memo } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, CircularProgress, 
   Typography, Chip, IconButton, Box,
-  useTheme, alpha, Divider, Paper, Card, CardContent, Autocomplete, TextField
+  useTheme, alpha, Divider, Paper, Card, CardContent, Autocomplete, TextField, useMediaQuery
 } from '@mui/material';
 import { FormikAutocomplete, FormikDatePicker } from '../../../components/forms/fields';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -76,6 +76,7 @@ const validationSchema = Yup.object().shape({
 
 const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClose, selectedDate, selectedTime }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [createTrainingTemplate] = useCreateTrainingTemplateMutation();
   const [createTrainingStudentTemplate] = useCreateTrainingStudentTemplateMutation();
   
@@ -163,7 +164,13 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
-      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <Dialog 
+        open={open} 
+        onClose={onClose} 
+        maxWidth="md" 
+        fullWidth
+        fullScreen={isMobile}
+      >
         <Formik
           initialValues={initialValues}
           validationSchema={validationSchema}
@@ -230,7 +237,7 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                   </IconButton>
                 </DialogTitle>
 
-                <DialogContent sx={{ p: 3 }}>
+                <DialogContent sx={{ p: isMobile ? 2 : 3 }}>
                   {/* Секция: Выбранное время */}
                   <Card sx={styles.cardBorder}>
                     <CardContent>
