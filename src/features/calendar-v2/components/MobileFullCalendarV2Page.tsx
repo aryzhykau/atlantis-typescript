@@ -96,10 +96,12 @@ const MobileFullCalendarV2Page: React.FC = () => {
         />
 
         {/* Time Grid */}
-        <MobileWeekTimeGrid
-          eventsMap={normalizedEvents}
-          selectedDay={selectedDay}
-        />
+        <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          <MobileWeekTimeGrid
+            eventsMap={normalizedEvents}
+            selectedDay={selectedDay}
+          />
+        </Box>
 
         {/* Month Picker Overlay */}
         <MobileMonthPickerOverlay
