@@ -371,6 +371,8 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
           width: '100%',
           minWidth: 0,
           boxSizing: 'border-box',
+          // Add extra bottom padding so rows are not obscured by iOS browser UI
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px) ',
           '--event-card-w': '160px',
           '--peek-w': '20px',
           '--hour-row-h': `${hourHeightPx}px`,

@@ -75,10 +75,13 @@ const MobileFullCalendarV2Page: React.FC = () => {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
-        overflow: 'hidden',
-        p: 1,
-        gap: 0.5,
+  height: '100vh',
+  overflow: 'hidden',
+  p: 1,
+  gap: 0.5,
+  // Ensure content isn't hidden behind iOS "liquid glass" UI
+  // Add safe-area inset to bottom plus a small extra gap
+  paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
       }}
     >
         {/* Tabs Container with Month Picker and View Mode */}
