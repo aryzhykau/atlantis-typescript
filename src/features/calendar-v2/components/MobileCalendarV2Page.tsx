@@ -10,7 +10,6 @@ import {
   Stack,
   Card,
   CardContent,
-
   Chip,
   CircularProgress,
   Collapse,
@@ -18,6 +17,7 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import AddIcon from '@mui/icons-material/Add';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -34,6 +34,7 @@ import {
   useGetRealTrainingsQuery,
 } from '../../../store/apis/calendarApi-v2';
 import { TrainingStudentTemplate } from '../models/trainingStudentTemplate';
+import TrainingTemplateForm from './TrainingTemplateForm';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
@@ -47,6 +48,7 @@ interface MobileCalendarControlsHeaderProps {
   dayDisplay: string;
   showBack?: boolean;
   onBack?: () => void;
+  onAddTraining?: () => void;
 }
 
 const MobileCalendarControlsHeader: React.FC<MobileCalendarControlsHeaderProps> = ({
@@ -59,6 +61,7 @@ const MobileCalendarControlsHeader: React.FC<MobileCalendarControlsHeaderProps> 
   dayDisplay,
   showBack,
   onBack,
+  onAddTraining,
 }) => {
   return (
     <Paper 
@@ -145,50 +148,76 @@ const MobileCalendarControlsHeader: React.FC<MobileCalendarControlsHeaderProps> 
           />
         </LocalizationProvider>
         
-        {/* Табы режимов */}
-                 <Box 
-           sx={(theme) => ({ 
-             backgroundColor: theme.palette.background.paper, 
-             borderRadius: 3,
-             p: 0.5,
-             border: `1px solid ${theme.palette.divider}`
-           })}
-         >
-          <Tabs 
-            value={viewMode} 
-            onChange={onViewModeChange} 
-            variant="fullWidth"
-            textColor="primary"
-            sx={(theme) => ({
-              '& .MuiTabs-indicator': {
-                display: 'none', // Убираем стандартный индикатор
-              },
-              '& .MuiTab-root': {
-                borderRadius: 2,
-                fontWeight: 'bold',
-                textTransform: 'none',
-                fontSize: '0.9rem',
-                color: theme.palette.text.secondary,
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  backgroundColor: `${theme.palette.primary.main}20`,
-                  color: theme.palette.primary.main
-                }
-              },
-              '& .Mui-selected': {
-                backgroundColor: theme.palette.primary.main,
-                color: theme.palette.primary.contrastText,
-                '&:hover': {
-                  backgroundColor: theme.palette.primary.dark,
-                  color: theme.palette.primary.contrastText
-                }
-              }
+        {/* Табы режимов и кнопка добавления */}
+        <Stack spacing={2}>
+          <Box 
+            sx={(theme) => ({ 
+              backgroundColor: theme.palette.background.paper, 
+              borderRadius: 3,
+              p: 0.5,
+              border: `1px solid ${theme.palette.divider}`,
             })}
           >
-            <Tab label="📋 Шаблон" value="scheduleTemplate" />
-            <Tab label="🏃‍♂️ Тренировки" value="actualTrainings" />
-          </Tabs>
-        </Box>
+            <Tabs 
+              value={viewMode} 
+              onChange={onViewModeChange} 
+              variant="fullWidth"
+              textColor="primary"
+              sx={(theme) => ({
+                '& .MuiTabs-indicator': {
+                  display: 'none', // Убираем стандартный индикатор
+                },
+                '& .MuiTab-root': {
+                  borderRadius: 2,
+                  fontWeight: 'bold',
+                  textTransform: 'none',
+                  fontSize: '0.9rem',
+                  color: theme.palette.text.secondary,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: `${theme.palette.primary.main}20`,
+                    color: theme.palette.primary.main
+                  }
+                },
+                '& .Mui-selected': {
+                  backgroundColor: theme.palette.primary.main,
+                  color: theme.palette.primary.contrastText,
+                  '&:hover': {
+                    backgroundColor: theme.palette.primary.dark,
+                    color: theme.palette.primary.contrastText
+                  }
+                }
+              })}
+            >
+              <Tab label="📋 Шаблон" value="scheduleTemplate" />
+              <Tab label="🏃‍♂️ Тренировки" value="actualTrainings" />
+            </Tabs>
+          </Box>
+          
+          {/* Add Training Button */}
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <IconButton
+              onClick={onAddTraining}
+              size="large"
+              sx={(theme) => ({
+                backgroundColor: theme.palette.success.main,
+                color: theme.palette.success.contrastText,
+                width: 60,
+                height: 60,
+                border: `3px solid ${theme.palette.success.dark}`,
+                boxShadow: theme.shadows[6],
+                '&:hover': { 
+                  backgroundColor: theme.palette.success.dark,
+                  transform: 'scale(1.1)',
+                  boxShadow: theme.shadows[10],
+                }
+              })}
+              title="Добавить тренировку"
+            >
+              <AddIcon sx={{ fontSize: 32 }} />
+            </IconButton>
+          </Box>
+        </Stack>
       </Stack>
     </Paper>
   );
@@ -494,6 +523,7 @@ const MobileCalendarV2Page: React.FC = () => {
 
   const [currentDate, setCurrentDate] = useState<Dayjs>(initialDate);
   const [viewMode, setViewMode] = useState<CalendarViewMode>('scheduleTemplate');
+  const [isTrainingFormOpen, setIsTrainingFormOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleDateChange = (date: Dayjs | null) => {
@@ -539,6 +569,14 @@ const MobileCalendarV2Page: React.FC = () => {
     navigate('/home/calendar-full');
   };
 
+  const handleAddTraining = () => {
+    setIsTrainingFormOpen(true);
+  };
+
+  const handleCloseTrainingForm = () => {
+    setIsTrainingFormOpen(false);
+  };
+
   const {
     data: scheduleTemplates,
     isLoading: isLoadingTemplates,
@@ -557,6 +595,32 @@ const MobileCalendarV2Page: React.FC = () => {
   } = useGetRealTrainingsQuery(realTrainingsParams, {
     skip: viewMode !== 'actualTrainings',
   });
+
+  // Calculate appropriate default time based on existing trainings
+  const defaultTrainingTime = useMemo(() => {
+    const data = viewMode === 'scheduleTemplate' ? scheduleTemplates : actualTrainings;
+    if (!data || data.length === 0) {
+      return "08:00"; // Default morning time
+    }
+    
+    // Find the latest training time and suggest next available slot
+    const times = data.map((training: any) => training.start_time || training.time).filter(Boolean);
+    if (times.length === 0) {
+      return "08:00";
+    }
+    
+    // Sort times and find a gap or suggest after the last one
+    times.sort();
+    const lastTime = times[times.length - 1];
+    const [hours, minutes] = lastTime.split(':').map(Number);
+    const newHour = hours + 1; // Suggest 1 hour later
+    
+    if (newHour < 22) { // Don't suggest too late
+      return `${newHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+    
+    return "08:00";
+  }, [viewMode, scheduleTemplates, actualTrainings]);
 
   const isLoading = viewMode === 'scheduleTemplate' ? isLoadingTemplates : isLoadingActual;
   const error = viewMode === 'scheduleTemplate' ? errorTemplates : errorActual;
@@ -583,6 +647,7 @@ const MobileCalendarV2Page: React.FC = () => {
           dayDisplay={dayDisplay}
           showBack={showBack}
           onBack={handleBack}
+          onAddTraining={handleAddTraining}
         />
         <MobileCalendarShell 
           currentDate={currentDate}
@@ -591,6 +656,14 @@ const MobileCalendarV2Page: React.FC = () => {
           actualData={actualTrainings}
           isLoading={isLoading}
           error={error}
+        />
+        
+        {/* Training Template Form */}
+        <TrainingTemplateForm
+          open={isTrainingFormOpen}
+          onClose={handleCloseTrainingForm}
+          selectedDate={currentDate}
+          selectedTime={defaultTrainingTime}
         />
       </Box>
     </LocalizationProvider>

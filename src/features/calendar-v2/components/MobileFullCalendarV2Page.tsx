@@ -13,6 +13,7 @@ import MobileWeekTimeGrid from './MobileWeekTimeGrid';
 import WeekdaySelector from './WeekdaySelector';
 import TabsContainer from './TabsContainer';
 import MobileMonthPickerOverlay from './MobileMonthPickerOverlay';
+import TrainingTemplateForm from './TrainingTemplateForm';
 import { normalizeEventsForWeek } from '../utils/normalizeEventsForWeek';
 
 // Mobile full calendar: reuse CalendarShell but adapt paddings to mobile
@@ -21,6 +22,7 @@ const MobileFullCalendarV2Page: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState<Dayjs>(dayjs());
   const [viewMode, setViewMode] = useState<CalendarViewMode>('scheduleTemplate');
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [isTrainingFormOpen, setIsTrainingFormOpen] = useState(false);
 
   const realTrainingsParams = useMemo(() => ({
     startDate: weekStart.format('YYYY-MM-DD'),
@@ -69,6 +71,15 @@ const MobileFullCalendarV2Page: React.FC = () => {
     setViewMode(mode);
   };
 
+  // Handle training form
+  const handleAddTraining = () => {
+    setIsTrainingFormOpen(true);
+  };
+
+  const handleCloseTrainingForm = () => {
+    setIsTrainingFormOpen(false);
+  };
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
           <Box
@@ -86,6 +97,7 @@ const MobileFullCalendarV2Page: React.FC = () => {
           viewMode={viewMode}
           onViewModeChange={handleViewModeChange}
           onOpenMonthPicker={() => setMonthPickerOpen(true)}
+          onAddTraining={handleAddTraining}
         />
         
         {/* Weekday Selector */}
@@ -114,6 +126,14 @@ const MobileFullCalendarV2Page: React.FC = () => {
             }
           }}
           onClose={() => setMonthPickerOpen(false)}
+        />
+
+        {/* Training Template Form */}
+        <TrainingTemplateForm
+          open={isTrainingFormOpen}
+          onClose={handleCloseTrainingForm}
+          selectedDate={selectedDay}
+          selectedTime="08:00"
         />
       </Box>
     </LocalizationProvider>
