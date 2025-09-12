@@ -142,6 +142,14 @@ export const useMobileDragDrop = (
       },
     }));
 
+    // Show an info snackbar with a loading indicator while the move request is in-flight
+    // It will be replaced by success/error notification after the request completes
+    try {
+      displaySnackbar('Перемещение тренировки...', 'info');
+    } catch (e) {
+      // swallow - displaySnackbar should be stable, but avoid crashing if not
+    }
+
     try {
       await handleMove(event, targetDay, targetTime);
       

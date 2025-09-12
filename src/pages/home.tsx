@@ -1,5 +1,5 @@
 import {useGetCurrentUserQuery} from "../store/apis/userApi.ts";
-import {Alert, Paper, Snackbar} from "@mui/material";
+import {Alert, Paper, Snackbar, CircularProgress, Box} from "@mui/material";
 import HomeLayout from "../layouts/HomeLayout.tsx";
 import {Outlet} from "react-router-dom";
 import {useEffect, useState} from "react";
@@ -59,7 +59,14 @@ export function HomePage() {
                 sx={{ zIndex: 9999 }}
             >
                 <Alert onClose={hideSnackbar} severity={snackbar.severity}>
-                    {snackbar.message}
+                    {snackbar.severity === 'info' ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <CircularProgress size={18} color="inherit" />
+                            <span>{snackbar.message}</span>
+                        </Box>
+                    ) : (
+                        snackbar.message
+                    )}
                 </Alert>
             </Snackbar>
             </>
