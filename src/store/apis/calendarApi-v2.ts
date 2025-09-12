@@ -191,12 +191,10 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         method: 'POST',
         body: newStudentTemplate,
       }),
-      invalidatesTags: [
+      invalidatesTags: (result) => [
         { type: TRAINING_STUDENT_TEMPLATE_TAG, id: 'LIST' },
-        // Также нужно инвалидировать связанный TrainingTemplate, чтобы обновить его assigned_students
-        // Это потребует знания ID связанного шаблона. Можно сделать более сложную логику инвалидации
-        // или пересмотреть структуру данных/запросов, если это критично.
-        // Пока оставляем так для простоты.
+        // If server returns the created student-template, also invalidate the parent training template so assigned_students are refreshed
+        result ? { type: TRAINING_TEMPLATE_TAG, id: (result as any).training_template_id } : { type: TRAINING_TEMPLATE_TAG, id: 'LIST' },
       ],
     }),
     updateTrainingStudentTemplate: builder.mutation<TrainingStudentTemplate, { id: number; data: TrainingStudentTemplateUpdate }>({
@@ -205,20 +203,22 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (_, __, { id }) => [
-        { type: TRAINING_STUDENT_TEMPLATE_TAG, id },
-        // Потенциально инвалидировать и связанный TrainingTemplate
+      invalidatesTags: (result, _error, arg) => [
+        { type: TRAINING_STUDENT_TEMPLATE_TAG, id: arg.id },
+        // Invalidate parent training template if server returned its id
+        result ? { type: TRAINING_TEMPLATE_TAG, id: (result as any).training_template_id } : { type: TRAINING_TEMPLATE_TAG, id: 'LIST' },
       ],
     }),
-    deleteTrainingStudentTemplate: builder.mutation<{ success: boolean; id: number }, number>({
+    deleteTrainingStudentTemplate: builder.mutation<TrainingStudentTemplate, number>({
       query: (id) => ({
         url: `training_student_templates/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (_, __, id) => [
+      invalidatesTags: (result, _error, id) => [
         { type: TRAINING_STUDENT_TEMPLATE_TAG, id },
         { type: TRAINING_STUDENT_TEMPLATE_TAG, id: 'LIST' },
-        // Потенциально инвалидировать и связанный TrainingTemplate
+        // Invalidate parent template cache if server returned the deleted record with training_template_id
+        result ? { type: TRAINING_TEMPLATE_TAG, id: (result as any).training_template_id } : { type: TRAINING_TEMPLATE_TAG, id: 'LIST' },
       ],
     }),
 

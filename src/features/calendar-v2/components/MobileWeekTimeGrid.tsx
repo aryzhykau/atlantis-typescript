@@ -682,6 +682,32 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
           onDelete={handleDeleteEvent}
           onRequestEdit={handleRequestEdit}
           onRequestMove={handleRequestMove}
+          onAssignedStudentDeleted={(trainingTemplateId: number, studentTemplateId: number) => {
+            // Remove the assigned student from localEventsMap entries (templates may appear across days)
+            setLocalEventsMap(prev => {
+              const copy = JSON.parse(JSON.stringify(prev));
+              Object.keys(copy).forEach(dayKey => {
+                copy[dayKey] = copy[dayKey].map((e: NormalizedEvent) => {
+                  if (e.isTemplate && e.raw && Number(e.id) === Number(trainingTemplateId)) {
+                    // remove assigned_students with matching id
+                    const assigned = (e.raw.assigned_students || []).filter((a: any) => a.id !== studentTemplateId);
+                    return { ...e, raw: { ...e.raw, assigned_students: assigned } } as NormalizedEvent;
+                  }
+                  return e;
+                });
+              });
+              return copy;
+            });
+
+            // If the detail sheet is open for the affected template, update selectedEvent so bottomsheet re-renders
+            setSelectedEvent(prev => {
+              if (!prev || Array.isArray(prev)) return prev;
+              const idMatches = prev.isTemplate && Number(prev.id) === Number(trainingTemplateId);
+              if (!idMatches) return prev;
+              const newRaw = { ...prev.raw, assigned_students: (prev.raw.assigned_students || []).filter((a: any) => a.id !== studentTemplateId) };
+              return { ...prev, raw: newRaw } as NormalizedEvent;
+            });
+          }}
         />
         <EditEventBottomSheet
           open={editSheetOpen}
