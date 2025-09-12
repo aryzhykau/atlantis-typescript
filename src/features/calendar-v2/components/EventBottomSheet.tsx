@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -29,6 +29,7 @@ interface EventBottomSheetProps {
   onSave?: (event: NormalizedEvent) => void;
   onMove?: (event: NormalizedEvent) => void;
   onDelete?: (event: NormalizedEvent) => void;
+  onRequestEdit?: (event: NormalizedEvent) => void;
 }
 
 const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
@@ -36,20 +37,31 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
   eventOrHourGroup,
   mode,
   onClose,
-  onSave,
   onMove,
   onDelete,
+  onRequestEdit,
 }) => {
   const theme = useTheme();
-
+  const [pendingDeleteEvent, setPendingDeleteEvent] = useState<NormalizedEvent | null>(null);
+  // When user wants to edit, request parent to open the edit sheet
   const handleEdit = () => {
-    // TODO: Implement edit functionality
-    console.log('Edit event', onSave);
+    if (!eventOrHourGroup || Array.isArray(eventOrHourGroup)) return;
+    onRequestEdit?.(eventOrHourGroup);
   };
 
   const handleDelete = (event: NormalizedEvent) => {
-    onDelete?.(event);
-    onClose();
+    // Show inline confirmation UI instead of immediate deletion
+    setPendingDeleteEvent(event);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDeleteEvent) return;
+    onDelete?.(pendingDeleteEvent);
+    setPendingDeleteEvent(null);
+  };
+
+  const cancelDelete = () => {
+    setPendingDeleteEvent(null);
   };
 
   const handleMove = (event: NormalizedEvent) => {
@@ -391,12 +403,12 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
           </Box>
         )}
 
-        {/* Action Buttons */}
+    {/* Action Buttons */}
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Button
             variant="outlined"
             startIcon={<EditIcon />}
-            onClick={handleEdit}
+      onClick={handleEdit}
             sx={{
               borderRadius: theme.spacing(1.5),
               textTransform: 'none',
@@ -434,6 +446,29 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
             Удалить
           </Button>
         </Box>
+
+  {/* Edit is handled in a separate edit sheet */}
+
+        {/* Inline confirmation UI for delete */}
+        {pendingDeleteEvent && pendingDeleteEvent.id === event.id && (
+          <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={confirmDelete}
+              sx={{ flex: 1, textTransform: 'none' }}
+            >
+              Подтвердить удаление
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={cancelDelete}
+              sx={{ flex: 1, textTransform: 'none' }}
+            >
+              Отмена
+            </Button>
+          </Box>
+        )}
       </Box>
     );
   };
@@ -553,7 +588,7 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
                     </IconButton>
                     <IconButton
                       size="small"
-                      onClick={() => handleDelete(event)}
+                        onClick={() => handleDelete(event)}
                       sx={{
                         color: theme.palette.error.main,
                         '&:hover': {
@@ -566,6 +601,12 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
                   </Box>
                 </ListItem>
                 {index < events.length - 1 && <Divider sx={{ my: 1 }} />}
+                {pendingDeleteEvent && pendingDeleteEvent.id === event.id && (
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                    <Button variant="contained" color="error" onClick={confirmDelete} sx={{ flex: 1, textTransform: 'none' }}>Подтвердить</Button>
+                    <Button variant="outlined" onClick={cancelDelete} sx={{ flex: 1, textTransform: 'none' }}>Отмена</Button>
+                  </Box>
+                )}
               </React.Fragment>
             );
           })}
@@ -589,6 +630,7 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
           borderTopRightRadius: theme.spacing(3),
           backgroundColor: theme.palette.background.paper,
           maxHeight: '80vh',
+          zIndex: 1400,
         },
       }}
     >

@@ -3,6 +3,8 @@ import {
   Box,
   Typography,
   useTheme,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import dayjs, { Dayjs } from 'dayjs';
 import { DndProvider } from 'react-dnd';
@@ -13,7 +15,13 @@ import { useAutoScroll } from '../hooks/useAutoScroll';
 import MobileDraggableEventCard from './MobileDraggableEventCard';
 import MobileDropZone from './MobileDropZone';
 import EventBottomSheet from './EventBottomSheet';
+import EditEventBottomSheet from './EditEventBottomSheet';
 import CalendarTrainingChip from './CalendarTrainingChip';
+import {
+  useDeleteTrainingTemplateMutation,
+  useDeleteRealTrainingMutation,
+} from '../../../store/apis/calendarApi-v2';
+import { useUpdateTrainingTemplateMutation, useUpdateRealTrainingMutation } from '../../../store/apis/calendarApi-v2';
 
 interface MobileWeekTimeGridProps {
   eventsMap: Record<string, NormalizedEvent[]>;
@@ -177,6 +185,10 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<NormalizedEvent | NormalizedEvent[] | null>(null);
   const [bottomSheetMode, setBottomSheetMode] = useState<'event' | 'group'>('event');
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<NormalizedEvent | null>(null);
+  // Keep a local copy of eventsMap so we can optimistically modify UI (delete/transfer/edit)
+  const [localEventsMap, setLocalEventsMap] = useState<Record<string, NormalizedEvent[]>>(eventsMap);
   
   // Create ref for the scrollable time grid container
   const timeGridRef = useRef<HTMLElement>(null!);
@@ -223,6 +235,114 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
     setBottomSheetMode('event');
     setBottomSheetOpen(true);
   };
+
+  const handleRequestEdit = (event: NormalizedEvent) => {
+    // Close the details bottom sheet first so the edit sheet can appear on top.
+    setBottomSheetOpen(false);
+    // Small delay for closing animation to finish, then open edit sheet.
+    setTimeout(() => {
+      setEditingEvent(event);
+      setEditSheetOpen(true);
+    }, 220);
+  };
+
+  // Sync local map when prop updates
+  useEffect(() => {
+    setLocalEventsMap(eventsMap);
+  }, [eventsMap]);
+
+  // Delete handler for bottom sheet - remove event from local map
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
+
+  // RTK Query mutations for deleting templates / real trainings
+  const [deleteTrainingTemplate] = useDeleteTrainingTemplateMutation();
+  const [deleteRealTraining] = useDeleteRealTrainingMutation();
+  // RTK Query mutations for updating templates / real trainings
+  const [updateTrainingTemplate] = useUpdateTrainingTemplateMutation();
+  const [updateRealTraining] = useUpdateRealTrainingMutation();
+
+  // Save (edit) handler: optimistic update localEventsMap and call API
+  const handleSaveEvent = useCallback(async (event: NormalizedEvent) => {
+    if (!event) return;
+    const backup = JSON.parse(JSON.stringify(localEventsMap));
+    const dayKey = event.start?.format ? event.start.format('YYYY-MM-DD') : null;
+
+    // Optimistically update local map
+    setLocalEventsMap(prev => {
+      const next = { ...prev };
+      if (dayKey && Array.isArray(next[dayKey])) {
+        next[dayKey] = next[dayKey].map(e => e.id === event.id ? event : e);
+      } else {
+        Object.keys(next).forEach(k => {
+          next[k] = next[k].map(e => e.id === event.id ? event : e);
+        });
+      }
+      return next;
+    });
+
+    try {
+      if (event.isTemplate) {
+        // prepare payload based on event.raw
+        const trainingTypeId = event.raw?.training_type_id ?? event.raw?.training_type?.id ?? event.training_type?.id;
+        const responsibleTrainerId = event.raw?.responsible_trainer_id ?? event.raw?.responsible_trainer?.id ?? event.trainer?.id;
+        const payload = {
+          id: Number(event.id),
+          data: {
+            day_number: event.raw?.day_number,
+            start_time: event.raw?.start_time,
+            training_type_id: trainingTypeId,
+            responsible_trainer_id: responsibleTrainerId,
+          },
+        };
+        await (updateTrainingTemplate as any)(payload).unwrap();
+      } else {
+        const payload = { id: Number(event.id), data: { training_date: event.raw?.training_date, start_time: event.raw?.start_time } };
+        await (updateRealTraining as any)(payload).unwrap();
+      }
+
+      setSnackbar({ open: true, message: 'Событие обновлено', severity: 'success' });
+      setBottomSheetOpen(false);
+      setSelectedEvent(null);
+    } catch (err: any) {
+      // revert
+      setLocalEventsMap(backup);
+      setSnackbar({ open: true, message: err?.message || 'Ошибка при обновлении', severity: 'error' });
+    }
+  }, [localEventsMap]);
+
+  const handleDeleteEvent = useCallback(async (event: NormalizedEvent) => {
+    if (!event) return;
+    // Optimistically remove locally, but keep a copy to revert on failure
+    const backup = JSON.parse(JSON.stringify(localEventsMap));
+    const dayKey = event.start?.format ? event.start.format('YYYY-MM-DD') : null;
+    setLocalEventsMap(prev => {
+      const next = { ...prev };
+      if (dayKey && Array.isArray(next[dayKey])) {
+        next[dayKey] = next[dayKey].filter(e => e.id !== event.id);
+      } else {
+        Object.keys(next).forEach(k => {
+          next[k] = next[k].filter(e => e.id !== event.id);
+        });
+      }
+      return next;
+    });
+
+    try {
+      // Choose mutation based on whether this is a template
+      if (event.isTemplate) {
+        await deleteTrainingTemplate(Number(event.id)).unwrap();
+      } else {
+        await deleteRealTraining(Number(event.id)).unwrap();
+      }
+      setSnackbar({ open: true, message: 'Событие успешно удалено', severity: 'success' });
+      setBottomSheetOpen(false);
+      setSelectedEvent(null);
+    } catch (err: any) {
+      // revert
+      setLocalEventsMap(backup);
+      setSnackbar({ open: true, message: err?.message || 'Ошибка при удалении', severity: 'error' });
+    }
+  }, [localEventsMap]);
 
   // Set up intersection observer for event cards
   useEffect(() => {
@@ -304,9 +424,9 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
     const timeLabel = `${hour.toString().padStart(2, '0')}:00`;
     
     // Get selected day or default to today
-    const activeDay = selectedDay || dayjs();
-    const activeDayKey = activeDay.format('YYYY-MM-DD');
-    const dayEvents = eventsMap[activeDayKey]?.filter((e: NormalizedEvent) => e.startHour === hour) || [];
+  const activeDay = selectedDay || dayjs();
+  const activeDayKey = activeDay.format('YYYY-MM-DD');
+  const dayEvents = localEventsMap[activeDayKey]?.filter((e: NormalizedEvent) => e.startHour === hour) || [];
     
     return (
       <Box
@@ -498,7 +618,24 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
           onClose={() => setBottomSheetOpen(false)}
           eventOrHourGroup={selectedEvent}
           mode={bottomSheetMode}
+          onDelete={handleDeleteEvent}
+          onRequestEdit={handleRequestEdit}
         />
+        <EditEventBottomSheet
+          open={editSheetOpen}
+          event={editingEvent}
+          onClose={() => setEditSheetOpen(false)}
+          onSave={(updated) => {
+            // forward to existing save handler
+            handleSaveEvent(updated);
+            setEditSheetOpen(false);
+          }}
+        />
+        <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar(s => ({ ...s, open: false }))}>
+          <Alert severity={snackbar.severity} onClose={() => setSnackbar(s => ({ ...s, open: false }))} sx={{ width: '100%' }}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </DndProvider>
   );
