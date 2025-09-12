@@ -16,12 +16,16 @@ import MobileDraggableEventCard from './MobileDraggableEventCard';
 import MobileDropZone from './MobileDropZone';
 import EventBottomSheet from './EventBottomSheet';
 import EditEventBottomSheet from './EditEventBottomSheet';
+import TransferEventBottomSheet from './TransferEventBottomSheet';
 import CalendarTrainingChip from './CalendarTrainingChip';
 import {
   useDeleteTrainingTemplateMutation,
   useDeleteRealTrainingMutation,
+  useUpdateTrainingTemplateMutation,
+  useUpdateRealTrainingMutation,
+  useMoveTrainingTemplateMutation,
+  useMoveRealTrainingMutation,
 } from '../../../store/apis/calendarApi-v2';
-import { useUpdateTrainingTemplateMutation, useUpdateRealTrainingMutation } from '../../../store/apis/calendarApi-v2';
 
 interface MobileWeekTimeGridProps {
   eventsMap: Record<string, NormalizedEvent[]>;
@@ -187,6 +191,10 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
   const [bottomSheetMode, setBottomSheetMode] = useState<'event' | 'group'>('event');
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<NormalizedEvent | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [movingEvent, setMovingEvent] = useState<NormalizedEvent | null>(null);
+  const [moveSheetOpen, setMoveSheetOpen] = useState(false);
+  const [moving, setMoving] = useState(false);
   // Keep a local copy of eventsMap so we can optimistically modify UI (delete/transfer/edit)
   const [localEventsMap, setLocalEventsMap] = useState<Record<string, NormalizedEvent[]>>(eventsMap);
   
@@ -246,6 +254,15 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
     }, 220);
   };
 
+  const handleRequestMove = (event: NormalizedEvent) => {
+    // Close details and open transfer sheet on top
+    setBottomSheetOpen(false);
+    setTimeout(() => {
+      setMovingEvent(event);
+      setMoveSheetOpen(true);
+    }, 220);
+  };
+
   // Sync local map when prop updates
   useEffect(() => {
     setLocalEventsMap(eventsMap);
@@ -260,6 +277,8 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
   // RTK Query mutations for updating templates / real trainings
   const [updateTrainingTemplate] = useUpdateTrainingTemplateMutation();
   const [updateRealTraining] = useUpdateRealTrainingMutation();
+  const [moveTrainingTemplate] = useMoveTrainingTemplateMutation();
+  const [moveRealTraining] = useMoveRealTrainingMutation();
 
   // Save (edit) handler: optimistic update localEventsMap and call API
   const handleSaveEvent = useCallback(async (event: NormalizedEvent) => {
@@ -300,9 +319,8 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
         await (updateRealTraining as any)(payload).unwrap();
       }
 
-      setSnackbar({ open: true, message: 'Событие обновлено', severity: 'success' });
-      setBottomSheetOpen(false);
-      setSelectedEvent(null);
+  setSnackbar({ open: true, message: 'Событие обновлено', severity: 'success' });
+  // keep the detail open logic to the caller so we can reopen after edit
     } catch (err: any) {
       // revert
       setLocalEventsMap(backup);
@@ -341,6 +359,49 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
       // revert
       setLocalEventsMap(backup);
       setSnackbar({ open: true, message: err?.message || 'Ошибка при удалении', severity: 'error' });
+    }
+  }, [localEventsMap]);
+
+  const handleMoveEvent = useCallback(async (event: NormalizedEvent) => {
+    if (!event) return;
+    const backup = JSON.parse(JSON.stringify(localEventsMap));
+
+    // Optimistically move locally
+    const dayKey = event.start?.format ? event.start.format('YYYY-MM-DD') : null;
+    setLocalEventsMap(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(k => {
+        next[k] = next[k].filter((e: NormalizedEvent) => e.id !== event.id);
+      });
+      if (dayKey) {
+        next[dayKey] = next[dayKey] ? [...next[dayKey], event] : [event];
+      }
+      return next;
+    });
+
+    try {
+      setMoving(true);
+      if (event.isTemplate) {
+        const payload = { id: Number(event.id), dayNumber: Number(event.raw?.day_number), startTime: event.raw?.start_time };
+        await (moveTrainingTemplate as any)(payload).unwrap();
+      } else {
+        const payload = { id: Number(event.id), trainingDate: event.raw?.training_date, startTime: event.raw?.start_time };
+        await (moveRealTraining as any)(payload).unwrap();
+      }
+      setSnackbar({ open: true, message: 'Событие перенесено', severity: 'success' });
+      // close transfer sheet and reopen detail sheet for the moved event
+      setMoveSheetOpen(false);
+      setMovingEvent(null);
+      setTimeout(() => {
+        setSelectedEvent(event);
+        setBottomSheetMode('event');
+        setBottomSheetOpen(true);
+      }, 220);
+    } catch (err: any) {
+      setLocalEventsMap(backup);
+      setSnackbar({ open: true, message: err?.message || 'Ошибка при переносе', severity: 'error' });
+    } finally {
+      setMoving(false);
     }
   }, [localEventsMap]);
 
@@ -620,15 +681,60 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
           mode={bottomSheetMode}
           onDelete={handleDeleteEvent}
           onRequestEdit={handleRequestEdit}
+          onRequestMove={handleRequestMove}
         />
         <EditEventBottomSheet
           open={editSheetOpen}
           event={editingEvent}
-          onClose={() => setEditSheetOpen(false)}
-          onSave={(updated) => {
-            // forward to existing save handler
-            handleSaveEvent(updated);
+          onClose={() => {
             setEditSheetOpen(false);
+            // reopen detail sheet with the same event after close animation
+            setTimeout(() => {
+              if (editingEvent) {
+                setSelectedEvent(editingEvent);
+                setBottomSheetMode('event');
+                setBottomSheetOpen(true);
+              }
+            }, 220);
+          }}
+          saving={savingEdit}
+          onSave={async (updated) => {
+            // forward to existing save handler and keep sheet open until done
+            try {
+              setSavingEdit(true);
+              await handleSaveEvent(updated);
+              // on success, close editor and reopen detail sheet for the updated event
+              setEditSheetOpen(false);
+              setTimeout(() => {
+                setSelectedEvent(updated);
+                setBottomSheetMode('event');
+                setBottomSheetOpen(true);
+              }, 220);
+            } finally {
+              setSavingEdit(false);
+            }
+          }}
+        />
+        <TransferEventBottomSheet
+          open={moveSheetOpen}
+          event={movingEvent}
+          onClose={() => {
+            setMoveSheetOpen(false);
+            // reopen detail sheet with the original event after close animation
+            setTimeout(() => {
+              if (movingEvent) {
+                setSelectedEvent(movingEvent);
+                setBottomSheetMode('event');
+                setBottomSheetOpen(true);
+              }
+              // clear movingEvent after reopening
+              setMovingEvent(null);
+            }, 220);
+          }}
+          moving={moving}
+          onMove={(updated) => {
+            // forwarded to handler which will perform API call and optimistic update
+            handleMoveEvent(updated);
           }}
         />
         <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar(s => ({ ...s, open: false }))}>

@@ -28,6 +28,7 @@ interface EventBottomSheetProps {
   onClose: () => void;
   onSave?: (event: NormalizedEvent) => void;
   onMove?: (event: NormalizedEvent) => void;
+  onRequestMove?: (event: NormalizedEvent) => void;
   onDelete?: (event: NormalizedEvent) => void;
   onRequestEdit?: (event: NormalizedEvent) => void;
 }
@@ -37,9 +38,9 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
   eventOrHourGroup,
   mode,
   onClose,
-  onMove,
   onDelete,
   onRequestEdit,
+  onRequestMove,
 }) => {
   const theme = useTheme();
   const [pendingDeleteEvent, setPendingDeleteEvent] = useState<NormalizedEvent | null>(null);
@@ -65,8 +66,8 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
   };
 
   const handleMove = (event: NormalizedEvent) => {
-    onMove?.(event);
-    onClose();
+  // Request parent to open transfer UI instead of directly moving
+  onRequestMove?.(event);
   };
 
   const renderSingleEvent = (event: NormalizedEvent) => {

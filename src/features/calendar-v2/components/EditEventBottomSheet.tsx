@@ -15,6 +15,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  CircularProgress,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { NormalizedEvent } from '../utils/normalizeEventsForWeek';
@@ -26,9 +27,10 @@ interface EditEventBottomSheetProps {
   event: NormalizedEvent | null;
   onClose: () => void;
   onSave: (updatedEvent: NormalizedEvent) => void;
+  saving?: boolean;
 }
 
-const EditEventBottomSheet: React.FC<EditEventBottomSheetProps> = ({ open, event, onClose, onSave }) => {
+const EditEventBottomSheet: React.FC<EditEventBottomSheetProps> = ({ open, event, onClose, onSave, saving = false }) => {
   const theme = useTheme();
   const [timeHour, setTimeHour] = useState<number | ''>(9);
   const [trainerId, setTrainerId] = useState<number | ''>('');
@@ -149,10 +151,12 @@ const EditEventBottomSheet: React.FC<EditEventBottomSheetProps> = ({ open, event
             isOptionEqualToValue={(o, v) => o.id === v.id}
           />
 
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <Button
               variant="contained"
               onClick={handleSave}
+              disabled={saving}
+              startIcon={saving ? <CircularProgress size={18} color="inherit" /> : undefined}
               sx={{
                 flex: 1,
                 borderRadius: 2,
@@ -167,9 +171,9 @@ const EditEventBottomSheet: React.FC<EditEventBottomSheetProps> = ({ open, event
                 },
               }}
             >
-              Сохранить
+              {saving ? 'Сохранение...' : 'Сохранить'}
             </Button>
-            <Button variant="outlined" onClick={onClose} sx={{ flex: 1, borderRadius: 2, height: 52, textTransform: 'none', borderColor: theme.palette.divider }}>
+            <Button variant="outlined" onClick={onClose} disabled={saving} sx={{ flex: 1, borderRadius: 2, height: 52, textTransform: 'none', borderColor: theme.palette.divider }}>
               Отмена
             </Button>
           </Box>
