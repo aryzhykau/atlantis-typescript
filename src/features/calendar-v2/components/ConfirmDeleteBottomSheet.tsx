@@ -1,4 +1,3 @@
-import React from 'react';
 import { SwipeableDrawer, Box, Typography, Button, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useTheme } from '@mui/material/styles';
