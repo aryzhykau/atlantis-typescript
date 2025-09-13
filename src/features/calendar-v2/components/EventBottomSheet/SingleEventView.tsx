@@ -19,7 +19,7 @@ interface SingleEventViewProps {
   eventOrHourGroup: NormalizedEvent | NormalizedEvent[] | null;
   onClose: () => void;
   onRequestEdit?: (event: NormalizedEvent) => void;
-  onRequestMove?: (event: NormalizedEvent) => void;
+  onRequestMove?: (event: NormalizedEvent, transferData?: any) => void;
   onDelete?: (event: NormalizedEvent) => void;
   onAssignedStudentDeleted?: (trainingTemplateId: number, studentTemplateId: number) => void;
 }

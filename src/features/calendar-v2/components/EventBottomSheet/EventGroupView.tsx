@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   Box, 
   Typography, 
@@ -12,16 +12,20 @@ import {
 import { 
   Close as CloseIcon,
   AccessTime as TimeIcon,
-  Delete as DeleteIcon 
+  Delete as DeleteIcon,
+  Edit as EditIcon 
 } from '@mui/icons-material';
 import { NormalizedEvent } from '../../utils/normalizeEventsForWeek';
 import { useEventDeletion } from '../../hooks/useEventDeletion';
 import DeleteConfirmation from './DeleteConfirmation';
+import EditBottomSheet from './EditBottomSheet';
+import TransferBottomSheet from './TransferBottomSheet';
 
 interface EventGroupViewProps {
   events: NormalizedEvent[];
   onClose: () => void;
-  onRequestMove?: (event: NormalizedEvent) => void;
+  onRequestMove?: (event: NormalizedEvent, transferData?: any) => void;
+  onRequestEdit?: (event: NormalizedEvent) => void;
   onDelete?: (event: NormalizedEvent) => void;
 }
 
@@ -33,19 +37,56 @@ const EventGroupView: React.FC<EventGroupViewProps> = ({
   events,
   onClose,
   onRequestMove,
+  onRequestEdit,
   onDelete,
 }) => {
   const theme = useTheme();
   const { pendingDeleteEvent, handleDelete, confirmDelete, cancelDelete } = useEventDeletion(onDelete);
 
+  // Inline form state
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [showTransferForm, setShowTransferForm] = useState(false);
+  const [currentEditEvent, setCurrentEditEvent] = useState<NormalizedEvent | null>(null);
+  const [currentTransferEvent, setCurrentTransferEvent] = useState<NormalizedEvent | null>(null);
+
   const hour = events[0]?.startHour || 0;
   const timeLabel = `${hour.toString().padStart(2, '0')}:00`;
 
-  const handleMove = (event: NormalizedEvent) => {
-    onRequestMove?.(event);
-  };
+  const handleMove = useCallback((event: NormalizedEvent) => {
+    setCurrentTransferEvent(event);
+    setShowTransferForm(true);
+  }, []);
+
+  const handleEdit = useCallback((event: NormalizedEvent) => {
+    setCurrentEditEvent(event);
+    setShowEditForm(true);
+  }, []);
+
+  // Inline form handlers
+  const handleEditSave = useCallback((event: NormalizedEvent, _updates: Partial<NormalizedEvent>) => {
+    onRequestEdit?.(event);
+    setShowEditForm(false);
+    setCurrentEditEvent(null);
+  }, [onRequestEdit]);
+
+  const handleEditCancel = useCallback(() => {
+    setShowEditForm(false);
+    setCurrentEditEvent(null);
+  }, []);
+
+  const handleTransferSave = useCallback((event: NormalizedEvent, transferData: any) => {
+    onRequestMove?.(event, transferData);
+    setShowTransferForm(false);
+    setCurrentTransferEvent(null);
+  }, [onRequestMove]);
+
+  const handleTransferCancel = useCallback(() => {
+    setShowTransferForm(false);
+    setCurrentTransferEvent(null);
+  }, []);
 
   return (
+    <>
     <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -139,6 +180,21 @@ const EventGroupView: React.FC<EventGroupViewProps> = ({
                 </IconButton>
                 <IconButton 
                   size="small" 
+                  onClick={() => handleEdit(event)} 
+                  sx={{ 
+                    color: theme.palette.secondary.main, 
+                    '&:hover': { 
+                      backgroundColor: theme.palette.secondary.main + '10',
+                    },
+                    width: 40,
+                    height: 40,
+                  }}
+                  aria-label="Редактировать тренировку"
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+                <IconButton 
+                  size="small" 
                   onClick={() => handleDelete(event)} 
                   sx={{ 
                     color: theme.palette.error.main, 
@@ -166,6 +222,23 @@ const EventGroupView: React.FC<EventGroupViewProps> = ({
         onCancel={cancelDelete}
       />
     </Box>
+    
+    {/* Edit Bottom Sheet */}
+    <EditBottomSheet
+      event={currentEditEvent}
+      open={showEditForm}
+      onSave={handleEditSave}
+      onClose={handleEditCancel}
+    />
+    
+    {/* Transfer Bottom Sheet */}
+    <TransferBottomSheet
+      event={currentTransferEvent}
+      open={showTransferForm}
+      onSave={handleTransferSave}
+      onClose={handleTransferCancel}
+    />
+    </>
   );
 };
 

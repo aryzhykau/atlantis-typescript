@@ -29,6 +29,8 @@ import { useSnackbar } from '../../../hooks/useSnackBar';
 import ConfirmDeleteBottomSheet from './ConfirmDeleteBottomSheet';
 import { useDeleteTrainingStudentTemplateMutation } from '../../../store/apis/calendarApi-v2';
 import { NormalizedEvent } from '../utils/normalizeEventsForWeek';
+import EditBottomSheet from './EventBottomSheet/EditBottomSheet';
+import TransferBottomSheet from './EventBottomSheet/TransferBottomSheet';
 
 interface Student {
   id: number;
@@ -50,7 +52,7 @@ interface EventBottomSheetProps {
   onClose: () => void;
   onSave?: (event: NormalizedEvent) => void;
   onMove?: (event: NormalizedEvent) => void;
-  onRequestMove?: (event: NormalizedEvent) => void;
+  onRequestMove?: (event: NormalizedEvent, transferData?: any) => void;
   onDelete?: (event: NormalizedEvent) => void;
   onRequestEdit?: (event: NormalizedEvent) => void;
   onAssignedStudentDeleted?: (trainingTemplateId: number, studentTemplateId: number) => void;
@@ -73,6 +75,12 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
   const [deleteTrainingStudentTemplate, { isLoading: isDeletingAssigned }] = useDeleteTrainingStudentTemplateMutation();
   const [createTrainingStudentTemplate, { isLoading: isCreatingAssigned }] = useCreateTrainingStudentTemplateMutation();
   const { data: allStudents } = useGetStudentsQuery();
+  
+  // Edit and Transfer inline form state
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [showTransferForm, setShowTransferForm] = useState(false);
+  const [currentEditEvent, setCurrentEditEvent] = useState<NormalizedEvent | null>(null);
+  const [currentTransferEvent, setCurrentTransferEvent] = useState<NormalizedEvent | null>(null);
   
   const [pendingDeleteEvent, setPendingDeleteEvent] = useState<NormalizedEvent | null>(null);
   const [confirmingAssigned, setConfirmingAssigned] = useState<{ assigned: StudentTemplate; event: NormalizedEvent } | null>(null);
@@ -102,8 +110,9 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
   const handleEdit = useCallback((evt?: NormalizedEvent) => {
     const event = evt ?? (Array.isArray(eventOrHourGroup) ? null : eventOrHourGroup);
     if (!event || Array.isArray(event)) return;
-    onRequestEdit?.(event);
-  }, [eventOrHourGroup, onRequestEdit]);
+    setCurrentEditEvent(event);
+    setShowEditForm(true);
+  }, [eventOrHourGroup]);
 
   const handleDelete = useCallback((event: NormalizedEvent) => {
     setPendingDeleteEvent(event);
@@ -122,8 +131,32 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
   const handleMove = useCallback((evt?: NormalizedEvent) => {
     const event = evt ?? (Array.isArray(eventOrHourGroup) ? null : eventOrHourGroup);
     if (!event || Array.isArray(event)) return;
-    onRequestMove?.(event);
-  }, [eventOrHourGroup, onRequestMove]);
+    setCurrentTransferEvent(event);
+    setShowTransferForm(true);
+  }, [eventOrHourGroup]);
+
+  // Inline form handlers
+  const handleEditSave = useCallback((event: NormalizedEvent, _updates: Partial<NormalizedEvent>) => {
+    onRequestEdit?.(event);
+    setShowEditForm(false);
+    setCurrentEditEvent(null);
+  }, [onRequestEdit]);
+
+  const handleEditCancel = useCallback(() => {
+    setShowEditForm(false);
+    setCurrentEditEvent(null);
+  }, []);
+
+  const handleTransferSave = useCallback((event: NormalizedEvent, transferData: any) => {
+    onRequestMove?.(event, transferData);
+    setShowTransferForm(false);
+    setCurrentTransferEvent(null);
+  }, [onRequestMove]);
+
+  const handleTransferCancel = useCallback(() => {
+    setShowTransferForm(false);
+    setCurrentTransferEvent(null);
+  }, []);
 
   // Memoize available students for better performance
   const availableStudents = useMemo(() => 
@@ -1009,6 +1042,7 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
   if (!eventOrHourGroup) return null;
 
   return (
+    <>
     <SwipeableDrawer
       anchor="bottom"
       open={open}
@@ -1077,6 +1111,23 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
         confirming={false}
       />
     </SwipeableDrawer>
+    
+    {/* Edit Bottom Sheet */}
+    <EditBottomSheet
+      event={currentEditEvent}
+      open={showEditForm}
+      onSave={handleEditSave}
+      onClose={handleEditCancel}
+    />
+    
+    {/* Transfer Bottom Sheet */}
+    <TransferBottomSheet
+      event={currentTransferEvent}
+      open={showTransferForm}
+      onSave={handleTransferSave}
+      onClose={handleTransferCancel}
+    />
+    </>
   );
 };
 

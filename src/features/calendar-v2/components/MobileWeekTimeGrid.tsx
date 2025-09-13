@@ -254,7 +254,7 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
     }, 220);
   };
 
-  const handleRequestMove = (event: NormalizedEvent) => {
+  const handleRequestMove = (event: NormalizedEvent, _transferData?: any) => {
     // Close details and open transfer sheet on top
     setBottomSheetOpen(false);
     setTimeout(() => {
