@@ -15,7 +15,8 @@ import {
   PersonAdd as PersonAddIcon,
   PersonRemove as PersonRemoveIcon,
   Edit as EditIcon,
-  Cancel as CancelIcon
+  Cancel as CancelIcon,
+  PersonOff as PersonOffIcon
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import { NormalizedEvent } from '../../utils/normalizeEventsForWeek';
@@ -32,6 +33,8 @@ interface RealTrainingViewProps {
   onRequestMove?: (event: NormalizedEvent, transferData?: any) => void;
   onRequestEdit?: (event: NormalizedEvent) => void;
   onCancel?: (event: NormalizedEvent) => void;
+  readOnlyForTrainer?: boolean;
+  onMarkStudentAbsent?: (studentTrainingId: string) => Promise<void>;
 }
 
 /**
@@ -44,6 +47,8 @@ const RealTrainingView: React.FC<RealTrainingViewProps> = ({
   onRequestMove,
   onRequestEdit,
   onCancel,
+  readOnlyForTrainer = false,
+  onMarkStudentAbsent,
 }) => {
   const theme = useTheme();
 
@@ -222,7 +227,7 @@ const RealTrainingView: React.FC<RealTrainingViewProps> = ({
                 Записанные ученики ({activeStudents.length})
               </Typography>
               
-              {!isPastTraining && !isTrainingCancelled && (
+              {!isPastTraining && !isTrainingCancelled && !readOnlyForTrainer && (
                 <Button
                   onClick={handleAddStudent}
                   startIcon={<PersonAddIcon fontSize="small" />}
@@ -295,7 +300,7 @@ const RealTrainingView: React.FC<RealTrainingViewProps> = ({
                     </Box>
                   </Box>
                   
-                  {!isPastTraining && !isTrainingCancelled && studentTraining.status === 'REGISTERED' && (
+                  {!isPastTraining && !isTrainingCancelled && !readOnlyForTrainer && studentTraining.status === 'REGISTERED' && (
                     <IconButton
                       size="small"
                       onClick={() => handleCancelStudent(studentTraining)}
@@ -311,6 +316,26 @@ const RealTrainingView: React.FC<RealTrainingViewProps> = ({
                       aria-label="Отменить запись ученика"
                     >
                       <PersonRemoveIcon fontSize="small" />
+                    </IconButton>
+                  )}
+
+                  {readOnlyForTrainer && !isPastTraining && !isTrainingCancelled && 
+                   (studentTraining.status === 'REGISTERED' || studentTraining.status === 'PRESENT') && (
+                    <IconButton
+                      size="small"
+                      onClick={() => onMarkStudentAbsent?.(studentTraining.id)}
+                      sx={{ 
+                        color: theme.palette.error.main, 
+                        backgroundColor: theme.palette.error.main + '10',
+                        width: 36,
+                        height: 36,
+                        '&:hover': { 
+                          backgroundColor: theme.palette.error.main + '20',
+                        },
+                      }}
+                      aria-label="Отметить как пропуск"
+                    >
+                      <PersonOffIcon fontSize="small" />
                     </IconButton>
                   )}
                 </Box>
@@ -395,72 +420,74 @@ const RealTrainingView: React.FC<RealTrainingViewProps> = ({
         )}
 
         {/* Action Buttons */}
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' },
-          gap: 2, 
-          mt: 3,
-          '& > button': {
-            minHeight: 48,
-            borderRadius: 2,
-            textTransform: 'none',
-            fontWeight: 600,
-          }
-        }}>
-          <Button
-            variant="contained"
-            startIcon={<EditIcon />}
-            onClick={handleEdit}
-            disabled={isPastTraining || isTrainingCancelled}
-            sx={{ 
-              flex: 1,
-              backgroundColor: theme.palette.primary.main,
-              '&:hover': {
-                backgroundColor: theme.palette.primary.dark,
-              }
-            }}
-          >
-            Редактировать
-          </Button>
-          
-          <Button
-            variant="contained"
-            startIcon={<TimeIcon />}
-            onClick={handleMove}
-            disabled={isPastTraining || isTrainingCancelled}
-            sx={{
-              flex: 1,
-              backgroundImage: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
-              color: theme.palette.getContrastText(theme.palette.secondary.main),
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              '&:hover': {
-                boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
-                transform: 'translateY(-1px)',
-              },
-              transition: 'all 0.2s ease-in-out',
-            }}
-          >
-            Перенести
-          </Button>
-          
-          <Button
-            variant="outlined"
-            startIcon={<CancelIcon />}
-            onClick={handleCancelTraining}
-            disabled={isPastTraining || isTrainingCancelled}
-            color="warning"
-            sx={{
-              flex: 1,
-              borderWidth: 2,
-              '&:hover': {
+        {!readOnlyForTrainer && (
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2, 
+            mt: 3,
+            '& > button': {
+              minHeight: 48,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+            }
+          }}>
+            <Button
+              variant="contained"
+              startIcon={<EditIcon />}
+              onClick={handleEdit}
+              disabled={isPastTraining || isTrainingCancelled}
+              sx={{ 
+                flex: 1,
+                backgroundColor: theme.palette.primary.main,
+                '&:hover': {
+                  backgroundColor: theme.palette.primary.dark,
+                }
+              }}
+            >
+              Редактировать
+            </Button>
+            
+            <Button
+              variant="contained"
+              startIcon={<TimeIcon />}
+              onClick={handleMove}
+              disabled={isPastTraining || isTrainingCancelled}
+              sx={{
+                flex: 1,
+                backgroundImage: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
+                color: theme.palette.getContrastText(theme.palette.secondary.main),
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                '&:hover': {
+                  boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+                  transform: 'translateY(-1px)',
+                },
+                transition: 'all 0.2s ease-in-out',
+              }}
+            >
+              Перенести
+            </Button>
+            
+            <Button
+              variant="outlined"
+              startIcon={<CancelIcon />}
+              onClick={handleCancelTraining}
+              disabled={isPastTraining || isTrainingCancelled}
+              color="warning"
+              sx={{
+                flex: 1,
                 borderWidth: 2,
-                backgroundColor: theme.palette.warning.main + '10',
-              }
-            }}
-          >
-            Отменить тренировку
-          </Button>
-        </Box>
+                '&:hover': {
+                  borderWidth: 2,
+                  backgroundColor: theme.palette.warning.main + '10',
+                }
+              }}
+            >
+              Отменить тренировку
+            </Button>
+          </Box>
+        )}
       </Box>
 
       {/* Edit Bottom Sheet - Will be implemented later */}

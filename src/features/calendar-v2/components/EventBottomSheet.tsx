@@ -55,6 +55,8 @@ interface EventBottomSheetProps {
   onDelete?: (event: NormalizedEvent) => void;
   onRequestEdit?: (event: NormalizedEvent) => void;
   onAssignedStudentDeleted?: (trainingTemplateId: number, studentTemplateId: number) => void;
+  readOnlyForTrainer?: boolean;
+  onMarkStudentAbsent?: (studentTrainingId: string) => Promise<void>;
 }
 
 const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
@@ -66,6 +68,8 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
   onRequestEdit,
   onRequestMove,
   onAssignedStudentDeleted,
+  readOnlyForTrainer = false,
+  onMarkStudentAbsent,
 }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
@@ -984,6 +988,8 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
                   onRequestMove={onRequestMove}
                   onRequestEdit={onRequestEdit}
                   onCancel={onDelete}
+                  readOnlyForTrainer={readOnlyForTrainer}
+                  onMarkStudentAbsent={onMarkStudentAbsent}
                 />
             )
           : Array.isArray(eventOrHourGroup) 
