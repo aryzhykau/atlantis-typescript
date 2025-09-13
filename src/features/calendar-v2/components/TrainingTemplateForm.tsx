@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, CircularProgress, 
   Typography, Chip, IconButton, Box,
@@ -77,6 +77,7 @@ const validationSchema = Yup.object().shape({
 const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClose, selectedDate, selectedTime }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [templateTime, setTemplateTime] = useState<string | null>(null);
   const [createTrainingTemplate] = useCreateTrainingTemplateMutation();
   const [createTrainingStudentTemplate] = useCreateTrainingStudentTemplateMutation();
   
@@ -87,6 +88,16 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
   
   const trainers = trainersData?.trainers || [];
   const studentOptions = students || [];
+
+  useEffect(() => {
+    if (selectedTime) {
+      // normalize incoming selectedTime like '08:00' or '08:00:00' -> '08:00'
+      const parts = selectedTime.split(':');
+      if (parts.length >= 2) setTemplateTime(`${parts[0].padStart(2, '0')}:00`);
+    } else {
+      setTemplateTime(null);
+    }
+  }, [selectedTime]);
 
   // Debug logging for students
   React.useEffect(() => {
@@ -121,7 +132,8 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
   const handleSubmit = async (values: FormValues, { setSubmitting, resetForm }: FormikHelpers<FormValues>) => {
     setSubmitting(true);
     try {
-      if (!selectedDate || !selectedTime || !values.trainingType || !values.responsibleTrainer) {
+      const timeToUse = templateTime || selectedTime;
+      if (!selectedDate || !timeToUse || !values.trainingType || !values.responsibleTrainer) {
         throw new Error("Основные поля не заполнены");
       }
 
@@ -129,7 +141,8 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
         training_type_id: values.trainingType.id,
         responsible_trainer_id: values.responsibleTrainer.id,
         day_number: selectedDate.day() === 0 ? 7 : selectedDate.day(),
-        start_time: `${selectedTime}:00`,
+        // timeToUse is expected in HH:MM format (we enforce HH:00 options in the UI)
+        start_time: timeToUse.includes(':') ? timeToUse : `${timeToUse}:00`,
       };
 
       const createdTemplate: TrainingTemplate = await createTrainingTemplate(templateData).unwrap();
@@ -258,14 +271,22 @@ const TrainingTemplateForm: React.FC<TrainingTemplateFormProps> = ({ open, onClo
                       </Box>
                       <Divider sx={{ mb: 2 }} />
                       
-                  {selectedDate && selectedTime && (
+                  {selectedDate && (
                         <Box sx={styles.timeBox}>
                           <Typography variant="body1" sx={{ fontWeight: 500 }}>
                             📅 {selectedDate.format('dddd, D MMMM YYYY')}
                           </Typography>
-                          <Typography variant="body1" sx={{ fontWeight: 500, mt: 0.5 }}>
-                            🕐 {selectedTime}
-                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 0.5 }}>
+                            {/* Hours-only selector (only input shown) */}
+                            <Autocomplete
+                              size="small"
+                              sx={{ width: 140 }}
+                              options={Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`)}
+                              value={templateTime}
+                              onChange={(_, val) => setTemplateTime(val)}
+                              renderInput={(params) => <TextField {...params} label="Время" />}
+                            />
+                          </Box>
                         </Box>
                   )}
                     </CardContent>
