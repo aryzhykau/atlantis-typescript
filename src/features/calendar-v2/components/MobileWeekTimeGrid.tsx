@@ -33,6 +33,8 @@ interface MobileWeekTimeGridProps {
   hourStart?: number;
   hourEnd?: number;
   hourHeightPx?: number;
+  readOnlyForTrainer?: boolean;
+  onMarkStudentAbsent?: (studentTrainingId: string) => Promise<void>;
 }
 
 interface EventCardProps {
@@ -182,6 +184,8 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
   hourEnd = 23,
   hourHeightPx = 64,
   selectedDay,
+  readOnlyForTrainer = false,
+  onMarkStudentAbsent,
 }) => {
   const theme = useTheme();
   // dynamic adjustment for mobile browser chrome (address/toolbars)
@@ -657,7 +661,7 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
             // Add generous bottom padding so last rows are not obscured by mobile browser UI
             // Keep safe-area inset and add a buffer to accommodate address bars / toolbars
             paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + 84px + ${viewportOffset}px)`,
-            '--event-card-w': '160px',
+            '--event-card-w': readOnlyForTrainer ? '100%' : '160px',
             '--peek-w': '20px',
             '--hour-row-h': `${hourHeightPx}px`,
           }}
@@ -682,6 +686,8 @@ const MobileWeekTimeGrid: React.FC<MobileWeekTimeGridProps> = ({
           onDelete={handleDeleteEvent}
           onRequestEdit={handleRequestEdit}
           onRequestMove={handleRequestMove}
+          readOnlyForTrainer={readOnlyForTrainer}
+          onMarkStudentAbsent={onMarkStudentAbsent}
           onAssignedStudentDeleted={(trainingTemplateId: number, studentTemplateId: number) => {
             // Remove the assigned student from localEventsMap entries (templates may appear across days)
             setLocalEventsMap(prev => {
