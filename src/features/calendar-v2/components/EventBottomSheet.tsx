@@ -881,57 +881,6 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
             Удалить
           </Button>
         </Box>
-
-        {/* Inline confirmation UI for delete - Improved styling */}
-        {pendingDeleteEvent && eventOrHourGroup && !Array.isArray(eventOrHourGroup) && pendingDeleteEvent.id === eventOrHourGroup.id && (
-          <Box sx={{ 
-            mt: 3, 
-            p: 3,
-            borderRadius: 2,
-            backgroundColor: theme.palette.error.main + '08',
-            border: `1px solid ${theme.palette.error.main}30`,
-          }}>
-            <Typography variant="body2" sx={{ 
-              mb: 2, 
-              color: theme.palette.error.main,
-              fontWeight: 600,
-              textAlign: 'center'
-            }}>
-              Вы уверены, что хотите удалить эту тренировку?
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button 
-                variant="contained" 
-                color="error" 
-                onClick={confirmDelete} 
-                sx={{ 
-                  flex: 1, 
-                  textTransform: 'none', 
-                  height: 44,
-                  fontWeight: 600,
-                }}
-              >
-                Подтвердить удаление
-              </Button>
-              <Button 
-                variant="outlined" 
-                onClick={cancelDelete} 
-                sx={{ 
-                  flex: 1, 
-                  textTransform: 'none', 
-                  height: 44,
-                  borderColor: theme.palette.divider,
-                  color: theme.palette.text.primary,
-                  '&:hover': {
-                    borderColor: theme.palette.text.secondary,
-                  }
-                }}
-              >
-                Отмена
-              </Button>
-            </Box>
-          </Box>
-        )}
       </Box>
     );
   }, [theme, localEvent, selectedStudent, startDate, addingStudentOpen, filteredAvailableStudents, isCreatingAssigned, 
@@ -1049,54 +998,6 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
                     </IconButton>
                   </Box>
                 </ListItem>
-                
-                {pendingDeleteEvent && pendingDeleteEvent.id === event.id && (
-                  <Box sx={{ 
-                    p: 2, 
-                    borderRadius: 2, 
-                    backgroundColor: theme.palette.error.main + '08',
-                    border: `1px solid ${theme.palette.error.main}30`,
-                    mb: 1,
-                  }}>
-                    <Typography variant="body2" sx={{ 
-                      mb: 2, 
-                      color: theme.palette.error.main,
-                      fontWeight: 600,
-                      textAlign: 'center'
-                    }}>
-                      Удалить "{event.title}"?
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button 
-                        variant="contained" 
-                        color="error" 
-                        onClick={confirmDelete} 
-                        sx={{ 
-                          flex: 1, 
-                          textTransform: 'none',
-                          height: 40,
-                          fontSize: '0.875rem',
-                        }}
-                      >
-                        Подтвердить
-                      </Button>
-                      <Button 
-                        variant="outlined" 
-                        onClick={cancelDelete} 
-                        sx={{ 
-                          flex: 1, 
-                          textTransform: 'none',
-                          height: 40,
-                          fontSize: '0.875rem',
-                          borderColor: theme.palette.divider,
-                          color: theme.palette.text.primary,
-                        }}
-                      >
-                        Отмена
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
               </React.Fragment>
             );
           })}
@@ -1159,9 +1060,21 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
       {/* Confirm delete assigned student */}
       <ConfirmDeleteBottomSheet
         open={Boolean(confirmingAssigned)}
+        title="Подтвердить удаление"
+        message={confirmingAssigned ? `Вы уверены, что хотите удалить ученика "${confirmingAssigned.assigned.student?.first_name} ${confirmingAssigned.assigned.student?.last_name}" из шаблона?` : 'Вы уверены, что хотите удалить этого ученика из шаблона?'}
         onClose={() => setConfirmingAssigned(null)}
         onConfirm={handleAssignedDeleteConfirm}
         confirming={isDeletingAssigned}
+      />
+      
+      {/* Confirm delete event */}
+      <ConfirmDeleteBottomSheet
+        open={Boolean(pendingDeleteEvent)}
+        title="Подтвердить удаление"
+        message={pendingDeleteEvent ? `Вы уверены, что хотите удалить тренировку "${pendingDeleteEvent.title}"?` : 'Вы уверены, что хотите удалить эту тренировку?'}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        confirming={false}
       />
     </SwipeableDrawer>
   );
