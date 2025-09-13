@@ -13,8 +13,9 @@ import {
   Close as CloseIcon,
   AccessTime as TimeIcon,
   Delete as DeleteIcon,
-  Edit as EditIcon 
+  Edit as EditIcon
 } from '@mui/icons-material';
+import dayjs from 'dayjs';
 import { NormalizedEvent } from '../../utils/normalizeEventsForWeek';
 import { useEventDeletion } from '../../hooks/useEventDeletion';
 import DeleteConfirmation from './DeleteConfirmation';
@@ -193,21 +194,52 @@ const EventGroupView: React.FC<EventGroupViewProps> = ({
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
-                <IconButton 
-                  size="small" 
-                  onClick={() => handleDelete(event)} 
-                  sx={{ 
-                    color: theme.palette.error.main, 
-                    '&:hover': { 
-                      backgroundColor: theme.palette.error.main + '10',
-                    },
-                    width: 40,
-                    height: 40,
-                  }}
-                  aria-label="Удалить тренировку"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
+                
+                {/* Use different action based on event type */}
+                {event.isTemplate ? (
+                  <IconButton 
+                    size="small" 
+                    onClick={() => handleDelete(event)} 
+                    sx={{ 
+                      color: theme.palette.error.main, 
+                      '&:hover': { 
+                        backgroundColor: theme.palette.error.main + '10',
+                      },
+                      width: 40,
+                      height: 40,
+                    }}
+                    aria-label="Удалить тренировку"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                ) : (
+                  // For real trainings, check if it's in the past
+                  (() => {
+                    const isPastTraining = event.raw?.training_date && event.raw?.start_time
+                      ? dayjs(`${event.raw.training_date} ${event.raw.start_time}`).isBefore(dayjs())
+                      : false;
+                    
+                    return (
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleDelete(event)} 
+                        disabled={isPastTraining}
+                        sx={{ 
+                          color: isPastTraining ? theme.palette.text.disabled : theme.palette.warning.main, 
+                          '&:hover': !isPastTraining ? { 
+                            backgroundColor: theme.palette.warning.main + '10',
+                          } : {},
+                          width: 40,
+                          height: 40,
+                        }}
+                        aria-label={isPastTraining ? "Нельзя отменить прошедшую тренировку" : "Отменить тренировку"}
+                        title={isPastTraining ? "Нельзя отменить прошедшую тренировку" : "Отменить тренировку"}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    );
+                  })()
+                )}
               </Box>
             </ListItem>
           );

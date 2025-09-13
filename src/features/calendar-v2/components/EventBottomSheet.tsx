@@ -7,9 +7,6 @@ import {
   TextField,
   useTheme,
   SwipeableDrawer,
-  List,
-  ListItem,
-  ListItemText,
   Button,
   Chip,
   Avatar,
@@ -31,6 +28,8 @@ import { useDeleteTrainingStudentTemplateMutation } from '../../../store/apis/ca
 import { NormalizedEvent } from '../utils/normalizeEventsForWeek';
 import EditBottomSheet from './EventBottomSheet/EditBottomSheet';
 import TransferBottomSheet from './EventBottomSheet/TransferBottomSheet';
+import EventGroupView from './EventBottomSheet/EventGroupView';
+import RealTrainingView from './EventBottomSheet/RealTrainingView';
 
 interface Student {
   id: number;
@@ -921,123 +920,16 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
       createTrainingStudentTemplate, dispatch, displaySnackbar, formatTime, onClose, handleToggleAddStudent]);
 
   const renderEventGroup = useCallback((events: NormalizedEvent[]) => {
-    const hour = events[0]?.startHour || 0;
-    const timeLabel = `${hour.toString().padStart(2, '0')}:00`;
-
     return (
-      <Box>
-        {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-              {`Тренировки в ${timeLabel}`}
-            </Typography>
-            <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-              {events.length} {events.length === 1 ? 'тренировка' : 'тренировки'}
-            </Typography>
-          </Box>
-          <IconButton 
-            onClick={onClose} 
-            sx={{ 
-              color: theme.palette.text.secondary, 
-              '&:hover': { backgroundColor: theme.palette.action.hover },
-              width: 44,
-              height: 44,
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Box>
-
-        {/* Event List */}
-        <List sx={{ p: 0, gap: 1, display: 'flex', flexDirection: 'column' }}>
-          {events.map((event) => {
-            const trainerName = event.trainer 
-              ? `${event.trainer.first_name || ''} ${event.trainer.last_name || ''}`.trim() 
-              : 'Не указан';
-            const trainerInitials = event.trainer 
-              ? `${(event.trainer.first_name || '').charAt(0)}${(event.trainer.last_name || '').charAt(0)}`.toUpperCase() 
-              : '?';
-            const typeColor = event.training_type?.color || theme.palette.primary.main;
-
-            return (
-              <React.Fragment key={event.id}>
-                <ListItem sx={{ 
-                  p: 2, 
-                  borderRadius: 3, 
-                  backgroundColor: theme.palette.background.default,
-                  border: `1px solid ${theme.palette.divider}`,
-                  '&:hover': {
-                    backgroundColor: theme.palette.action.hover,
-                  },
-                  transition: 'background-color 0.2s ease',
-                }}>
-                  <Avatar sx={{ 
-                    bgcolor: typeColor, 
-                    width: 44, 
-                    height: 44, 
-                    mr: 2, 
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                  }}>
-                    {trainerInitials}
-                  </Avatar>
-                  <ListItemText
-                    primary={
-                      <Typography variant="subtitle1" sx={{ 
-                        fontWeight: 600, 
-                        color: theme.palette.text.primary,
-                        mb: 0.5,
-                      }}>
-                        {event.title}
-                      </Typography>
-                    }
-                    secondary={
-                      <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                        {trainerName}
-                      </Typography>
-                    }
-                  />
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <IconButton 
-                      size="small" 
-                      onClick={() => handleMove(event)} 
-                      sx={{ 
-                        color: theme.palette.primary.main, 
-                        '&:hover': { 
-                          backgroundColor: theme.palette.primary.main + '10',
-                        },
-                        width: 40,
-                        height: 40,
-                      }}
-                      aria-label="Перенести тренировку"
-                    >
-                      <TimeIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton 
-                      size="small" 
-                      onClick={() => handleDelete(event)} 
-                      sx={{ 
-                        color: theme.palette.error.main, 
-                        '&:hover': { 
-                          backgroundColor: theme.palette.error.main + '10',
-                        },
-                        width: 40,
-                        height: 40,
-                      }}
-                      aria-label="Удалить тренировку"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                </ListItem>
-              </React.Fragment>
-            );
-          })}
-        </List>
-      </Box>
+      <EventGroupView
+        events={events}
+        onClose={onClose}
+        onRequestMove={onRequestMove}
+        onRequestEdit={onRequestEdit}
+        onDelete={onDelete}
+      />
     );
-  }, [theme, handleMove, handleDelete, pendingDeleteEvent, confirmDelete, cancelDelete, onClose]);
+  }, [onClose, onRequestMove, onRequestEdit, onDelete]);
 
   if (!eventOrHourGroup) return null;
 
@@ -1084,7 +976,16 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
         height: '100%',
       }}>
         {mode === 'event' && !Array.isArray(eventOrHourGroup) 
-          ? renderSingleEvent(eventOrHourGroup) 
+          ? (eventOrHourGroup.isTemplate 
+              ? renderSingleEvent(eventOrHourGroup)
+              : <RealTrainingView 
+                  event={eventOrHourGroup}
+                  onClose={onClose}
+                  onRequestMove={onRequestMove}
+                  onRequestEdit={onRequestEdit}
+                  onCancel={onDelete}
+                />
+            )
           : Array.isArray(eventOrHourGroup) 
             ? renderEventGroup(eventOrHourGroup) 
             : null
