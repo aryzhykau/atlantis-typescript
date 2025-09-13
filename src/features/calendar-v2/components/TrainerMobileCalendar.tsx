@@ -94,9 +94,7 @@ const TrainerMobileCalendar: React.FC = () => {
       }
 
       // Optimistic update: show success message immediately
-      displaySnackbar('Отмечено как пропуск', 'success');
-
-      // Call the API
+      displaySnackbar('Отмечено как пропуск', 'success');      // Call the API
       await markStudentAbsent(trainingId, studentTrainingId);
       
       // Note: The cache will be updated via RTK Query invalidation tags

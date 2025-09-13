@@ -1,6 +1,7 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import dayjs from 'dayjs';
 import RealTrainingView from '../features/calendar-v2/components/EventBottomSheet/RealTrainingView';
 import { NormalizedEvent } from '../features/calendar-v2/utils/normalizeEventsForWeek';
 
@@ -10,6 +11,9 @@ const mockTrainingEvent: NormalizedEvent = {
   id: 1,
   title: 'Test Training',
   startHour: 10,
+  start: dayjs('2023-12-01 10:00'),
+  end: dayjs('2023-12-01 11:00'),
+  durationMins: 60,
   isTemplate: false,
   training_type: {
     id: 1,
@@ -192,8 +196,6 @@ describe('RealTrainingView trainer attendance', () => {
     });
 
     it('should call onMarkStudentAbsent when mark absent button is clicked', async () => {
-      const user = userEvent.setup();
-      
       renderWithTheme(
         <RealTrainingView
           event={mockTrainingEvent}
@@ -210,7 +212,7 @@ describe('RealTrainingView trainer attendance', () => {
       expect(markAbsentButton).toBeInTheDocument();
       
       if (markAbsentButton) {
-        await user.click(markAbsentButton);
+        fireEvent.click(markAbsentButton);
         
         await waitFor(() => {
           expect(mockOnMarkStudentAbsent).toHaveBeenCalledWith('1'); // student training ID
@@ -219,8 +221,6 @@ describe('RealTrainingView trainer attendance', () => {
     });
 
     it('should show optimistic UI update when marking absent', async () => {
-      const user = userEvent.setup();
-      
       renderWithTheme(
         <RealTrainingView
           event={mockTrainingEvent}
@@ -235,7 +235,7 @@ describe('RealTrainingView trainer attendance', () => {
       const markAbsentButton = aliceRow?.querySelector('[aria-label="Отметить как пропуск"]');
       
       if (markAbsentButton) {
-        await user.click(markAbsentButton);
+        fireEvent.click(markAbsentButton);
         
         // The button should trigger the callback
         expect(mockOnMarkStudentAbsent).toHaveBeenCalledWith('1');
