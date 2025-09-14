@@ -6,6 +6,26 @@ import SingleEventView from './SingleEventView';
 import EventGroupView from './EventGroupView';
 import EditBottomSheet from './EditBottomSheet';
 import TransferBottomSheet from './TransferBottomSheet';
+import RealTrainingView from './RealTrainingView';
+import { NormalizedEvent } from '../../../utils/normalizeEventsForWeek';
+
+// Simple guard: check whether passed event is a real training
+// Accepts multiple signals: normalized isTemplate flag OR raw payload fields
+const isRealTrainingEvent = (ev: any | null | undefined) => {
+  if (!ev) return false;
+  try {
+    if (ev.isTemplate === false) return true;
+    const raw = ev.raw || {};
+    // If raw contains a training_date/training_datetime/training_id or students, treat as real
+    if (raw.training_date || raw.training_datetime || raw.training_id) return true;
+    if (Array.isArray(raw.students) && raw.students.length > 0) return true;
+    // fallback: if raw explicitly marks as template-based real training
+    if (raw.is_template_based) return true;
+  } catch (e) {
+    // ignore and return false
+  }
+  return false;
+};
 
 /**
  * EventBottomSheetRefactored - Main container component for event details
@@ -102,6 +122,19 @@ const EventBottomSheetRefactored: React.FC<EventBottomSheetProps> = ({
     }
   }, [eventOrHourGroup, setLocalEvent]);
 
+  // Compute whether this is a real training for rendering branch and log for debugging
+  const isReal = mode === 'event' && !Array.isArray(eventOrHourGroup) && isRealTrainingEvent(eventOrHourGroup as NormalizedEvent);
+  React.useEffect(() => {
+    if (mode === 'event' && eventOrHourGroup) {
+      console.debug('[EventBottomSheetRefactored] render debug', {
+        isArray: Array.isArray(eventOrHourGroup),
+        isReal,
+        isTemplate: !isReal ? (eventOrHourGroup as any)?.isTemplate : false,
+        raw: (!Array.isArray(eventOrHourGroup) ? (eventOrHourGroup as any)?.raw : undefined),
+      });
+    }
+  }, [mode, eventOrHourGroup, isReal]);
+
   if (!eventOrHourGroup) return null;
 
   return (
@@ -147,16 +180,28 @@ const EventBottomSheetRefactored: React.FC<EventBottomSheetProps> = ({
         }}>
           {/* Render SingleEventView or EventGroupView based on mode */}
           {mode === 'event' && !Array.isArray(eventOrHourGroup) ? (
-            <SingleEventView
-              event={eventOrHourGroup}
-              eventOrHourGroup={eventOrHourGroup}
-              onClose={onClose}
-              // override: let SingleEventView call this to open inline forms
-              onRequestEdit={handleOpenEdit}
-              onRequestMove={handleOpenTransfer}
-              onDelete={onDelete}
-              onAssignedStudentDeleted={onAssignedStudentDeleted}
-            />
+            // If this is a real training event, render RealTrainingView which
+            // provides mobile cancel/add/cancel-training bottom-sheet flows.
+            (isRealTrainingEvent(eventOrHourGroup as NormalizedEvent)) ? (
+              <RealTrainingView
+                event={eventOrHourGroup as NormalizedEvent}
+                onClose={onClose}
+                onRequestEdit={handleOpenEdit}
+                onRequestMove={handleOpenTransfer}
+                onCancel={onDelete}
+              />
+            ) : (
+              <SingleEventView
+                event={eventOrHourGroup}
+                eventOrHourGroup={eventOrHourGroup}
+                onClose={onClose}
+                // override: let SingleEventView call this to open inline forms
+                onRequestEdit={handleOpenEdit}
+                onRequestMove={handleOpenTransfer}
+                onDelete={onDelete}
+                onAssignedStudentDeleted={onAssignedStudentDeleted}
+              />
+            )
           ) : Array.isArray(eventOrHourGroup) ? (
             <EventGroupView
               events={eventOrHourGroup}

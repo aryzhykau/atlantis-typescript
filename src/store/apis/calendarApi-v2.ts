@@ -229,7 +229,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
 
     // --- Real Trainings Endpoints ---
     getRealTrainings: builder.query<RealTraining[], GetRealTrainingsParams | void>({
-      query: (params) => {
+    query: (params) => {
         if (params) {
           // Формируем строку параметров запроса из объекта params
           const queryParams = new URLSearchParams();
@@ -238,7 +238,9 @@ export const calendarApiV2 = baseApi.injectEndpoints({
           if (params.trainerId) queryParams.append('trainer_id', params.trainerId.toString());
           if (params.trainingTypeId) queryParams.append('training_type_id', params.trainingTypeId.toString());
           if (params.studentId) queryParams.append('student_id', params.studentId.toString());
-          if (params.withStudents) queryParams.append('with_students', 'true');
+      if (params.withStudents) queryParams.append('with_students', 'true');
+      // includeCancelled is a client-side camelCase prop; backend expects include_cancelled
+      if ((params as any).includeCancelled) queryParams.append('include_cancelled', 'true');
           return `real-trainings/?${queryParams.toString()}`;
         }
         return 'real-trainings/';

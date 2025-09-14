@@ -94,6 +94,7 @@ export interface GetRealTrainingsParams {
   trainingTypeId?: number;
   studentId?: number;
   withStudents?: boolean; // Include student data
+  includeCancelled?: boolean; // Include cancelled trainings (maps to include_cancelled on the API)
   // Можно добавить другие параметры, если API их поддерживает (например, status)
 }
 
