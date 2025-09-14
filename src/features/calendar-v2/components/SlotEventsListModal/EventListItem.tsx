@@ -13,7 +13,7 @@ import { alpha } from '@mui/material/styles';
 import EditIcon from '@mui/icons-material/Edit';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
-import { CalendarEvent } from '../../../types';
+import { CalendarEvent } from '../../types';
 
 interface EventListItemProps {
   event: CalendarEvent;
@@ -74,6 +74,7 @@ export const EventListItem: React.FC<EventListItemProps> = ({
         position: 'relative',
         transition: 'all 0.2s ease-in-out',
         cursor: 'pointer',
+        // Visual for cancelled trainings
         opacity: isCancelled ? 0.6 : 1,
         filter: isCancelled ? 'grayscale(30%)' : 'none',
         '&:hover': {

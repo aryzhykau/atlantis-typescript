@@ -5,6 +5,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/ru';
 import { CalendarViewMode } from '../../desktop/layout/CalendarV2Page';
+import { useIsAdminOrOwner } from '../../../../../hooks/usePermissions';
 import {
   useGetTrainingTemplatesQuery,
   useGetRealTrainingsQuery,
@@ -25,10 +26,13 @@ const MobileFullCalendarV2Page: React.FC = () => {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [isTrainingFormOpen, setIsTrainingFormOpen] = useState(false);
 
+  const isAdminOrOwner = useIsAdminOrOwner();
+
   const realTrainingsParams = useMemo(() => ({
     startDate: weekStart.format('YYYY-MM-DD'),
     endDate: weekStart.endOf('isoWeek').format('YYYY-MM-DD'),
-  }), [weekStart]);
+    includeCancelled: isAdminOrOwner ? true : undefined,
+  }), [weekStart, isAdminOrOwner]);
 
   const { data: scheduleTemplates, isLoading: isLoadingTemplates } = useGetTrainingTemplatesQuery(undefined, {
     skip: viewMode !== 'scheduleTemplate',

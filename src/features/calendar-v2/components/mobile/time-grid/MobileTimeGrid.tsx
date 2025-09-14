@@ -14,7 +14,7 @@ import {
   useUpdateTrainingTemplateMutation,
   useUpdateRealTrainingMutation,
   useDeleteTrainingTemplateMutation,
-  useDeleteRealTrainingMutation,
+  useCancelRealTrainingMutation,
 } from '../../../../../store/apis/calendarApi-v2';
 import MobileTimeRow from './MobileTimeRow';
 import { useMobileDragDrop } from '../../../hooks/useMobileDragDrop';
@@ -84,7 +84,8 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
   const [updateTrainingTemplate] = useUpdateTrainingTemplateMutation();
   const [updateRealTraining] = useUpdateRealTrainingMutation();
   const [deleteTrainingTemplate] = useDeleteTrainingTemplateMutation();
-  const [deleteRealTraining] = useDeleteRealTrainingMutation();
+  // deleteRealTraining (DELETE /real-trainings/:id) removed for real trainings cancellation flow
+  const [cancelRealTraining] = useCancelRealTrainingMutation();
   const { displaySnackbar } = useSnackbar();
 
   // Generate hour array
@@ -96,6 +97,18 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
   const activeDay = selectedDay || dayjs();
   const activeDayKey = activeDay.format('YYYY-MM-DD');
 
+  // Debug: log raw eventsMap received from backend for inspection
+  React.useEffect(() => {
+    try {
+  console.log('MobileTimeGrid: received eventsMap from backend', {
+        activeDayKey,
+        eventsMapSnapshot: eventsMap,
+      });
+    } catch (e) {
+      // ignore logging errors
+    }
+  }, [eventsMap, activeDayKey]);
+
   // Handle event click - open bottom sheet with selected event
   const handleEventClick = useCallback((event: NormalizedEvent | NormalizedEvent[]) => {
     setSelectedEvent(event);
@@ -106,7 +119,7 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
 
   // Handler invoked from EventBottomSheet when user requests a transfer
   const handleRequestMove = useCallback(async (event: NormalizedEvent, transferData?: any) => {
-  console.debug('MobileTimeGrid.handleRequestMove', { eventId: event?.id, transferData });
+  console.log('MobileTimeGrid.handleRequestMove', { eventId: event?.id, transferData });
   if (!event || !transferData) return;
     displaySnackbar('Перемещение...', 'info');
     try {
@@ -194,7 +207,7 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
 
   // Handler invoked from EventBottomSheet when user requests an edit/save
   const handleRequestEdit = useCallback(async (event: NormalizedEvent, updates?: Partial<NormalizedEvent>) => {
-  console.debug('MobileTimeGrid.handleRequestEdit', { eventId: event?.id, updates });
+  console.log('MobileTimeGrid.handleRequestEdit', { eventId: event?.id, updates });
   if (!event) return;
     displaySnackbar('Сохранение изменений...', 'info');
     try {
@@ -237,15 +250,22 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
         await deleteTrainingTemplate(event.id).unwrap();
         displaySnackbar('Шаблон удалён', 'success');
       } else {
-        await deleteRealTraining(event.id).unwrap();
-        displaySnackbar('Тренировка удалена', 'success');
+        // call cancel endpoint (POST /real-trainings/{id}/cancel) instead of hard delete
+        try {
+          const cancellationData = { reason: 'Cancelled from UI', process_refunds: true };
+          await cancelRealTraining({ trainingId: event.id, cancellationData }).unwrap();
+          displaySnackbar('Тренировка отменена', 'success');
+        } catch (innerErr: any) {
+          // surface original error if cancel failed
+          throw innerErr;
+        }
       }
     } catch (err: any) {
       console.error('Failed to delete event:', err);
       const msg = err?.data?.detail || err?.message || 'Ошибка при удалении';
       displaySnackbar(msg, 'error');
     }
-  }, [deleteTrainingTemplate, deleteRealTraining, displaySnackbar]);
+  }, [deleteTrainingTemplate, cancelRealTraining, displaySnackbar]);
 
   // Handle bottom sheet close
   const handleBottomSheetClose = useCallback(() => {
@@ -313,6 +333,18 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
               return ev;
             });
           }
+          // Debug: log what will be rendered for this hour (IDs and statuses)
+          try {
+            console.log('MobileTimeGrid.renderHour', {
+              activeDayKey,
+              hour,
+              rawDayEvents: dayEvents.map(d => ({ id: d.id, title: d.title, status: (d as any).raw?.status || (d as any).status })),
+              updatedDayEvents: updatedDayEvents.map(d => ({ id: d.id, title: d.title, status: (d as any).raw?.status || (d as any).status })),
+            });
+          } catch (e) {
+            // ignore
+          }
+
           return (
             <MobileTimeRow
               key={hour}

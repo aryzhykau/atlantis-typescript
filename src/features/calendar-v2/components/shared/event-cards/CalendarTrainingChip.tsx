@@ -87,6 +87,18 @@ export const CalendarTrainingChip = memo(forwardRef<HTMLDivElement, CalendarTrai
 
   // Responsive styles using utility
   const responsiveStyles = useMemo(() => getResponsiveChipStyles(isMobile, isTablet), [isMobile, isTablet]);
+  // Determine cancelled state once and reuse
+  const isCancelled = useMemo(() => {
+    const rawEvent: any = event as any;
+    return (
+      rawEvent?.status === 'cancelled_by_coach' ||
+      rawEvent?.status === 'cancelled_by_admin' ||
+      Boolean(rawEvent?.cancelled_at) ||
+      Boolean(rawEvent?.cancelled) ||
+      Boolean(rawEvent?.is_cancelled) ||
+      Boolean(rawEvent?.raw?.cancelled_at)
+    );
+  }, [event]);
   
   // Chip styles with simplified memoization
   const chipSx = useMemo((): SxProps<Theme> => {
@@ -137,10 +149,14 @@ export const CalendarTrainingChip = memo(forwardRef<HTMLDivElement, CalendarTrai
       } as SxProps<Theme>;
     }
 
+    // Merge external sx first so component-level cancelled visual overrides any external opacity/filter
+    const mergedSx = (typeof sx === 'object' && !Array.isArray(sx) ? sx : {});
     return {
       ...baseStyles,
-      // Merge external sx styles
-      ...(typeof sx === 'object' && !Array.isArray(sx) ? sx : {}),
+      ...mergedSx,
+      // Visual for cancelled trainings (apply after mergedSx to ensure it takes precedence)
+      opacity: isCancelled ? 0.6 : 1,
+      filter: isCancelled ? 'grayscale(30%)' : 'none',
     } as SxProps<Theme>;
   }, [chipData.typeColor, responsiveStyles.maxWidth, theme.palette, sx, isMobile, isDuplicate]);
 
@@ -202,6 +218,22 @@ export const CalendarTrainingChip = memo(forwardRef<HTMLDivElement, CalendarTrai
           >
             {chipData.trainingTypeName}
           </Typography>
+          {/* Cancelled badge */}
+          {isCancelled && (
+            <Box sx={{
+              ml: 1,
+              bgcolor: theme.palette.warning.main,
+              color: 'white',
+              fontSize: '0.6rem',
+              fontWeight: 700,
+              px: 0.6,
+              py: 0.125,
+              borderRadius: 1,
+              flexShrink: 0,
+            }}>
+              Отменена
+            </Box>
+          )}
           {showDragHandle && isMobile && (
             <Box sx={{ flexShrink: 0 }}> {/* Prevent drag handle from shrinking */}
               <MobileDragHandle

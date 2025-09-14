@@ -75,6 +75,16 @@ const MobileEventCard: React.FC<MobileEventCardProps> = ({
   const interpolatedBorderRadius = baseBorderRadius + (maxBorderRadius - baseBorderRadius) * (1 - activeRatio);
   
   // Common card styles
+  // Compute visual de-emphasis for cancelled trainings
+  const isCancelled = Boolean(
+    event.raw?.status === 'cancelled_by_coach' ||
+    event.raw?.status === 'cancelled_by_admin' ||
+    event.raw?.cancelled_at
+  );
+
+  const computedOpacity = isCancelled ? 0.6 : (isVisible ? 1 : 0.8);
+  const computedFilter = isCancelled ? 'grayscale(30%)' : undefined;
+
   const cardStyles = {
     height: isPartiallyHidden 
       ? 'calc(var(--hour-row-h, 44px) - 16px)' 
@@ -83,7 +93,7 @@ const MobileEventCard: React.FC<MobileEventCardProps> = ({
     minWidth: '120px',
     maxWidth: '120px',
     scrollSnapAlign: 'start',
-    opacity: isVisible ? 1 : 0.8,
+    opacity: computedOpacity,
     transform: isPartiallyHidden 
       ? 'scale(0.9)' 
       : isVisible ? 'scale(1)' : 'scale(0.95)',
@@ -94,6 +104,7 @@ const MobileEventCard: React.FC<MobileEventCardProps> = ({
     boxShadow: theme.shadows[1],
     background: `linear-gradient(135deg, ${typeColor}20 0%, ${typeColor}10 100%)`,
     overflow: 'hidden',
+    filter: computedFilter,
   };
   
   return (
