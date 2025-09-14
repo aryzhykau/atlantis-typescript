@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import TrainerEventBottomSheet from '../../shared/bottom-sheets/TrainerEventBottomSheet';
-import EventBottomSheet from '../../shared/bottom-sheets/EventBottomSheet';
+import EventBottomSheetRefactored from '../../shared/bottom-sheets/EventBottomSheetRefactored';
 import { Box } from '@mui/material';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -106,17 +106,83 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
 
   // Handler invoked from EventBottomSheet when user requests a transfer
   const handleRequestMove = useCallback(async (event: NormalizedEvent, transferData?: any) => {
-    if (!event || !transferData) return;
+  console.debug('MobileTimeGrid.handleRequestMove', { eventId: event?.id, transferData });
+  if (!event || !transferData) return;
+    displaySnackbar('Перемещение...', 'info');
     try {
       if (event.isTemplate) {
-        const dayOfWeek = transferData.dayOfWeek === 0 ? 7 : transferData.dayOfWeek;
-        const startTime = `${String(transferData.hour || event.start.hour()).padStart(2, '0')}:00`;
+        // support both dayOfWeek and dayNumber keys
+        const dow = transferData.dayOfWeek ?? transferData.dayNumber;
+        const dayOfWeek = dow === 0 ? 7 : dow;
+        const hour = Number(transferData.hour ?? event.start.hour());
+        const startTime = `${String(hour).padStart(2, '0')}:00`;
+        console.debug('MobileTimeGrid.moveTrainingTemplate payload', { id: event.id, dayNumber: dayOfWeek, startTime });
         await moveTrainingTemplate({ id: event.id, dayNumber: dayOfWeek, startTime }).unwrap();
+        // optimistic local update: move template within localEventsMap if present
+        try {
+          setLocalEventsMap(prev => {
+            const next = { ...prev } as typeof prev;
+            // templates are keyed by date strings (YYYY-MM-DD) in eventsMap; best-effort: find and move
+            Object.keys(next).forEach(dayKey => {
+              next[dayKey] = next[dayKey].filter(e => e.id !== event.id);
+            });
+            // Place into a best-guess day: keep using existing activeDay as target if mapping unclear
+            const targetDay = activeDay.format('YYYY-MM-DD');
+            next[targetDay] = next[targetDay] || [];
+            next[targetDay].push({ ...event, startHour: hour });
+            return next;
+          });
+        } catch (e) {
+          console.warn('Failed optimistic update for template move', e);
+        }
         displaySnackbar('Шаблон перемещён', 'success');
       } else {
-        const trainingDate = transferData.date || event.start.format('YYYY-MM-DD');
-        const startTime = `${String(transferData.hour || event.start.hour()).padStart(2, '0')}:00`;
+        // accept both `trainingDate` and `date` keys from the transfer form
+        const trainingDate = transferData.trainingDate ?? transferData.date ?? event.start.format('YYYY-MM-DD');
+        const hour = Number(transferData.hour ?? event.start.hour());
+        const startTime = `${String(hour).padStart(2, '0')}:00`;
+        console.debug('MobileTimeGrid.moveRealTraining payload', { id: event.id, trainingDate, startTime });
         await moveRealTraining({ id: event.id, trainingDate, startTime }).unwrap();
+        // optimistic local update: move real training in localEventsMap
+        try {
+          setLocalEventsMap(prev => {
+            const next = { ...prev } as typeof prev;
+            // remove from any slot where it exists
+            Object.keys(next).forEach(dayKey => {
+              next[dayKey] = next[dayKey].filter(e => e.id !== event.id);
+            });
+            // target dayKey
+            const targetDay = (trainingDate) as string;
+            next[targetDay] = next[targetDay] || [];
+            // Reconstruct a minimal NormalizedEvent to place in UI
+            const moved: NormalizedEvent = {
+              ...event,
+              start: event.start.set('hour', hour).set('date', dayjs(trainingDate).date()).set('month', dayjs(trainingDate).month()).set('year', dayjs(trainingDate).year()),
+              end: event.start.set('hour', hour).add(event.durationMins, 'minute'),
+              startHour: hour,
+            } as NormalizedEvent;
+            next[targetDay].push(moved);
+            return next;
+          });
+          // update selectedEvent if it was open
+          setSelectedEvent(prev => {
+            if (!prev) return prev;
+            const isArray = Array.isArray(prev);
+            const ev = isArray ? prev[0] : prev;
+            if (ev.id === event.id) {
+              const movedSelected: NormalizedEvent = {
+                ...event,
+                start: event.start.set('hour', hour).set('date', dayjs(trainingDate).date()).set('month', dayjs(trainingDate).month()).set('year', dayjs(trainingDate).year()),
+                end: event.start.set('hour', hour).add(event.durationMins, 'minute'),
+                startHour: hour,
+              } as NormalizedEvent;
+              return isArray ? [movedSelected] : movedSelected;
+            }
+            return prev;
+          });
+        } catch (e) {
+          console.warn('Failed optimistic update for real training move', e);
+        }
         displaySnackbar('Тренировка перемещена', 'success');
       }
     } catch (err: any) {
@@ -128,7 +194,9 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
 
   // Handler invoked from EventBottomSheet when user requests an edit/save
   const handleRequestEdit = useCallback(async (event: NormalizedEvent, updates?: Partial<NormalizedEvent>) => {
-    if (!event) return;
+  console.debug('MobileTimeGrid.handleRequestEdit', { eventId: event?.id, updates });
+  if (!event) return;
+    displaySnackbar('Сохранение изменений...', 'info');
     try {
       // If the EditBottomSheet provided an `updates` object prefer those values
       const start = updates?.start ?? event.start;
@@ -163,6 +231,7 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
   // Handler invoked when deleting an event from bottom sheet
   const handleDelete = useCallback(async (event: NormalizedEvent) => {
     if (!event) return;
+    displaySnackbar('Удаление...', 'info');
     try {
       if (event.isTemplate) {
         await deleteTrainingTemplate(event.id).unwrap();
@@ -271,13 +340,11 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
           onMarkStudentAbsent={onMarkStudentAbsent}
         />
       ) : (
-        <EventBottomSheet
+        <EventBottomSheetRefactored
           open={bottomSheetOpen}
           eventOrHourGroup={Array.isArray(selectedEvent) ? selectedEvent : selectedEvent}
           mode="event"
           onClose={handleBottomSheetClose}
-          readOnlyForTrainer={readOnlyForTrainer}
-          onMarkStudentAbsent={onMarkStudentAbsent}
           onRequestMove={handleRequestMove}
           onRequestEdit={handleRequestEdit}
           onDelete={handleDelete}

@@ -85,8 +85,14 @@ const TransferBottomSheet: React.FC<TransferBottomSheetProps> = ({
       transferData.date = selectedDate.format('YYYY-MM-DD');
     }
     
+    // compatibility: backend / callers may expect `trainingDate` key for real trainings
+    if (transferData.date && !transferData.trainingDate) {
+      transferData.trainingDate = transferData.date;
+    }
+    console.debug('TransferBottomSheet.handleSave', { eventId: event.id, transferData });
     onSave(event, transferData);
   }, [event, selectedDate, selectedDayOfWeek, selectedHour, isTemplate, onSave]);
+
 
   const hasChanges = event && (
     selectedHour !== event.start.hour() ||

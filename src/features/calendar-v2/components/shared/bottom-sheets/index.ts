@@ -4,10 +4,10 @@ export { default as SingleEventView } from './SingleEventView';
 export { default as EventGroupView } from './EventGroupView';
 
 // Additional Bottom Sheets
-export { default as EditEventBottomSheet } from './EditEventBottomSheet';
-export { default as TransferEventBottomSheet } from './TransferEventBottomSheet';
+// export { default as EditEventBottomSheet } from './EditEventBottomSheet';
+// export { default as TransferEventBottomSheet } from './TransferEventBottomSheet';
 export { default as ConfirmDeleteBottomSheet } from './ConfirmDeleteBottomSheet';
-export { default as EventBottomSheet } from './EventBottomSheet';
+// export { default as EventBottomSheet } from './EventBottomSheet';
 
 // Reusable components
 export { default as EventHeader } from './EventHeader';
