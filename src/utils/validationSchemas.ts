@@ -52,10 +52,15 @@ export const commonValidations = {
   requiredSelect: Yup.string().required('Необходимо выбрать опцию'),
   optionalSelect: Yup.string().optional(),
 
-  // Phone validation
+  // Phone validation: accept formatted input from MuiTelInput (spaces, parentheses, dashes)
+  // but validate by numeric digit count (5..15) to match backend constraints.
   phone: Yup.string()
-    .matches(/^\+?[1-9]\d{1,14}$/, 'Неверный формат телефона')
-    .optional(),
+    .optional()
+    .test('phone-format', 'Неверный формат телефона', (value) => {
+      if (!value) return true;
+      const digits = value.replace(/\D/g, '');
+      return digits.length >= 5 && digits.length <= 15;
+    }),
 
   // Email validation
   email: Yup.string()
@@ -103,7 +108,7 @@ export const studentSchemas = {
   create: Yup.object({
     first_name: commonValidations.shortName,
     last_name: commonValidations.shortName,
-    date_of_birth: Yup.date().nullable().required('Дата рождения обязательна'),
+  date_of_birth: Yup.date().nullable().optional(),
     email: commonValidations.email,
     phone: commonValidations.phone,
   }),
@@ -233,7 +238,7 @@ export const clientSchemas = {
     phone: commonValidations.phone,
     gender: Yup.string()
       .oneOf(['M', 'F'], 'Выберите пол')
-      .required('Пол обязателен для заполнения'),
+      .optional(),
     students: Yup.array().of(
       Yup.object({
         first_name: commonValidations.shortName,
@@ -254,7 +259,7 @@ export const clientSchemas = {
     phone: commonValidations.phone,
     gender: Yup.string()
       .oneOf(['M', 'F'], 'Выберите пол')
-      .required('Пол обязателен для заполнения'),
+      .optional(),
     students: Yup.array().of(
       Yup.object({
         first_name: commonValidations.shortName,
