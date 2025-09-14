@@ -23,6 +23,7 @@ import {
   FitnessCenter as FitnessCenterIcon
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
+import { useSnackbar } from '../../../../../hooks/useSnackBar';
 import { NormalizedEvent } from '../../../utils/normalizeEventsForWeek';
 
 interface TrainerEventBottomSheetProps {
@@ -40,6 +41,24 @@ const TrainerEventBottomSheet: React.FC<TrainerEventBottomSheetProps> = ({
 }) => {
   const theme = useTheme();
   const [markingId, setMarkingId] = React.useState<string | null>(null);
+  // Robust cancelled detection aligned with RealTrainingView
+  // This hook must run on every render (even when `event` is null) to keep hook order stable
+  const isCancelled = React.useMemo(() => {
+    const raw: any = (event && event.raw) || event || {};
+    const status = (raw?.status || '').toString().toLowerCase();
+    return (
+      status === 'cancelled_by_coach' ||
+      status === 'cancelled_by_admin' ||
+      status === 'cancelled' ||
+      Boolean(raw?.cancelled_at) ||
+      Boolean(raw?.cancelled) ||
+      Boolean(raw?.is_cancelled) ||
+      Boolean(raw?.raw?.cancelled_at)
+    );
+  }, [event]);
+
+  // Provide snackbar for user feedback (must be called unconditionally)
+  const { displaySnackbar } = useSnackbar();
 
   if (!event) return null;
 
@@ -60,13 +79,15 @@ const TrainerEventBottomSheet: React.FC<TrainerEventBottomSheetProps> = ({
   const endTime = event.end.format('HH:mm');
   const trainingDate = event.start.format('DD MMMM YYYY');
   
-  // Check if training is in the past or cancelled
+  // Check if training is in the past
   const isPastTraining = event.start.isBefore(dayjs(), 'minute');
-  const isTrainingCancelled = event.raw?.status === 'CANCELLED';
 
-  // Get students from the event
+  // Get students from the event and split active/cancelled consistently
   const students = event.raw?.students || [];
-  const activeStudents = students.filter((s: any) => s.status !== 'CANCELLED');
+  const activeStudents = (students || []).filter((s: any) => {
+    const st = (s?.status || '').toString().toUpperCase();
+    return st === 'REGISTERED' || st === 'PRESENT' || st === 'ABSENT';
+  });
 
   // Get attendance status color
   const getStatusColor = (status: string) => {
@@ -92,13 +113,17 @@ const TrainerEventBottomSheet: React.FC<TrainerEventBottomSheetProps> = ({
 
   // Check if student can be marked absent
   const canMarkAbsent = (status: string) => {
-    return !isPastTraining && 
-           !isTrainingCancelled && 
-           (status === 'REGISTERED' || status === 'PRESENT');
+    const st = (status || '').toString().toUpperCase();
+    return !isPastTraining && !isCancelled && (st === 'REGISTERED' || st === 'PRESENT');
   };
 
   const handleMarkAbsent = async (studentTraining: any) => {
-    if (onMarkStudentAbsent && canMarkAbsent(studentTraining.status)) {
+    if (!onMarkStudentAbsent) return;
+    if (isCancelled) {
+      displaySnackbar('Нельзя отмечать посещаемость для отменённой тренировки', 'error');
+      return;
+    }
+    if (canMarkAbsent(studentTraining.status)) {
       const attendanceId = studentTraining.id || studentTraining.real_training_id;
       if (!attendanceId) {
         console.error('Error: No valid attendance ID found in studentTraining', studentTraining);
@@ -202,7 +227,7 @@ const TrainerEventBottomSheet: React.FC<TrainerEventBottomSheetProps> = ({
         </Box>
 
         {/* Status Messages */}
-        {isTrainingCancelled && (
+  {isCancelled && (
           <Box sx={{ 
             p: 2, 
             borderRadius: 2, 
@@ -219,7 +244,7 @@ const TrainerEventBottomSheet: React.FC<TrainerEventBottomSheetProps> = ({
           </Box>
         )}
 
-        {isPastTraining && !isTrainingCancelled && (
+  {isPastTraining && !isCancelled && (
           <Box sx={{ 
             p: 2, 
             borderRadius: 2, 
