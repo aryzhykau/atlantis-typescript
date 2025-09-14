@@ -45,52 +45,14 @@ const TrainerMobileCalendar: React.FC = () => {
     skip: !user?.id, // Skip if no user ID available
   });
 
-  // Enhanced logging for API call status
-  console.log('🚀 API Query Status:', {
-    isLoading,
-    isFetching,
-    isSuccess,
-    error,
-    hasUser: !!user?.id,
-    userId: user?.id,
-    queryParams: realTrainingsParams,
-    skipQuery: !user?.id
-  });
 
   // Normalize events for the week view - only trainer's own trainings
   const normalizedEvents = useMemo(() => {
-    console.log('🔄 Normalizing events - Input check:', {
-      hasTrainerTrainings: !!trainerTrainings,
-      trainingCount: trainerTrainings?.length || 0,
-      hasUserId: !!user?.id,
-      userId: user?.id,
-      weekStart: weekStart.format('YYYY-MM-DD')
-    });
 
     if (!trainerTrainings || !user?.id) {
-      console.log('❌ Early return - missing data:', {
-        trainerTrainings: !!trainerTrainings,
-        userId: !!user?.id
-      });
       return {};
     }
     
-    console.log('🔍 Raw trainer trainings (full data):', JSON.stringify(trainerTrainings, null, 2));
-    console.log('👤 Current user ID:', user.id);
-    
-    // Log each training's trainer info
-    trainerTrainings.forEach((training, index) => {
-      console.log(`📋 Training ${index + 1}:`, {
-        id: training.id,
-        training_date: training.training_date,
-        start_time: training.start_time,
-        responsible_trainer_id: training.responsible_trainer_id,
-        trainer: training.trainer,
-        training_type: training.training_type,
-        students: training.students?.length || 'No students',
-        rawTraining: training
-      });
-    });
     
     // Additional client-side filter to ensure only trainer's own events
       const filteredTrainings = trainerTrainings.filter(training => 
@@ -104,16 +66,6 @@ const TrainerMobileCalendar: React.FC = () => {
     });
     
     const normalized = normalizeEventsForWeek(filteredTrainings, weekStart);
-    console.log('📅 Normalized events for week:', {
-      weekStart: weekStart.format('YYYY-MM-DD'),
-      weekEnd: weekStart.endOf('isoWeek').format('YYYY-MM-DD'),
-      normalizedEvents: normalized,
-      totalEventsByDay: Object.keys(normalized).map(day => ({
-        day,
-        eventCount: normalized[day].length,
-        events: normalized[day].map(e => ({ id: e.id, title: e.title, start: e.start.format('YYYY-MM-DD HH:mm') }))
-      }))
-    });
     
     return normalized;
   }, [trainerTrainings, weekStart, user?.id]);
@@ -169,7 +121,7 @@ const TrainerMobileCalendar: React.FC = () => {
         console.error('TrainerMobileCalendar: Training or student not found', { trainingId, studentId, studentTrainingId });
         throw new Error('Тренировка не найдена');
       }
-
+      console.log("showing snackbar")
       // Show loading snackbar while request is in-flight
       displaySnackbar('Отправка изменения...', 'info');
 
@@ -202,9 +154,8 @@ const TrainerMobileCalendar: React.FC = () => {
         student_id: studentId,
         status_of_presence: 'ABSENT',
       } as any;
-      console.log('TrainerMobileCalendar: Calling updateStudentAttendance with', payload);
+      
       await updateStudentAttendance(payload).unwrap();
-      console.log('TrainerMobileCalendar: updateStudentAttendance request sent');
 
       // On success, show success snackbar
       displaySnackbar('Отмечено как пропуск', 'success');
@@ -226,14 +177,6 @@ const TrainerMobileCalendar: React.FC = () => {
     }
   };  
 
-  // Log events being passed to MobileTimeGrid
-  console.log('📊 Passing events to MobileTimeGrid:', {
-    selectedDay: selectedDay.format('YYYY-MM-DD'),
-    eventsMapKeys: Object.keys(normalizedEvents),
-    eventsForSelectedDay: normalizedEvents[selectedDay.format('YYYY-MM-DD')] || [],
-    totalEventsInMap: Object.values(normalizedEvents).flat().length,
-    readOnlyForTrainer: true
-  });
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ru">
