@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Paper, BottomNavigation, useTheme, BottomNavigationAction } from '@mui/material';
+import { Box, Paper, BottomNavigation, useTheme, BottomNavigationAction, CircularProgress, Alert, Snackbar } from '@mui/material';
 import {
   Payment as PaymentIcon,
   CalendarToday as ScheduleIcon,
@@ -8,6 +8,7 @@ import {
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGradients } from '../features/trainer-mobile/hooks/useGradients';
+import { useSnackbar } from '../hooks/useSnackBar';
 
 interface MobileTrainerLayoutProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
   const location = useLocation();
   const navigate = useNavigate();
   const gradients = useGradients();
+  const {snackbar, hideSnackbar} = useSnackbar();
 
   // Определяем текущую страницу
   const getCurrentPage = () => {
@@ -73,6 +75,7 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
   ];
 
   return (
+    
     <Box sx={{ 
       display: 'flex', 
       flexDirection: 'column', 
@@ -152,6 +155,23 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
           ))}
         </BottomNavigation>
       </Paper>
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={hideSnackbar}
+        sx={(theme) => ({ zIndex: (theme as any).zIndex.modal + 999999 })}
+      >
+        <Alert onClose={hideSnackbar} severity={snackbar.severity}>
+            {snackbar.severity === 'info' ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CircularProgress size={18} color="inherit" />
+                    <span>{snackbar.message}</span>
+                </Box>
+            ) : (
+                snackbar.message
+            )}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }; 
