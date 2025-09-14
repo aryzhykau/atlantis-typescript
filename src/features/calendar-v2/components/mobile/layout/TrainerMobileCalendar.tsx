@@ -41,7 +41,7 @@ const TrainerMobileCalendar: React.FC = () => {
     withStudents: true, // Include student data for attendance management
   }), [weekStart, user?.id]);
 
-  const { data: trainerTrainings, isLoading, error, isSuccess, isFetching } = useGetRealTrainingsQuery(realTrainingsParams, {
+  const { data: trainerTrainings, isLoading } = useGetRealTrainingsQuery(realTrainingsParams, {
     skip: !user?.id, // Skip if no user ID available
   });
 
