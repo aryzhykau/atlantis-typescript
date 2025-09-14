@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import TrainerEventBottomSheet from '../../shared/bottom-sheets/TrainerEventBottomSheet';
+import EventBottomSheet from '../../shared/bottom-sheets/EventBottomSheet';
 import { Box } from '@mui/material';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -169,13 +170,24 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
         <Box sx={{ height: `calc(env(safe-area-inset-bottom, 0px) + ${72 + viewportOffset}px)`, flexShrink: 0 }} />
       </Box>
 
-      {/* Event Bottom Sheet */}
-      <TrainerEventBottomSheet
-        open={bottomSheetOpen}
-        event={Array.isArray(selectedEvent) ? selectedEvent[0] : selectedEvent}
-        onClose={handleBottomSheetClose}
-        onMarkStudentAbsent={onMarkStudentAbsent}
-      />
+      {/* Event Bottom Sheet: show Trainer-specific bottom sheet for trainers, full EventBottomSheet for admins/owners */}
+      {readOnlyForTrainer ? (
+        <TrainerEventBottomSheet
+          open={bottomSheetOpen}
+          event={Array.isArray(selectedEvent) ? selectedEvent[0] : selectedEvent}
+          onClose={handleBottomSheetClose}
+          onMarkStudentAbsent={onMarkStudentAbsent}
+        />
+      ) : (
+        <EventBottomSheet
+          open={bottomSheetOpen}
+          eventOrHourGroup={Array.isArray(selectedEvent) ? selectedEvent : selectedEvent}
+          mode="event"
+          onClose={handleBottomSheetClose}
+          readOnlyForTrainer={readOnlyForTrainer}
+          onMarkStudentAbsent={onMarkStudentAbsent}
+        />
+      )}
     </DndProvider>
   );
 };
