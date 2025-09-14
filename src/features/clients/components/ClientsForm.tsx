@@ -61,6 +61,9 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
     const validationSchema = isEdit ? clientSchemas.update : clientSchemas.create;
 
     const handleSubmit = async (values: IClientUserFormValues, {resetForm}: {resetForm: () =>  void}) => {
+        // Log and show a quick snackbar to confirm submit handler invocation
+        console.log('ClientsForm handleSubmit called with values:', values);
+        displaySnackbar('Submitting client...', 'info');
         try {
             const phoneInfo = values.phone ? parsePhoneNumber(values.phone) : null;
             const whatsappInfo = values.whatsapp_number ? parsePhoneNumber(values.whatsapp_number) : null;
@@ -89,10 +92,7 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
                     ? dayjs(values.date_of_birth).tz(dayjs.tz.guess()).format('YYYY-MM-DD')
                     : null;
     
-                if (!clientDateOfBirth) { 
-                    displaySnackbar("Дата рождения клиента обязательна.", "error");
-                    return; 
-                }
+                // Date of birth is optional now; backend accepts null. Convert if present.
     
                 const studentsToCreate = values.students
                     ?.filter(student => student.date_of_birth != null) 
@@ -111,7 +111,7 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
                     email: values.email,
                     phone_country_code: phoneInfo?.countryCallingCode || '',
                     phone_number: phoneInfo?.nationalNumber || '',
-                    date_of_birth: clientDateOfBirth,
+                    date_of_birth: clientDateOfBirth || '',
                     whatsapp_country_code: whatsappInfo?.countryCallingCode,
                     whatsapp_number: whatsappInfo?.nationalNumber,
                     is_student: values.is_student,
