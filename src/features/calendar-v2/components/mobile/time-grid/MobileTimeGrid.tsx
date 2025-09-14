@@ -7,6 +7,15 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { NormalizedEvent } from '../../../utils/normalizeEventsForWeek';
+import { useSnackbar } from '../../../../../hooks/useSnackBar';
+import {
+  useMoveTrainingTemplateMutation,
+  useMoveRealTrainingMutation,
+  useUpdateTrainingTemplateMutation,
+  useUpdateRealTrainingMutation,
+  useDeleteTrainingTemplateMutation,
+  useDeleteRealTrainingMutation,
+} from '../../../../../store/apis/calendarApi-v2';
 import MobileTimeRow from './MobileTimeRow';
 import { useMobileDragDrop } from '../../../hooks/useMobileDragDrop';
 // TODO: Fix import path for TrainerEventBottomSheet
@@ -69,6 +78,15 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
     // For true optimistic UI, you may want to update localEventsMap based on state.optimisticUpdate
   });
 
+  // API mutations for bottom-sheet actions (edit / move / delete)
+  const [moveTrainingTemplate] = useMoveTrainingTemplateMutation();
+  const [moveRealTraining] = useMoveRealTrainingMutation();
+  const [updateTrainingTemplate] = useUpdateTrainingTemplateMutation();
+  const [updateRealTraining] = useUpdateRealTrainingMutation();
+  const [deleteTrainingTemplate] = useDeleteTrainingTemplateMutation();
+  const [deleteRealTraining] = useDeleteRealTrainingMutation();
+  const { displaySnackbar } = useSnackbar();
+
   // Generate hour array
   const hours = useMemo(() => {
     return Array.from({ length: hourEnd - hourStart + 1 }, (_, i) => hourStart + i);
@@ -85,6 +103,80 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
     console.log('Event clicked:', event);
     console.log('BottomSheet open:', true);
   }, []);
+
+  // Handler invoked from EventBottomSheet when user requests a transfer
+  const handleRequestMove = useCallback(async (event: NormalizedEvent, transferData?: any) => {
+    if (!event || !transferData) return;
+    try {
+      if (event.isTemplate) {
+        const dayOfWeek = transferData.dayOfWeek === 0 ? 7 : transferData.dayOfWeek;
+        const startTime = `${String(transferData.hour || event.start.hour()).padStart(2, '0')}:00`;
+        await moveTrainingTemplate({ id: event.id, dayNumber: dayOfWeek, startTime }).unwrap();
+        displaySnackbar('Шаблон перемещён', 'success');
+      } else {
+        const trainingDate = transferData.date || event.start.format('YYYY-MM-DD');
+        const startTime = `${String(transferData.hour || event.start.hour()).padStart(2, '0')}:00`;
+        await moveRealTraining({ id: event.id, trainingDate, startTime }).unwrap();
+        displaySnackbar('Тренировка перемещена', 'success');
+      }
+    } catch (err: any) {
+      console.error('Failed to move event:', err);
+      const msg = err?.data?.detail || err?.message || 'Ошибка при перемещении';
+      displaySnackbar(msg, 'error');
+    }
+  }, [moveTrainingTemplate, moveRealTraining, displaySnackbar]);
+
+  // Handler invoked from EventBottomSheet when user requests an edit/save
+  const handleRequestEdit = useCallback(async (event: NormalizedEvent, updates?: Partial<NormalizedEvent>) => {
+    if (!event) return;
+    try {
+      // If the EditBottomSheet provided an `updates` object prefer those values
+      const start = updates?.start ?? event.start;
+      const raw = { ...(event.raw || {}), ...(updates?.raw || {}) } as any;
+      if (event.isTemplate) {
+        const dayNumber = start.day() === 0 ? 7 : start.day();
+        const data: any = {
+          start_time: raw.start_time || `${String(start.hour()).padStart(2, '0')}:00`,
+          day_number: dayNumber,
+        };
+        if (raw.responsible_trainer_id) data.responsible_trainer_id = raw.responsible_trainer_id;
+        if (raw.training_type_id) data.training_type_id = raw.training_type_id;
+        await updateTrainingTemplate({ id: event.id, data }).unwrap();
+        displaySnackbar('Шаблон обновлён', 'success');
+      } else {
+        const data: any = {
+          start_time: raw.start_time || `${String(start.hour()).padStart(2, '0')}:00`,
+          training_date: start.format('YYYY-MM-DD'),
+        };
+        if (raw.responsible_trainer_id) data.responsible_trainer_id = raw.responsible_trainer_id;
+        if (raw.training_type_id) data.training_type_id = raw.training_type_id;
+        await updateRealTraining({ id: event.id, data }).unwrap();
+        displaySnackbar('Тренировка обновлена', 'success');
+      }
+    } catch (err: any) {
+      console.error('Failed to update event:', err);
+      const msg = err?.data?.detail || err?.message || 'Ошибка при сохранении';
+      displaySnackbar(msg, 'error');
+    }
+  }, [updateTrainingTemplate, updateRealTraining, displaySnackbar]);
+
+  // Handler invoked when deleting an event from bottom sheet
+  const handleDelete = useCallback(async (event: NormalizedEvent) => {
+    if (!event) return;
+    try {
+      if (event.isTemplate) {
+        await deleteTrainingTemplate(event.id).unwrap();
+        displaySnackbar('Шаблон удалён', 'success');
+      } else {
+        await deleteRealTraining(event.id).unwrap();
+        displaySnackbar('Тренировка удалена', 'success');
+      }
+    } catch (err: any) {
+      console.error('Failed to delete event:', err);
+      const msg = err?.data?.detail || err?.message || 'Ошибка при удалении';
+      displaySnackbar(msg, 'error');
+    }
+  }, [deleteTrainingTemplate, deleteRealTraining, displaySnackbar]);
 
   // Handle bottom sheet close
   const handleBottomSheetClose = useCallback(() => {
@@ -186,6 +278,9 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
           onClose={handleBottomSheetClose}
           readOnlyForTrainer={readOnlyForTrainer}
           onMarkStudentAbsent={onMarkStudentAbsent}
+          onRequestMove={handleRequestMove}
+          onRequestEdit={handleRequestEdit}
+          onDelete={handleDelete}
         />
       )}
     </DndProvider>

@@ -53,7 +53,7 @@ interface EventBottomSheetProps {
   onMove?: (event: NormalizedEvent) => void;
   onRequestMove?: (event: NormalizedEvent, transferData?: any) => void;
   onDelete?: (event: NormalizedEvent) => void;
-  onRequestEdit?: (event: NormalizedEvent) => void;
+  onRequestEdit?: (event: NormalizedEvent, updates?: Partial<NormalizedEvent>) => void;
   onAssignedStudentDeleted?: (trainingTemplateId: number, studentTemplateId: number) => void;
   readOnlyForTrainer?: boolean;
   onMarkStudentAbsent?: (studentTrainingId: string) => Promise<void>;
@@ -139,8 +139,9 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
   }, [eventOrHourGroup]);
 
   // Inline form handlers
-  const handleEditSave = useCallback((event: NormalizedEvent, _updates: Partial<NormalizedEvent>) => {
-    onRequestEdit?.(event);
+  const handleEditSave = useCallback((event: NormalizedEvent, updates: Partial<NormalizedEvent>) => {
+    // Pass through the updates provided by EditBottomSheet so parent can construct the API payload
+    onRequestEdit?.(event, updates);
     setShowEditForm(false);
     setCurrentEditEvent(null);
   }, [onRequestEdit]);
