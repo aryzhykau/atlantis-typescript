@@ -21,9 +21,9 @@ export interface EventBottomSheetProps {
   onClose: () => void;
   onSave?: (event: NormalizedEvent) => void;
   onMove?: (event: NormalizedEvent) => void;
-  onRequestMove?: (event: NormalizedEvent) => void;
+  onRequestMove?: (event: NormalizedEvent, transferData?: any) => void;
   onDelete?: (event: NormalizedEvent) => void;
-  onRequestEdit?: (event: NormalizedEvent) => void;
+  onRequestEdit?: (event: NormalizedEvent, updates?: Partial<NormalizedEvent>) => void;
   onAssignedStudentDeleted?: (trainingTemplateId: number, studentTemplateId: number) => void;
 }
 
