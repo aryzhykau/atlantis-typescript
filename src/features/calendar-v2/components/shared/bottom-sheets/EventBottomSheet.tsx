@@ -264,6 +264,7 @@ const EventBottomSheet: React.FC<EventBottomSheetProps> = ({
   }, [confirmingAssigned, deleteTrainingStudentTemplate, eventOrHourGroup, dispatch, onAssignedStudentDeleted, displaySnackbar]);
 
   const renderSingleEvent = useCallback((event: NormalizedEvent) => {
+    console.log('Rendering single event in EventBottomSheet:', event); // Debug log
     const trainerName = event.trainer
       ? `${event.trainer.first_name || ''} ${event.trainer.last_name || ''}`.trim()
       : 'Не указан';
