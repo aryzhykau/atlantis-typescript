@@ -56,7 +56,7 @@ export function HomePage() {
                 open={snackbar.open} 
                 autoHideDuration={6000} 
                 onClose={hideSnackbar}
-                sx={{ zIndex: 9999 }}
+                sx={(theme) => ({ zIndex: (theme as any).zIndex.modal + 2000 })}
             >
                 <Alert onClose={hideSnackbar} severity={snackbar.severity}>
                     {snackbar.severity === 'info' ? (

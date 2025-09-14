@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { BrowserRouter } from 'react-router-dom';
-import TrainerMobileCalendar from '../features/calendar-v2/components/TrainerMobileCalendar';
+import TrainerMobileCalendar from '../features/calendar-v2/components/mobile/layout/TrainerMobileCalendar';
 import { baseApi } from '../store/apis/api';
 
 // Mock the useCurrentUser hook

@@ -93,6 +93,7 @@ export interface GetRealTrainingsParams {
   trainerId?: number;
   trainingTypeId?: number;
   studentId?: number;
+  withStudents?: boolean; // Include student data
   // Можно добавить другие параметры, если API их поддерживает (например, status)
 }
 

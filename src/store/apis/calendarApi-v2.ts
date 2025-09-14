@@ -233,6 +233,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
           if (params.trainerId) queryParams.append('trainer_id', params.trainerId.toString());
           if (params.trainingTypeId) queryParams.append('training_type_id', params.trainingTypeId.toString());
           if (params.studentId) queryParams.append('student_id', params.studentId.toString());
+          if (params.withStudents) queryParams.append('with_students', 'true');
           return `real-trainings/?${queryParams.toString()}`;
         }
         return 'real-trainings/';
@@ -374,7 +375,8 @@ export const calendarApiV2 = baseApi.injectEndpoints({
       query: ({ training_id, student_id, status_of_presence }) => ({
         url: `real-trainings/${training_id}/students/${student_id}/attendance`,
         method: 'PUT',
-        body: { status_of_presence },
+        // Backend expects { status: 'ABSENT' } according to RealTrainingStudentUpdate schema
+        body: { status: status_of_presence },
       }),
       invalidatesTags: (_, __, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
     }),
