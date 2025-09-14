@@ -39,6 +39,7 @@ const TrainerMobileCalendar: React.FC = () => {
     endDate: weekStart.endOf('isoWeek').format('YYYY-MM-DD'),
     trainerId: user?.id, // Only fetch current trainer's trainings
     withStudents: true, // Include student data for attendance management
+  includeCancelled: true, // Ensure cancelled real trainings are returned for trainer view
   }), [weekStart, user?.id]);
 
   const { data: trainerTrainings, isLoading } = useGetRealTrainingsQuery(realTrainingsParams, {
