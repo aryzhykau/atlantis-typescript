@@ -1,6 +1,6 @@
 import { CalendarEvent } from '../types';
 import { isTrainingTemplate, isRealTraining } from '../types/typeGuards';
-import { CalendarFilters, FilterOption } from '../components/CalendarSearchBar';
+import { CalendarFilters, FilterOption } from '../components/desktop/layout/CalendarSearchBar';
 import { TrainingTemplate } from '../models/trainingTemplate';
 import { RealTraining } from '../models/realTraining';
 

@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { Dayjs } from 'dayjs';
-import { CalendarViewMode } from '../components/CalendarV2Page';
+import { CalendarViewMode } from '../components/desktop/layout/CalendarV2Page';
 import { TrainingTemplate } from '../models/trainingTemplate';
 import { RealTraining } from '../models/realTraining';
 import { CalendarEvent } from '../types';

@@ -142,12 +142,14 @@ export const trainersApi = baseApi.injectEndpoints({
         updateStudentAttendance: builder.mutation<any, {
             training_id: number;
             student_id: number;
-            data: AttendanceUpdate;
+            data?: AttendanceUpdate;
+            status_of_presence?: string;
         }>({
-            query: ({ training_id, student_id, data }) => ({
+            query: ({ training_id, student_id, data, status_of_presence }) => ({
                 url: `/real-trainings/${training_id}/students/${student_id}/attendance`,
                 method: 'PUT',
-                body: data,
+                // Support both shapes: callers may provide `data` object or `status_of_presence` string
+                body: data ?? (status_of_presence ? { status: status_of_presence } : {}),
             }),
             invalidatesTags: ['RealTrainingV2'],
         }),

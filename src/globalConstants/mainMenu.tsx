@@ -13,8 +13,8 @@ import { TrainingSettings } from "../layouts/trainingTypesSubscriptions/Training
 import {MobileClients} from "../layouts/clients/MobileClients.tsx";
 import InvoicesPayments from "../layouts/invoicesPyaments/InvoicesPayments.tsx";
 import { StudentsListPage } from '../features/students/components/StudentsListPage.tsx';
-import CalendarV2Page from "../features/calendar-v2/components/CalendarV2Page.tsx";
-import MobileFullCalendarV2Page from "../features/calendar-v2/components/MobileFullCalendarV2Page.tsx";
+import CalendarV2Page from "../features/calendar-v2/components/desktop/layout/CalendarV2Page";
+import MobileFullCalendarV2Page from "../features/calendar-v2/components/mobile/layout/MobileFullCalendarV2Page";
 import CallIcon from '@mui/icons-material/Call';
 import { UnifiedClientContactsDataGrid } from "../features/client-contacts/components/UnifiedClientContactsDataGrid";
 import AdminManagementPage from "../features/admin-management/components/AdminManagementPage.tsx";

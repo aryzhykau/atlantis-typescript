@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import dayjs from 'dayjs';
-import RealTrainingView from '../features/calendar-v2/components/EventBottomSheet/RealTrainingView';
+import RealTrainingView from '../features/calendar-v2/components/shared/bottom-sheets/RealTrainingView';
 import { NormalizedEvent } from '../features/calendar-v2/utils/normalizeEventsForWeek';
 
 const theme = createTheme();

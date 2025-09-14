@@ -8,7 +8,7 @@ import { useGetStudentsQuery } from '../../../store/apis/studentsApi';
 import { calendarApiV2 } from '../../../store/apis/calendarApi-v2';
 import { useSnackbar } from '../../../hooks/useSnackBar';
 import { NormalizedEvent } from '../utils/normalizeEventsForWeek';
-import { Student, StudentTemplate } from '../components/EventBottomSheet/types';
+import { Student, StudentTemplate } from '../components/shared/bottom-sheets/types';
 
 /**
  * useEventStudentManagement - Custom hook for managing event student operations
