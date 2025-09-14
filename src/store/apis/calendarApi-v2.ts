@@ -85,6 +85,11 @@ export const calendarApiV2 = baseApi.injectEndpoints({
           start_time: startTime,
         },
       }),
+      // Ensure lists are refreshed after a successful move
+      invalidatesTags: (_, __, { id }) => [
+        { type: TRAINING_TEMPLATE_TAG, id },
+        { type: TRAINING_TEMPLATE_TAG, id: 'LIST' },
+      ],
       // Оптимистичные обновления с поиском всех кешей
       onQueryStarted: async ({ id, dayNumber, startTime }, { dispatch, queryFulfilled, getState }) => {
         debugLog('🎯 Начинаем оптимистичное обновление шаблона:', { id, dayNumber, startTime });
@@ -281,6 +286,11 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         },
       }),
       // Оптимистичные обновления с учетом параметров даты
+      // Ensure lists are refreshed after a successful move
+      invalidatesTags: (_, __, { id }) => [
+        { type: REAL_TRAINING_TAG, id },
+        { type: REAL_TRAINING_TAG, id: 'LIST' },
+      ],
       onQueryStarted: async ({ id, trainingDate, startTime }, { dispatch, queryFulfilled, getState }) => {
         debugLog('🎯 Начинаем оптимистичное обновление тренировки:', { id, trainingDate, startTime });
         
