@@ -4,7 +4,7 @@ import {
   createClickableColumn, 
   createDateColumn
 } from "../../../components/UnifiedDataGrid";
-import { CheckCircle, Cancel, Receipt, FitnessCenter, Repeat } from '@mui/icons-material';
+import { CheckCircle, Cancel, Receipt, FitnessCenter, Repeat, Pending } from '@mui/icons-material';
 import { IInvoiceGet, InvoiceType, InvoiceStatus } from '../models/invoice';
 
 export const createEnhancedInvoiceColumns = (): GridColDef[] => [
@@ -37,10 +37,14 @@ export const createEnhancedInvoiceColumns = (): GridColDef[] => [
         label = 'Оплачен';
         color = 'success';
         icon = <CheckCircle sx={{ fontSize: 16 }} />;
-      } else if (status === 'CANCELLED') {
+      }else if (status === 'CANCELLED') {
         label = 'Отменён';
         color = 'error';
         icon = <Cancel sx={{ fontSize: 16 }} />;
+      } else if (status === 'PENDING') {
+        label = 'В ожидании';
+        color = 'warning';
+        icon = <Pending sx={{ fontSize: 16 }} />;
       } else {
         label = 'Не оплачен';
         color = 'warning';

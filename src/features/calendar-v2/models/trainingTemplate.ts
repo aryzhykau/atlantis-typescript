@@ -9,6 +9,13 @@ export interface TrainingTypeBasicInfo {
   name: string;
   color: string; // Цвет обязателен для календаря
   max_participants: number | null; // Для показа загруженности
+  // Optional cancellation policy fields
+  cancellation_mode?: 'FIXED' | 'FLEXIBLE';
+  safe_cancel_hours?: number | null;
+  safe_cancel_time_morning?: string | null;
+  safe_cancel_time_evening?: string | null;
+  safe_cancel_time_morning_prev_day?: boolean | null;
+  safe_cancel_time_evening_prev_day?: boolean | null;
 }
 
 /**

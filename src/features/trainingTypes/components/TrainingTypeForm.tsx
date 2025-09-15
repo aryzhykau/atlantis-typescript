@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Formik, Form } from 'formik';
-import { Box, Typography, IconButton } from '@mui/material';
+import { Box, Typography, IconButton, MenuItem } from '@mui/material';
 import { ITrainingType, ITrainingTypeCreate, ITrainingTypeUpdate } from '../../training-types/models/trainingType.ts';
 import { useCreateTrainingTypeMutation, useUpdateTrainingTypeMutation } from '../../../store/apis/trainingTypesApi.ts';
 import { useSnackbar } from "../../../hooks/useSnackBar.tsx";
@@ -14,6 +14,7 @@ import {
   FormikCheckboxField,
   FormikColorPicker
 } from '../../../components/forms/fields';
+import { FormikSelectField } from '../../../components/forms/fields/FormikSelectField';
 import { FormActions } from '../../../components/forms/layout';
 
 
@@ -40,6 +41,12 @@ const prepareSubmitValues = (values: Partial<ITrainingType>, isCreating: boolean
         max_participants: values.max_participants,
         color: values.color,
         is_active: values.is_active,
+    cancellation_mode: (values as any).cancellation_mode,
+    safe_cancel_time_morning: (values as any).safe_cancel_time_morning,
+    safe_cancel_time_evening: (values as any).safe_cancel_time_evening,
+    safe_cancel_time_morning_prev_day: (values as any).safe_cancel_time_morning_prev_day,
+    safe_cancel_time_evening_prev_day: (values as any).safe_cancel_time_evening_prev_day,
+    safe_cancel_hours: (values as any).safe_cancel_hours,
     };
 
     if (isCreating) {
@@ -50,6 +57,12 @@ const prepareSubmitValues = (values: Partial<ITrainingType>, isCreating: boolean
             price: data.price,
             is_active: data.is_active === undefined ? true : data.is_active,
             max_participants: data.max_participants,
+            cancellation_mode: data.cancellation_mode,
+            safe_cancel_time_morning: data.safe_cancel_time_morning,
+            safe_cancel_time_evening: data.safe_cancel_time_evening,
+            safe_cancel_time_morning_prev_day: data.safe_cancel_time_morning_prev_day,
+            safe_cancel_time_evening_prev_day: data.safe_cancel_time_evening_prev_day,
+            safe_cancel_hours: data.safe_cancel_hours,
         } as ITrainingTypeCreate;
     }
     const updateData: any = {};
@@ -59,6 +72,12 @@ const prepareSubmitValues = (values: Partial<ITrainingType>, isCreating: boolean
     if (data.color !== undefined) updateData.color = data.color;
     if (data.is_active !== undefined) updateData.is_active = data.is_active;
     if (data.max_participants !== undefined) updateData.max_participants = data.max_participants;
+    if (data.cancellation_mode !== undefined) updateData.cancellation_mode = data.cancellation_mode;
+    if (data.safe_cancel_time_morning !== undefined) updateData.safe_cancel_time_morning = data.safe_cancel_time_morning;
+    if (data.safe_cancel_time_evening !== undefined) updateData.safe_cancel_time_evening = data.safe_cancel_time_evening;
+    if (data.safe_cancel_time_morning_prev_day !== undefined) updateData.safe_cancel_time_morning_prev_day = data.safe_cancel_time_morning_prev_day;
+    if (data.safe_cancel_time_evening_prev_day !== undefined) updateData.safe_cancel_time_evening_prev_day = data.safe_cancel_time_evening_prev_day;
+    if (data.safe_cancel_hours !== undefined) updateData.safe_cancel_hours = data.safe_cancel_hours;
     return updateData as ITrainingTypeUpdate;
 };
 
@@ -83,6 +102,13 @@ const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, 
                 if (formValuesForSubmit.is_active !== undefined) updatePayload.is_active = formValuesForSubmit.is_active;
                 if (formValuesForSubmit.is_subscription_only !== undefined) updatePayload.is_subscription_only = formValuesForSubmit.is_subscription_only;
                 if (formValuesForSubmit.max_participants !== undefined) updatePayload.max_participants = formValuesForSubmit.max_participants;
+                    // include cancellation fields in update
+                    if ((formValuesForSubmit as any).cancellation_mode !== undefined) updatePayload.cancellation_mode = (formValuesForSubmit as any).cancellation_mode;
+                    if ((formValuesForSubmit as any).safe_cancel_time_morning !== undefined) updatePayload.safe_cancel_time_morning = (formValuesForSubmit as any).safe_cancel_time_morning;
+                    if ((formValuesForSubmit as any).safe_cancel_time_evening !== undefined) updatePayload.safe_cancel_time_evening = (formValuesForSubmit as any).safe_cancel_time_evening;
+                    if ((formValuesForSubmit as any).safe_cancel_time_morning_prev_day !== undefined) updatePayload.safe_cancel_time_morning_prev_day = (formValuesForSubmit as any).safe_cancel_time_morning_prev_day;
+                    if ((formValuesForSubmit as any).safe_cancel_time_evening_prev_day !== undefined) updatePayload.safe_cancel_time_evening_prev_day = (formValuesForSubmit as any).safe_cancel_time_evening_prev_day;
+                    if ((formValuesForSubmit as any).safe_cancel_hours !== undefined) updatePayload.safe_cancel_hours = (formValuesForSubmit as any).safe_cancel_hours;
 
                 await updateTrainingType({id: trainingTypeId, payload: updatePayload}).unwrap();
                 displaySnackbar("Вид тренировки успешно обновлен", "success");
@@ -103,6 +129,12 @@ const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, 
         max_participants: initialValues.max_participants === undefined || initialValues.max_participants === null ? null : initialValues.max_participants,
         color: initialValues.color || defaultInitialColor,
         is_active: initialValues.is_active === undefined ? true : initialValues.is_active,
+    cancellation_mode: (initialValues as any).cancellation_mode || 'FLEXIBLE',
+    safe_cancel_time_morning: (initialValues as any).safe_cancel_time_morning || null,
+    safe_cancel_time_evening: (initialValues as any).safe_cancel_time_evening || null,
+    safe_cancel_time_morning_prev_day: (initialValues as any).safe_cancel_time_morning_prev_day || false,
+    safe_cancel_time_evening_prev_day: (initialValues as any).safe_cancel_time_evening_prev_day || false,
+    safe_cancel_hours: (initialValues as any).safe_cancel_hours ?? 12,
     };
 
     return (
@@ -164,6 +196,45 @@ const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, 
                                     label="Активен"
                                 />
                                 
+                                <FormikSelectField
+                                    name="cancellation_mode"
+                                    label="Режим отмены"
+                                >
+                                    <MenuItem value="FLEXIBLE">Гибкий (по часам)</MenuItem>
+                                    <MenuItem value="FIXED">Фиксированный (время для утра/вечера)</MenuItem>
+                                </FormikSelectField>
+
+                                {values.cancellation_mode === 'FLEXIBLE' && (
+                                    <FormikNumberField
+                                        name="safe_cancel_hours"
+                                        label="Безопасная отмена (часов до начала)"
+                                        placeholder="Например, 12"
+                                    />
+                                )}
+
+                                {values.cancellation_mode === 'FIXED' && (
+                                    <>
+                                        <FormikTextField
+                                            name="safe_cancel_time_morning"
+                                            label="Безопасное время (утренняя тренировка)"
+                                            type="time"
+                                        />
+                                        <FormikCheckboxField
+                                            name="safe_cancel_time_morning_prev_day"
+                                            label="Относится к предыдущему дню"
+                                        />
+                                        <FormikTextField
+                                            name="safe_cancel_time_evening"
+                                            label="Безопасное время (вечерняя тренировка)"
+                                            type="time"
+                                        />
+                                        <FormikCheckboxField
+                                            name="safe_cancel_time_evening_prev_day"
+                                            label="Относится к предыдущему дню"
+                                        />
+                                    </>
+                                )}
+
                                 <FormikColorPicker
                                     name="color"
                                     label="Цвет отметки"

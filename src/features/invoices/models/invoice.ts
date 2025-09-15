@@ -1,6 +1,6 @@
 
 
-export type InvoiceStatus = "UNPAID" | "PAID" | "CANCELLED";
+export type InvoiceStatus = "UNPAID" | "PAID" | "CANCELLED" | "PENDING";
 export type InvoiceType = "SUBSCRIPTION" | "TRAINING";
 
 export interface IUserBasic {
