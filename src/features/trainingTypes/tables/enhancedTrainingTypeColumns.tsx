@@ -1,10 +1,10 @@
 import { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
-import { Typography, Chip, Button } from "@mui/material";
+import { Typography, Chip, Button, Box } from "@mui/material";
 import { 
   createClickableColumn,
   createStatusColumn
 } from "../../../components/UnifiedDataGrid";
-import { FitnessCenter, Edit } from '@mui/icons-material';
+import { FitnessCenter, Edit, AllInclusive, PushPin } from '@mui/icons-material';
 import { ITrainingType } from '../../training-types/models/trainingType';
 import TrainingTypeColorCircle from '../components/TrainingTypeColorCircle';
 
@@ -124,7 +124,38 @@ export const createEnhancedTrainingTypeColumns = ({
       />
     ),
   },
+  {
+    field: "cancellation_mode",
+    headerName: "Режим отмены",
+    align: "center",
+    width: 140,
+    renderCell: (params: GridRenderCellParams<ITrainingType>) => {
+      const mode = params.value;
+      let label = 'Не указан';
+      let color: 'default' | 'primary' = 'default';
 
+      if (mode === 'FIXED') {
+        label = 'Фиксированный';
+        color = 'primary';
+      } else if (mode === 'FLEXIBLE') {
+        label = 'Гибкий';
+        color = 'default';
+      }
+
+      return (
+        <Box sx = {{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+          {
+          mode === 'FIXED' ? 
+          <PushPin fontSize="small" color={color === 'primary' ? 'action' : 'disabled'} style={{ marginRight: 4 }} /> : 
+          <AllInclusive fontSize="small" color={mode === 'FLEXIBLE' ? 'success' : 'action'} style={{ marginRight: 4 }} />
+          }
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          {label}
+          </Typography>
+      </Box>
+    );
+  },
+  },
   createStatusColumn("is_active", "Статус", {
     width: 120,
   }),
