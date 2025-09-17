@@ -43,7 +43,7 @@ export const createEnhancedInvoiceColumns = (): GridColDef[] => [
         icon = <Cancel sx={{ fontSize: 16 }} />;
       } else if (status === 'PENDING') {
         label = 'В ожидании';
-        color = 'warning';
+        color = 'default';
         icon = <Pending sx={{ fontSize: 16 }} />;
       } else {
         label = 'Не оплачен';
