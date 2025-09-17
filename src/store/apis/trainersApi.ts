@@ -190,8 +190,8 @@ export const trainersApi = baseApi.injectEndpoints({
             providesTags: ['Students'],
         }),
 
-        getExpenses: builder.query<Expense[], { period: string }>({
-            query: ({ period }) => `expenses/?period=${period}`,
+        getExpenses: builder.query<Expense[], { start_date: string, user_id: number }>({
+            query: ({ start_date, user_id }) => `expenses/?start_date=${start_date}&user_id=${user_id}`,
             providesTags: (result) => (result ? [{ type: 'Expenses', id: 'LIST' }] : []),
         }),
         createExpense: builder.mutation<Expense, Partial<Expense>>({
@@ -199,6 +199,21 @@ export const trainersApi = baseApi.injectEndpoints({
                 url: 'expenses/',
                 method: 'POST',
                 body,
+            }),
+            invalidatesTags: [{ type: 'Expenses', id: 'LIST' }],
+        }),
+        updateExpense: builder.mutation<Expense, { expenseId: number; body: Partial<Expense> }>({
+            query: ({ expenseId, body }) => ({
+                url: `expenses/${expenseId}`,
+                method: 'PUT',
+                body,
+            }),
+            invalidatesTags: [{ type: 'Expenses', id: 'LIST' }],
+        }),
+        deleteExpense: builder.mutation<Expense, number>({
+            query: (expenseId) => ({
+                url: `expenses/${expenseId}`,
+                method: 'DELETE',
             }),
             invalidatesTags: [{ type: 'Expenses', id: 'LIST' }],
         }),
@@ -224,4 +239,6 @@ export const {
     useGetTrainerStudentsQuery,
     useGetExpensesQuery,
     useCreateExpenseMutation,
+    useUpdateExpenseMutation,
+    useDeleteExpenseMutation,
 } = trainersApi;
