@@ -62,7 +62,7 @@ export const TrainerExpenses: React.FC = () => {
   const { data: user } = useGetCurrentUserQuery();
   
   const twoWeeksAgo = React.useMemo(() => dayjs().subtract(2, 'week').toISOString(), []);
-  const { data: expenses, isLoading: isLoadingExpenses, isError, error } = useGetExpensesQuery({ start_date: twoWeeksAgo, user_id: user?.id }, { skip: !user });
+  const { data: expenses, isLoading: isLoadingExpenses, isError, error } = useGetExpensesQuery({ start_date: twoWeeksAgo, user_id: user!.id }, { skip: !user });
   console.log({ isLoadingExpenses, isError, error });
   const [createExpense, { isLoading: isCreating }] = useCreateExpenseMutation();
   const [updateExpense, { isLoading: isUpdating }] = useUpdateExpenseMutation();
