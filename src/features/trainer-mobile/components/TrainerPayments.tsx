@@ -154,9 +154,6 @@ export const TrainerPayments: React.FC = () => {
             💰 Платежи
             <TrendingUp sx={{ ml: 1, fontSize: 32 }} />
           </Typography>
-          <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 300 }}>
-            Ваши зарегистрированные платежи за последние 2 недели
-          </Typography>
         </Box>
       </Paper>
 
