@@ -158,6 +158,9 @@ export const TrainerInfoCard: React.FC<TrainerInfoCardProps> = ({ trainer, onEdi
                 borderColor: 'divider',
                 overflow: 'hidden',
                 background: theme.palette.background.paper,
+                // allow scrolling when content is large (e.g. small viewports)
+                height: '100%',
+                overflowY: 'auto',
             }}
         >
             {/* Градиентный заголовок */}

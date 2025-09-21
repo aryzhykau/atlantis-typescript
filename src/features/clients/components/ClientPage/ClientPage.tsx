@@ -451,7 +451,7 @@ export function ClientPage() {
     const balance = client.balance || 0;
 
     return (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 3 , maxHeight: '90vh', overflowY: 'auto' }}>
             {/* Градиентный заголовок */}
             <Paper
                 elevation={0}

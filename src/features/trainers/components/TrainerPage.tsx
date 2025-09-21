@@ -47,9 +47,10 @@ function TabPanel(props: TabPanelProps) {
             hidden={value !== index}
             id={`trainer-tabpanel-${index}`}
             aria-labelledby={`trainer-tab-${index}`}
+            style={{ height: '100%' }}
             {...other}
         >
-            {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+            {value === index && <Box sx={{ height: '100%' }}>{children}</Box>}
         </div>
     );
 }
@@ -116,7 +117,7 @@ const TrainerStats: React.FC<TrainerStatsProps> = ({ age, salary, isActive, isFi
     const gradients = useGradients();
     
     return (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid container spacing={2}>
             <Grid item xs={showSalary ? 6 : 12} sm={showSalary ? 3 : 4}>
                 <StatCard
                     icon={<PersonIcon sx={{ fontSize: 32 }} />}
@@ -260,7 +261,7 @@ export function TrainerPage() {
     const age = dayjs().diff(dayjs(trainer.date_of_birth), 'year');
 
     return (
-        <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+        <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, maxHeight: "90vh", overflow: 'scroll' }}>
             {/* Градиентный заголовок */}
             <Paper
                 elevation={0}
@@ -320,6 +321,7 @@ export function TrainerPage() {
             <Paper
                 elevation={0}
                 sx={{
+                    mt: 3,
                     mb: 3,
                     borderRadius: 3,
                     border: '1px solid',
@@ -361,33 +363,30 @@ export function TrainerPage() {
                 </Tabs>
             </Paper>
 
-            <TabPanel value={activeTab} index={0}>
-                <Grid container spacing={3}>
-                    <Grid item xs={12}>
-                        <TrainerInfoCard 
-                            trainer={trainer} 
-                            onEdit={handleOpenEditModal} 
-                            onStatusChange={handleChangeStatus}
-                            showSalary={isOwner}
-                        />
-                    </Grid>
-                    {/* Можно добавить другие карточки сюда, например, для статистики или связанных данных */}
-                </Grid>
-            </TabPanel>
-
-            <TabPanel value={activeTab} index={1}>
-                <Typography>Информация о тренировках будет здесь.</Typography>
-            </TabPanel>
-
-            <TabPanel value={activeTab} index={2}>
-                <TrainerPaymentsTab trainerId={trainer.id} />
-            </TabPanel>
-
-            {!isFixedSalary && isOwner && (
-                <TabPanel value={activeTab} index={3}>
-                    <TrainerSalaryTab trainerId={trainer.id} />
+            <Box sx={{ flexGrow: 1 }}>
+                <TabPanel value={activeTab} index={0}>
+                    <TrainerInfoCard 
+                        trainer={trainer} 
+                        onEdit={handleOpenEditModal} 
+                        onStatusChange={handleChangeStatus}
+                        showSalary={isOwner}
+                    />
                 </TabPanel>
-            )}
+
+                <TabPanel value={activeTab} index={1}>
+                    <Typography>Информация о тренировках будет здесь.</Typography>
+                </TabPanel>
+
+                <TabPanel value={activeTab} index={2}>
+                    <TrainerPaymentsTab trainerId={trainer.id} />
+                </TabPanel>
+
+                {!isFixedSalary && isOwner && (
+                    <TabPanel value={activeTab} index={3}>
+                        <TrainerSalaryTab trainerId={trainer.id} />
+                    </TabPanel>
+                )}
+            </Box>
             
             <Dialog 
                 open={isEditModalOpen} 
