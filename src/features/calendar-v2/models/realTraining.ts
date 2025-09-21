@@ -166,6 +166,28 @@ export interface TrainerSalarySummary {
 }
 
 /**
+ * Details of a single training in the salary preview.
+ */
+export interface SalaryPreviewTraining {
+  training_id: number;
+  training_name: string;
+  start_time: string; // HH:MM:SS
+  potential_amount: number;
+}
+
+/**
+ * The response structure for the trainer salary preview endpoint.
+ */
+export interface TrainerSalaryPreviewResponse {
+  trainer_id: number;
+  preview_date: string; // YYYY-MM-DD
+  is_fixed_salary: boolean;
+  fixed_salary_amount?: number;
+  potential_total_amount: number;
+  eligible_trainings: SalaryPreviewTraining[];
+}
+
+/**
  * Предварительный расчет зарплаты тренера при отмене.
  */
 export interface SalaryCalculationPreview {
