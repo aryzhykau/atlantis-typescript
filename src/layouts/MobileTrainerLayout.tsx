@@ -5,6 +5,7 @@ import {
   CalendarToday as ScheduleIcon,
   Person as ProfileIcon,
   ReceiptLong as ExpensesIcon,
+  AttachMoney as SalaryIcon, // Import the new icon
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGradients } from '../features/trainer-mobile/hooks/useGradients';
@@ -26,8 +27,9 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
     const path = location.pathname;
     if (path.includes('/payments')) return 0;
     if (path.includes('/expenses')) return 1;
-    if (path.includes('/schedule')) return 2;
-    if (path.includes('/profile')) return 3;
+    if (path.includes('/salary')) return 2; // New salary page
+    if (path.includes('/schedule')) return 3;
+    if (path.includes('/profile')) return 4;
     return 0; // По умолчанию платежи
   };
 
@@ -42,9 +44,12 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
         navigate('/trainer-mobile/expenses');
         break;
       case 2:
-        navigate('/trainer-mobile/schedule');
+        navigate('/trainer-mobile/salary'); // New salary page navigation
         break;
       case 3:
+        navigate('/trainer-mobile/schedule');
+        break;
+      case 4:
         navigate('/trainer-mobile/profile');
         break;
     }
@@ -61,6 +66,11 @@ export const MobileTrainerLayout: React.FC<MobileTrainerLayoutProps> = ({ childr
       label: 'Расходы',
       icon: <ExpensesIcon />,
       gradient: gradients.primary,
+    },
+    {
+      label: 'Зарплата',
+      icon: <SalaryIcon />,
+      gradient: gradients.info, // Choose an appropriate gradient
     },
     {
       label: 'Расписание',

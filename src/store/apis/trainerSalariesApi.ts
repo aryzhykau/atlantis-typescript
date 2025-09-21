@@ -1,7 +1,7 @@
 
 import { baseApi } from './api';
 import { ITrainerTrainingTypeSalary } from '../../features/trainers/models/trainer';
-import { TrainerSalarySummary, SalaryCalculationPreview } from '../../features/calendar-v2/models/realTraining';
+import { TrainerSalarySummary, SalaryCalculationPreview, TrainerSalaryPreviewResponse } from '../../features/calendar-v2/models/realTraining';
 
 // Interfaces for API payloads
 interface ITrainerSalaryCreatePayload {
@@ -79,6 +79,18 @@ export const trainerSalariesApi = baseApi.injectEndpoints({
         },
       }),
     }),
+
+    // Get trainer salary preview for a specific date
+    getSalaryPreview: builder.query<TrainerSalaryPreviewResponse, {
+      trainerId: number;
+      previewDate: string; // YYYY-MM-DD format
+    }>({
+      query: ({ trainerId, previewDate }) => 
+        `/trainers/${trainerId}/salary/preview?preview_date=${previewDate}`,
+      providesTags: (_, __, { trainerId, previewDate }) => [
+        { type: 'TrainerSalary', id: `PREVIEW_${trainerId}_${previewDate}` }
+      ],
+    }),
   }),
 });
 
@@ -91,4 +103,5 @@ export const {
   useDeleteTrainerSalaryMutation,
   useGetTrainerSalarySummaryQuery,
   useCalculateTrainingSalaryMutation,
+  useGetSalaryPreviewQuery,
 } = trainerSalariesApi;
