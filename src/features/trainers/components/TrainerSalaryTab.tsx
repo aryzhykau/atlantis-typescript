@@ -206,7 +206,7 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
     }
 
     return (
-        <>
+        <Box sx={{ height: '100%', overflowY: 'auto' }}>
             <SalarySummaryCard trainerId={trainerId} />
             
             <Paper
@@ -249,7 +249,7 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
                 </Button>
             </Box>
 
-            <TableContainer>
+            <TableContainer sx={{ maxHeight: '40vh', overflow: 'auto' }}>
                 <Table>
                     <TableHead>
                         <TableRow>
@@ -276,7 +276,7 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
             </TableContainer>
 
             <Dialog open={isModalOpen} onClose={handleCloseModal} maxWidth="xs" fullWidth>
-                <DialogContent sx={{ p: 3 }}>
+                <DialogContent sx={{ p: 3, maxHeight: '60vh', overflowY: 'auto' }}>
                     <SalaryForm
                         trainingTypes={trainingTypes || []}
                         existingSalaries={salaries || []}
@@ -287,7 +287,7 @@ const TrainerSalaryTab: React.FC<TrainerSalaryTabProps> = ({ trainerId }) => {
                 </DialogContent>
             </Dialog>
         </Paper>
-        </>
+        </Box>
     );
 };
 

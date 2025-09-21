@@ -61,7 +61,7 @@ function TabPanel(props: TabPanelProps) {
             {...other}
         >
             {value === index && (
-                <Box sx={{ pt: 3 }}>
+                <Box sx={{ p: 2 }}>
                     {children}
                 </Box>
             )}
@@ -229,10 +229,11 @@ export function StudentPage() {
         .reduce((sum, sub) => sum + (sub.sessions_left || 0), 0);
 
     return (
-        <Box sx={{ minHeight: '100vh', background: theme.palette.background.default }}>
+        <Box sx={{ maxHeight: '90vh', overflow: "scroll", background: theme.palette.background.default }}>
             {/* Градиентный заголовок */}
             <Box
                 sx={{
+                    borderRadius: 3,
                     background: gradients.primary,
                     color: 'white',
                     position: 'relative',

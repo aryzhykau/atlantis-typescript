@@ -129,7 +129,7 @@ const TrainerPaymentsTab: React.FC<TrainerPaymentsTabProps> = ({ trainerId }) =>
     }
 
     return (
-        <Box p={3}>
+        <Box p={3} >
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Typography variant="h5" component="h2">
                     Платежи тренера
@@ -256,7 +256,7 @@ const TrainerPaymentsTab: React.FC<TrainerPaymentsTabProps> = ({ trainerId }) =>
             )}
 
             {/* Таблица */}
-            <Paper sx={{ height: 600, width: '100%' }}>
+            <Paper sx={{ height: 600, width: '100%', maxHeight: '60vh', overflow: 'auto' }}>
                 <DataGrid
                     rows={data?.payments || []}
                     columns={columns}
