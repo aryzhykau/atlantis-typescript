@@ -80,10 +80,20 @@ export const createEventDisplayData = (event: CalendarEvent, theme: Theme): Even
 /**
  * Creates tooltip content data for an event
  */
-export const createTooltipContent = (displayData: EventDisplayData) => ({
+export const createTooltipContent = (displayData: EventDisplayData, event: CalendarEvent) => ({
   title: displayData.trainingTypeName,
   trainer: `👨 ${displayData.trainerName}`,
-  students: `👥 Студентов: ${displayData.capacityText}`,
+  students: (
+    <div>
+      <span>👥 Студентов: {displayData.capacityText}</span>
+      {isRealTraining(event) && event.students.map(student => (
+        <div key={student.student_id}>
+          <span>{student.student.first_name} {student.student.last_name}</span>
+          {student.is_trial && <span style={{ marginLeft: '8px', color: 'green' }}>Пробное</span>}
+        </div>
+      ))}
+    </div>
+  ),
   status: (() => {
     if (!displayData.maxParticipants || displayData.maxParticipants >= 999) {
       return null;

@@ -32,6 +32,11 @@ export interface CalendarState {
     isOpen: boolean;
     selectedSlot: SelectedSlotInfo | null;
   };
+
+  createRealTrainingForm: {
+    isOpen: boolean;
+    selectedSlot: SelectedSlotInfo | null;
+  };
   
   // Modal state
   eventModal: CalendarModalState;
@@ -45,6 +50,8 @@ export interface CalendarState {
 type CalendarAction =
   | { type: 'OPEN_CREATE_FORM'; payload: SelectedSlotInfo }
   | { type: 'CLOSE_CREATE_FORM' }
+  | { type: 'OPEN_CREATE_REAL_TRAINING_FORM'; payload: SelectedSlotInfo }
+  | { type: 'CLOSE_CREATE_REAL_TRAINING_FORM' }
   | { type: 'OPEN_EVENT_MODAL'; payload: { eventId: number; eventType: 'template' | 'real' } }
   | { type: 'CLOSE_EVENT_MODAL' }
   | { type: 'OPEN_SLOT_EVENTS_LIST'; payload: { day: Dayjs; time: string; events: CalendarEvent[]; isTemplate: boolean } }
@@ -55,6 +62,10 @@ type CalendarAction =
 
 const initialState: CalendarState = {
   createForm: {
+    isOpen: false,
+    selectedSlot: null,
+  },
+  createRealTrainingForm: {
     isOpen: false,
     selectedSlot: null,
   },
@@ -89,6 +100,24 @@ const calendarReducer = (state: CalendarState, action: CalendarAction): Calendar
       return {
         ...state,
         createForm: {
+          isOpen: false,
+          selectedSlot: null,
+        },
+      };
+
+    case 'OPEN_CREATE_REAL_TRAINING_FORM':
+      return {
+        ...state,
+        createRealTrainingForm: {
+          isOpen: true,
+          selectedSlot: action.payload,
+        },
+      };
+    
+    case 'CLOSE_CREATE_REAL_TRAINING_FORM':
+      return {
+        ...state,
+        createRealTrainingForm: {
           isOpen: false,
           selectedSlot: null,
         },
@@ -163,6 +192,8 @@ export interface UseCalendarStateReturn {
   actions: {
     openCreateForm: (slotInfo: SelectedSlotInfo) => void;
     closeCreateForm: () => void;
+    openCreateRealTrainingForm: (slotInfo: SelectedSlotInfo) => void;
+    closeCreateRealTrainingForm: () => void;
     openEventModal: (eventId: number, eventType: 'template' | 'real') => void;
     closeEventModal: () => void;
     openSlotEventsList: (day: Dayjs, time: string, events: CalendarEvent[], isTemplate: boolean) => void;
@@ -186,6 +217,14 @@ export const useCalendarState = (): UseCalendarStateReturn => {
 
     closeCreateForm: useCallback(() => {
       dispatch({ type: 'CLOSE_CREATE_FORM' });
+    }, []),
+
+    openCreateRealTrainingForm: useCallback((slotInfo: SelectedSlotInfo) => {
+      dispatch({ type: 'OPEN_CREATE_REAL_TRAINING_FORM', payload: slotInfo });
+    }, []),
+
+    closeCreateRealTrainingForm: useCallback(() => {
+      dispatch({ type: 'CLOSE_CREATE_REAL_TRAINING_FORM' });
     }, []),
 
     openEventModal: useCallback((eventId: number, eventType: 'template' | 'real') => {

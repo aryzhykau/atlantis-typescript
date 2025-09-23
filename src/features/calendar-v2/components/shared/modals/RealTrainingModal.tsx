@@ -17,6 +17,8 @@ import {
   Grid,
   Alert,
   Autocomplete,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close';
@@ -83,6 +85,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
   // Состояние для диалога добавления студента
   const [addStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [selectedStudentToAdd, setSelectedStudentToAdd] = useState<any>(null);
+  const [isTrial, setIsTrial] = useState(false);
 
   // Состояние для отображения информации о зарплате тренера
   const [salaryResult, setSalaryResult] = useState<StudentCancellationResponse['trainer_salary_result'] | null>(null);
@@ -200,7 +203,8 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
     try {
       await addStudentToTraining({
         training_id: realTrainingData.id,
-        student_id: selectedStudentToAdd.id
+        student_id: selectedStudentToAdd.id,
+        is_trial: isTrial
       }).unwrap();
       
       dispatch(calendarApiV2.util.invalidateTags([{ type: 'RealTrainingV2', id: realTrainingData.id }]));
@@ -359,6 +363,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
                     }}
                   >
                     {s_real.student ? `${s_real.student.first_name || ''} ${s_real.student.last_name || ''}`.trim() : 'Имя не найдено'}
+                    {s_real.is_trial && <Chip label="Пробное" size="small" color="success" sx={{ ml: 1 }} />}
                   </Typography>
                   {s_real.student.client && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
@@ -922,6 +927,11 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
                 margin: '2px 0',
               }
             }}
+          />
+
+          <FormControlLabel
+            control={<Checkbox checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} />}
+            label="Пробное занятие"
           />
           
           {selectedStudentToAdd && (

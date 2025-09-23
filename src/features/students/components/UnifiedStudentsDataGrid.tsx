@@ -9,24 +9,29 @@ import {
   alpha, 
   FormControlLabel, 
   Switch,
-  Dialog,
-  DialogContent
 } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import SchoolIcon from '@mui/icons-material/School';
 import { useTheme } from '@mui/material/styles';
+import { useSnackbar } from '../../../hooks/useSnackBar';
+
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import { UnifiedDataGrid } from '../../../components/UnifiedDataGrid';
 import { createEnhancedStudentColumns } from '../tables/enhancedStudentsColumns';
-import { useGetStudentsQuery } from '../../../store/apis/studentsApi';
+import { useGetStudentsQuery, useCreateStudentMutation } from '../../../store/apis/studentsApi';
+import { StudentForm } from './StudentForm';
+import { IStudentCreatePayload, IStudentUpdatePayload } from '../models/student';
+import { studentSchemas } from '../../../utils/validationSchemas';
 
 export const UnifiedStudentsDataGrid: React.FC = () => {
-  const { data: studentsResponse, isLoading } = useGetStudentsQuery();
+  const { data: studentsResponse, isLoading: isLoadingStudents } = useGetStudentsQuery();
+  const [createStudent, { isLoading: isCreatingStudent }] = useCreateStudentMutation();
   
   const gradients = useGradients();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const { displaySnackbar } = useSnackbar();
   
   const [showOnlyActive, setShowOnlyActive] = useState(true);
   const [searchValue, setSearchValue] = useState("");
@@ -79,6 +84,19 @@ export const UnifiedStudentsDataGrid: React.FC = () => {
 
   const handleActiveFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setShowOnlyActive(event.target.checked);
+  };
+
+  const handleCreateStudent = async (values: IStudentCreatePayload | IStudentUpdatePayload) => {
+    try {
+      // When called from create flow we expect a create payload; coerce if necessary
+      const payload = values as IStudentCreatePayload;
+      await createStudent(payload).unwrap();
+      displaySnackbar('Студент успешно создан!', 'success');
+      handleCloseModal();
+    } catch (error) {
+      displaySnackbar('Ошибка при создании студента', 'error');
+      console.error("Failed to create student:", error);
+    }
   };
 
   const columns = createEnhancedStudentColumns();
@@ -210,11 +228,10 @@ export const UnifiedStudentsDataGrid: React.FC = () => {
         </Box>
       </Paper>
 
-      {/* Unified DataGrid */}
       <UnifiedDataGrid
         rows={filteredStudents}
         columns={columns}
-        loading={isLoading}
+        loading={isLoadingStudents}
         entityType="students"
         pageSizeOptions={[10, 25, 50]}
         initialPageSize={10}
@@ -222,19 +239,24 @@ export const UnifiedStudentsDataGrid: React.FC = () => {
         ariaLabel="Таблица студентов"
       />
 
-      {/* Future: Create Student Modal can be added here */}
+      {/* Create Student Modal */}
       {isModalOpen && (
-        <Dialog
+        <StudentForm
           open={isModalOpen}
           onClose={handleCloseModal}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogContent>
-            <Typography>Создание студента будет добавлено в будущем</Typography>
-            <Button onClick={handleCloseModal}>Закрыть</Button>
-          </DialogContent>
-        </Dialog>
+          initialValues={{
+            first_name: '',
+            last_name: '',
+            date_of_birth: null,
+            client_id: null,
+          }}
+          validationSchema={studentSchemas.create}
+          onSubmit={handleCreateStudent}
+          isLoading={isCreatingStudent}
+          title="Добавить нового студента"
+          subtitle="Заполните информацию о студенте"
+          isEdit={false}
+        />
       )}
     </Box>
   );
