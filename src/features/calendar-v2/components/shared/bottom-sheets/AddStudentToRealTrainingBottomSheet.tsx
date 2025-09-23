@@ -89,10 +89,11 @@ const AddStudentToRealTrainingBottomSheet: React.FC<AddStudentToRealTrainingBott
   const handleAddStudent = useCallback(async () => {
     if (!selectedStudent || !training) return;
     
-    try {
+      try {
       await addStudentToTraining({
         training_id: training.id,
-        student_id: selectedStudent.id
+        student_id: selectedStudent.id,
+        is_trial: false,
       }).unwrap();
       
       displaySnackbar(`Студент ${selectedStudent.first_name} ${selectedStudent.last_name} добавлен на тренировку`, 'success');

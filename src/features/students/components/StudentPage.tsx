@@ -23,6 +23,7 @@ import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import { useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
+import { studentSchemas } from '../../../utils/validationSchemas';
 
 dayjs.extend(isBetween);
 
@@ -32,9 +33,7 @@ import { StudentParentInfoCard } from './StudentParentInfoCard';
 import { StudentActiveSubscriptionCard } from './StudentActiveSubscriptionCard';
 import { StudentSubscriptionsTable } from './StudentSubscriptionsTable';
 import { StudentForm } from './StudentForm';
-import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
+// Dialog imports intentionally omitted; use StudentForm which provides its own dialog when needed
 import { AddSubscriptionForm } from './AddSubscriptionForm';
 
 // Иконки для статистики
@@ -485,72 +484,35 @@ export function StudentPage() {
             </Box>
 
             {/* Модальные окна */}
-            <Dialog 
+            <StudentForm 
                 open={isEditModalOpen} 
                 onClose={handleCloseEditModal}
-                maxWidth="md"
-                fullWidth
-                PaperProps={{
-                    sx: {
-                        borderRadius: 3,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                    }
+                initialValues={{
+                    first_name: student.first_name,
+                    last_name: student.last_name,
+                    date_of_birth: dayjs(student.date_of_birth),
+                    client_id: student.client.id,
                 }}
-            >
-                <DialogTitle sx={{ 
-                    background: gradients.primary,
-                    color: 'white',
-                    fontWeight: 600
-                }}>
-                    Редактировать данные ученика
-                </DialogTitle>
-                <DialogContent sx={{ p: 3 }}>
-                    <StudentForm 
-                        initialValues={{
-                            first_name: student.first_name,
-                            last_name: student.last_name,
-                            date_of_birth: dayjs(student.date_of_birth),
-                            client_id: student.client.id,
-                        }}
-                        onSubmit={handleUpdateStudent}
-                        isLoading={isUpdatingStudent}
-                        onClose={handleCloseEditModal}
-                    />
-                </DialogContent>
-            </Dialog>
+                validationSchema={studentSchemas.update}
+                onSubmit={handleUpdateStudent}
+                isLoading={isUpdatingStudent}
+                title="Редактировать данные ученика"
+                subtitle="Обновите информацию о студенте"
+                isEdit={true}
+            />
 
-            <Dialog 
-                open={isAddSubscriptionModalOpen} 
+            
+               
+            <AddSubscriptionForm 
+                open={isAddSubscriptionModalOpen}
+                studentId={student.id}
+                availableSubscriptions={allBaseSubscriptionsData?.items || []}
+                onSubmit={handleAddSubscriptionSubmit}
+                isLoading={isAddingSubscription}
                 onClose={handleCloseAddSubscriptionModal}
-                maxWidth="md"
-                fullWidth
-                PaperProps={{
-                    sx: {
-                        borderRadius: 3,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                    }
-                }}
-            >
-                <DialogTitle sx={{ 
-                    background: gradients.success,
-                    color: 'white',
-                    fontWeight: 600
-                }}>
-                    Добавить абонемент ученику
-                </DialogTitle>
-                <DialogContent sx={{ p: 3 }}>
-                    <AddSubscriptionForm 
-                        open={isAddSubscriptionModalOpen}
-                        studentId={student.id}
-                        availableSubscriptions={allBaseSubscriptionsData?.items || []}
-                        onSubmit={handleAddSubscriptionSubmit}
-                        isLoading={isAddingSubscription}
-                        onClose={handleCloseAddSubscriptionModal}
-                    />
-                </DialogContent>
-            </Dialog>
+            />
+                
+            
         </Box>
     );
 } 

@@ -30,6 +30,7 @@ interface SlotEventsListModalProps {
   isTemplate: boolean;
   onEventClick: (event: CalendarEvent) => void;
   onAddNewEvent?: () => void;
+  onAddNewRealTraining?: () => void;
 }
 
 /**
@@ -45,6 +46,7 @@ export const SlotEventsListModal: React.FC<SlotEventsListModalProps> = ({
   isTemplate,
   onEventClick,
   onAddNewEvent,
+  onAddNewRealTraining,
 }) => {
   const theme = useTheme();
 
@@ -259,6 +261,26 @@ export const SlotEventsListModal: React.FC<SlotEventsListModalProps> = ({
               }}
             >
               Добавить тренировку
+            </Button>
+          )}
+        </Box>
+
+        <Box>
+          {onAddNewRealTraining && !isTemplate && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onAddNewRealTraining}
+              sx={{
+                background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${alpha(theme.palette.secondary.main, 0.8)} 100%)`,
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: `0 6px 20px ${alpha(theme.palette.secondary.main, 0.4)}`,
+                },
+                transition: 'all 0.2s ease',
+              }}
+            >
+              Добавить пробную
             </Button>
           )}
         </Box>

@@ -35,6 +35,7 @@ export interface RealTrainingStudent {
   cancelled_at?: string;
   attendance_marked_at?: string;
   requires_payment: boolean;
+  is_trial: boolean;
   // template_student_id?: number; // Если нужно связывать с записью в шаблоне
 }
 
@@ -67,6 +68,7 @@ export interface RealTrainingCreate {
   training_type_id: number;
   template_id?: number;
   student_ids?: number[]; // Массив ID студентов для немедленного добавления
+  trial_student_id?: number; // ID пробного студента (если создаём тренировку с пробным студентом)
 }
 
 /**
@@ -104,6 +106,7 @@ export interface GetRealTrainingsParams {
  */
 export interface AddStudentToRealTrainingPayload {
   student_id: number;
+  is_trial?: boolean;
   // template_student_id?: number; // Если нужно связать с шаблоном
 }
 

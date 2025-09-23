@@ -375,11 +375,11 @@ export const calendarApiV2 = baseApi.injectEndpoints({
     }),
 
     // Эндпоинты для управления студентами на реальной тренировке
-    addStudentToRealTraining: builder.mutation<RealTrainingStudent, { training_id: number; student_id: number }>({
-      query: ({ training_id, student_id }) => ({
+    addStudentToRealTraining: builder.mutation<RealTrainingStudent, { training_id: number; student_id: number; is_trial: boolean }>({
+      query: ({ training_id, student_id, is_trial }) => ({
         url: `real-trainings/${training_id}/students`,
         method: 'POST',
-        body: { student_id },
+        body: { student_id, is_trial },
       }),
       invalidatesTags: (_, __, { training_id }) => [{ type: REAL_TRAINING_TAG, id: training_id }],
     }),

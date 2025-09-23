@@ -178,6 +178,7 @@ export const useCalendarDragDrop = (
               return await addStudentToRealTraining({
                 training_id: createdTraining.id,
                 student_id: trainingStudent.student.id,
+                is_trial: trainingStudent.is_trial || false,
               }).unwrap();
             } catch (error) {
               console.warn(`Failed to add student ${trainingStudent.student.id}:`, error);

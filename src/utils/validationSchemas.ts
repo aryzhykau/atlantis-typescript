@@ -113,6 +113,14 @@ export const studentSchemas = {
     phone: commonValidations.phone,
   }),
   
+  update: Yup.object({
+    first_name: commonValidations.shortName.optional(),
+    last_name: commonValidations.shortName.optional(),
+    date_of_birth: Yup.date().nullable().optional(),
+    email: commonValidations.email.optional(),
+    phone: commonValidations.phone.optional(),
+  }),
+  
   freezeSubscription: Yup.object({
     freeze_start_date: Yup.date()
       .required('Дата начала заморозки обязательна')

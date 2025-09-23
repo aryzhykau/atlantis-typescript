@@ -2,6 +2,7 @@ import React from 'react';
 import TrainingTemplateForm from '../forms/TrainingTemplateForm';
 import TrainingTemplateModal from './TrainingTemplateModal';
 import RealTrainingModal from './RealTrainingModal';
+import RealTrainingForm from '../forms/RealTrainingForm';
 import { SlotEventsListModal } from './SlotEventsListModal';
 import { CalendarState } from '../../../hooks/useCalendarState';
 
@@ -68,6 +69,24 @@ export const CalendarModals: React.FC<CalendarModalsProps> = ({
               });
             }
           }}
+          onAddNewRealTraining={() => {
+            if (calendarState.slotEventsListModal.day && calendarState.slotEventsListModal.time) {
+              calendarActions.openCreateRealTrainingForm({ 
+                date: calendarState.slotEventsListModal.day, 
+                time: calendarState.slotEventsListModal.time 
+              });
+            }
+          }}
+        />
+      )}
+
+      {/* Real Training Creation Form */}
+      {calendarState.createRealTrainingForm.isOpen && calendarState.createRealTrainingForm.selectedSlot && (
+        <RealTrainingForm 
+          open={calendarState.createRealTrainingForm.isOpen}
+          onClose={calendarActions.closeCreateRealTrainingForm}
+          selectedDate={calendarState.createRealTrainingForm.selectedSlot.date}
+          selectedTime={calendarState.createRealTrainingForm.selectedSlot.time}
         />
       )}
     </>

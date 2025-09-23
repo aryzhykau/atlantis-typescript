@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, memo, forwardRef } from 'react';
 import { Box, Typography, Tooltip, useTheme, alpha, SxProps, Theme, Avatar, Chip } from '@mui/material';
 import { CalendarEvent } from '../../../types';
-import { createEventDisplayData, createTooltipContent, getResponsiveChipStyles } from '../../../utils/eventDisplayUtils';
+import { createEventDisplayData, createTooltipContent, getResponsiveChipStyles } from '../../../utils/eventDisplayUtils.tsx';
 import MobileDragHandle from '../../mobile/drag-drop/MobileDragHandle';
 
 interface CalendarTrainingChipProps {
@@ -31,7 +31,7 @@ export const CalendarTrainingChip = memo(forwardRef<HTMLDivElement, CalendarTrai
   const chipData = useMemo(() => createEventDisplayData(event, theme), [event, theme]);
 
   // Simplified tooltip content using utility
-  const tooltipData = useMemo(() => createTooltipContent(chipData), [chipData]);
+  const tooltipData = useMemo(() => createTooltipContent(chipData, event), [chipData, event]);
   
   // Create trainer initials for mobile avatar
   const trainerInitials = useMemo(() => {
