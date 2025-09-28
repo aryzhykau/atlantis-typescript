@@ -114,6 +114,7 @@ export function SideBar({width, isCollapsed = false, onToggle}: SideBarProps) {
                                 display: 'flex', 
                                 alignItems: 'center',
                                 fontSize: '1.75rem',
+                                color: 'inherit',
                             }}
                         >
                             🏊‍♂️ ATLANTIS
@@ -124,6 +125,7 @@ export function SideBar({width, isCollapsed = false, onToggle}: SideBarProps) {
                                 opacity: 0.9, 
                                 fontWeight: 300,
                                 fontSize: '0.875rem',
+                                color: 'inherit',
                             }}
                         >
                             Swimming academy
@@ -230,6 +232,7 @@ export function SideBar({width, isCollapsed = false, onToggle}: SideBarProps) {
                                                 sx={{ 
                                                     fontWeight: selectedIndex === idx ? 600 : 500,
                                                     fontSize: '0.95rem',
+                                                    color: "inherit",
                                                 }}
                                             >
                                                 {item.title}
