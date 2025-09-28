@@ -217,7 +217,7 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
                                 <FormikFieldArray 
                                     name="students"
                                     label="Дети клиента"
-                                    addButtonText="+ Добавить ребёнка"
+                                    addButtonText="Добавить ребёнка"
                                     emptyItem={{ first_name: '', last_name: '', date_of_birth: null, gender: 'M' }}
                                 >
                                     {(index: number) => (
