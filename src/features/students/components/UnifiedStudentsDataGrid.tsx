@@ -223,7 +223,7 @@ export const UnifiedStudentsDataGrid: React.FC = () => {
               }
             }}
           >
-            Добавить студента
+            Добавить ученика
           </Button>
         </Box>
       </Paper>
