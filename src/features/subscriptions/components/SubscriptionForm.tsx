@@ -61,14 +61,6 @@ const SubscriptionForm: React.FC<SubscriptionFormProps> = ({ isCreating, initial
             subtitle="Заполните информацию об абонементе"
             icon={<AccountBalance />}
             maxWidth="sm"
-            actions={
-                <FormActions
-                    onCancel={onClose}
-                    submitText={isCreating ? 'Добавить' : 'Изменить'}
-                    isLoading={isLoading}
-                    disabled={isLoading}
-                />
-            }
         >
             <Formik
                 initialValues={formInitialValues}
@@ -76,7 +68,7 @@ const SubscriptionForm: React.FC<SubscriptionFormProps> = ({ isCreating, initial
                 onSubmit={handleSubmit}
                 enableReinitialize
             >
-                {() => (
+                {({ isSubmitting, isValid }) => (
                     <Form>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                             <FormikTextField
@@ -115,6 +107,13 @@ const SubscriptionForm: React.FC<SubscriptionFormProps> = ({ isCreating, initial
                                 label="Активен"
                             />
                         </Box>
+
+                        <FormActions
+                            onCancel={onClose}
+                            submitText={isCreating ? 'Добавить' : 'Изменить'}
+                            isLoading={isLoading || isSubmitting}
+                            disabled={isLoading || isSubmitting || !isValid}
+                        />
                     </Form>
                 )}
             </Formik>

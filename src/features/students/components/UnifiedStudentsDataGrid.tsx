@@ -91,10 +91,10 @@ export const UnifiedStudentsDataGrid: React.FC = () => {
       // When called from create flow we expect a create payload; coerce if necessary
       const payload = values as IStudentCreatePayload;
       await createStudent(payload).unwrap();
-      displaySnackbar('Студент успешно создан!', 'success');
+      displaySnackbar('Ученик успешно создан!', 'success');
       handleCloseModal();
     } catch (error) {
-      displaySnackbar('Ошибка при создании студента', 'error');
+      displaySnackbar('Ошибка при создании ученика', 'error');
       console.error("Failed to create student:", error);
     }
   };
@@ -134,7 +134,7 @@ export const UnifiedStudentsDataGrid: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <SchoolIcon sx={{ fontSize: 28, mr: 1.5 }} />
             <Typography variant="h5" sx={{ fontWeight: 700, color: 'white' }}>
-              Студенты
+              Ученики
             </Typography>
           </Box>
           
@@ -175,7 +175,7 @@ export const UnifiedStudentsDataGrid: React.FC = () => {
           
           <TextField
             id="search-student"
-            placeholder="Поиск студента..."
+            placeholder="Поиск ученика..."
             type="search"
             variant="outlined"
             value={searchValue}
@@ -236,7 +236,7 @@ export const UnifiedStudentsDataGrid: React.FC = () => {
         pageSizeOptions={[10, 25, 50]}
         initialPageSize={10}
         variant="elevated"
-        ariaLabel="Таблица студентов"
+        ariaLabel="Таблица учеников"
       />
 
       {/* Create Student Modal */}
@@ -253,8 +253,8 @@ export const UnifiedStudentsDataGrid: React.FC = () => {
           validationSchema={studentSchemas.create}
           onSubmit={handleCreateStudent}
           isLoading={isCreatingStudent}
-          title="Добавить нового студента"
-          subtitle="Заполните информацию о студенте"
+          title="Добавить нового ученика"
+          subtitle="Заполните информацию о ученике"
           isEdit={false}
         />
       )}

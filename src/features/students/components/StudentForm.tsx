@@ -45,7 +45,7 @@ export const StudentForm: React.FC<StudentFormProps> = ({
     const { data: clients = [] } = useGetClientsQuery();
 
     const { submit, isLoading: isSubmissionLoading } = useFormSubmission({
-        successMessage: isEdit ? 'Данные студента успешно обновлены' : 'Студент успешно создан',
+        successMessage: isEdit ? 'Данные ученика успешно обновлены' : 'Ученик успешно создан',
         onSuccess: onClose,
     });
 

@@ -64,7 +64,7 @@ export const createEnhancedStudentColumns = (): GridColDef[] => [
   {
     field: 'parentName',
     headerName: 'Родитель',
-    valueGetter: (_value, row) => `${row.client.first_name} ${row.client.last_name}`,
+    valueGetter: (_value, row) => row.client.first_name === row.first_name && row.client.last_name === row.last_name ? `-` :`${row.client.first_name} ${row.client.last_name}`,
     flex: 1,
     minWidth: 150,
     sortable: true,
