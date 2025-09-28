@@ -1,4 +1,4 @@
-import {Box, List, ListItem, ListItemButton, ListItemIcon, Paper, Typography, useTheme, alpha, IconButton, Tooltip} from "@mui/material";
+import {Box, List, ListItem, ListItemButton, ListItemIcon, Paper, Typography, useTheme, alpha, IconButton, Tooltip, Badge} from "@mui/material";
 import {MenuItems} from "../../globalConstants/mainMenu.tsx";
 import {Link} from "react-router-dom";
 import {IMenuItems} from "../../models/mainMenu.ts";
@@ -6,6 +6,7 @@ import {useState} from "react";
 import {useLocation} from "react-router-dom";
 import {ChevronLeft, ChevronRight} from "@mui/icons-material";
 import {useCurrentUser} from "../../hooks/usePermissions";
+import { useListClientContactsQuery } from '../../store/apis/clientContactsApi';
 import {getFilteredMenuItemsForContext as getFilteredMenuItems} from "../../utils/menuUtils";
 
 interface SideBarProps {
@@ -19,6 +20,11 @@ export function SideBar({width, isCollapsed = false, onToggle}: SideBarProps) {
     const location = useLocation();
     const { user } = useCurrentUser();
     const filteredMenuItems = getFilteredMenuItems(MenuItems, user?.role, false);
+
+    // Fetch only a small page of pending client contact tasks to show count in badge.
+    // Using limit=1 and relying on `data?.length` won't give total count; instead request a reasonable page (e.g., limit 100) or fetch all when small.
+    const { data: pendingContacts } = useListClientContactsQuery({ status: 'PENDING', limit: 100 });
+    const pendingCount = (pendingContacts || []).length;
     
     const [selectedIndex, setSelectedIndex] = useState(() => {
         return filteredMenuItems.findIndex((item) => item.link === location.pathname.split("/")[2]);
@@ -225,7 +231,18 @@ export function SideBar({width, isCollapsed = false, onToggle}: SideBarProps) {
                                                     mr: 2,
                                                 }}
                                             >
-                                                {item.icon}
+                                                {item.link === 'client-contacts' ? (
+                                                    <Badge
+                                                        badgeContent={pendingCount > 0 ? pendingCount : undefined}
+                                                        color="error"
+                                                        overlap="circular"
+                                                        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                                    >
+                                                        {item.icon}
+                                                    </Badge>
+                                                ) : (
+                                                    item.icon
+                                                )}
                                             </ListItemIcon>
                                             <Typography 
                                                 variant="body1" 
@@ -247,7 +264,18 @@ export function SideBar({width, isCollapsed = false, onToggle}: SideBarProps) {
                                                 mr: 0,
                                             }}
                                         >
-                                            {item.icon}
+                                            {item.link === 'client-contacts' ? (
+                                                <Badge
+                                                    badgeContent={pendingCount > 0 ? pendingCount : undefined}
+                                                    color="error"
+                                                    overlap="circular"
+                                                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                                >
+                                                    {item.icon}
+                                                </Badge>
+                                            ) : (
+                                                item.icon
+                                            )}
                                         </ListItemIcon>
                                     )}
                                 </Box>

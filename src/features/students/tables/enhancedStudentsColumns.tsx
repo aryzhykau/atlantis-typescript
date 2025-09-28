@@ -8,6 +8,7 @@ import {
  
 } from "../../../components/UnifiedDataGrid";
 import { Typography, Chip, Link } from "@mui/material";
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import dayjs from 'dayjs';
 
 const calculateAge = (dateOfBirth: string): number => {
@@ -68,26 +69,30 @@ export const createEnhancedStudentColumns = (): GridColDef[] => [
     flex: 1,
     minWidth: 150,
     sortable: true,
-    renderCell: (params: GridRenderCellParams) => (
-      <Link
-        component="span"
-        onClick={(e) => {
-          e.stopPropagation();
-          // Navigate to parent client page
-          window.location.href = `/home/clients/${params.row.client.id}`;
-        }}
-        sx={{
-          cursor: 'pointer',
-          color: 'primary.main',
-          textDecoration: 'none',
-          fontWeight: 'medium',
-          '&:hover': {
-            textDecoration: 'underline',
-          },
-        }}
-      >
-        {params.value}
-      </Link>
+     renderCell: (params: GridRenderCellParams) => (
+      params.value === '-' ? (
+        <RemoveCircleOutlineIcon color="error" fontSize="small" />
+      ) : (
+        <Link
+          component="span"
+          onClick={(e) => {
+            e.stopPropagation();
+            // Navigate to parent client page
+            window.location.href = `/home/clients/${params.row.client.id}`;
+          }}
+          sx={{
+            cursor: 'pointer',
+            color: 'primary.main',
+            textDecoration: 'none',
+            fontWeight: 'medium',
+            '&:hover': {
+              textDecoration: 'underline',
+            },
+          }}
+        >
+          {params.value}
+        </Link>
+      )
     ),
   },
 
