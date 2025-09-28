@@ -18,6 +18,7 @@ export const FormikTelInput: React.FC<FormikTelInputProps> = ({ name, ...props }
   return (
     <MuiTelInput
       {...props}
+      disableFormatting={false}
       value={field.value || ''}
       onChange={handleChange}
       onBlur={field.onBlur}

@@ -1,4 +1,4 @@
-import {Box, List, ListItem, ListItemButton, ListItemIcon,  Typography} from "@mui/material";
+import {Box, List, ListItem, ListItemButton, ListItemIcon,  Typography, Badge} from "@mui/material";
 import {MenuItems} from "../../globalConstants/mainMenu.tsx";
 import {Link} from "react-router-dom";
 import {IMenuItems} from "../../models/mainMenu.ts";
@@ -6,11 +6,14 @@ import {useState} from "react";
 import {useLocation} from "react-router-dom";
 import {useCurrentUser} from "../../hooks/usePermissions";
 import {getFilteredMenuItemsForContext as getFilteredMenuItems} from "../../utils/menuUtils";
+import { useListClientContactsQuery } from '../../store/apis/clientContactsApi';
 
 export function MobileSideBar() {
     const location = useLocation();
     const currentUser = useCurrentUser();
     const filteredMenuItems = getFilteredMenuItems(MenuItems, currentUser?.user?.role, true);
+    const { data: pendingContacts } = useListClientContactsQuery({ status: 'PENDING', limit: 100 });
+    const pendingCount = (pendingContacts || []).length;
     
     const [selectedIndex, setSelectedIndex] = useState(() => {
         return filteredMenuItems.findIndex((item) => item.link === location.pathname.split("/")[2]);
@@ -55,7 +58,18 @@ export function MobileSideBar() {
                             onClick={() => handleListItemClick( idx)}
                         >
                             <ListItemIcon sx={{color: "inherit"}}>
-                                {item.icon}
+                                {item.link === 'client-contacts' ? (
+                                    <Badge
+                                        badgeContent={pendingCount > 0 ? pendingCount : undefined}
+                                        color="error"
+                                        overlap="circular"
+                                        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                                    >
+                                        {item.icon}
+                                    </Badge>
+                                ) : (
+                                    item.icon
+                                )}
                             </ListItemIcon>
                             <Typography variant={"button"}>{item.title}</Typography>
                         </ListItemButton>

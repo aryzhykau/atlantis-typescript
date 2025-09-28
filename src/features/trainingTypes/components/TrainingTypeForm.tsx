@@ -117,7 +117,7 @@ const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, 
             onClose();
         } catch (error: any) {
             console.error("Ошибка сохранения вида тренировки:", error);
-            const errorDetail = error?.data?.detail || 'Ошибка при сохранении вида тренировки';
+            const errorDetail = error?.data?.detail[0].msg || 'Ошибка при сохранении вида тренировки';
             displaySnackbar(String(errorDetail), 'error');
         }
     };
