@@ -9,7 +9,7 @@ export const commonValidations = {
     .required('Название обязательно'),
 
   shortName: Yup.string()
-    .min(1, 'Минимум 1 символ')
+    .min(2, 'Минимум 2 символа')
     .max(50, 'Максимум 50 символов')
     .required('Обязательно'),
 
