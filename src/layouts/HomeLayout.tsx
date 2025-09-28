@@ -124,6 +124,7 @@ export default function HomeLayout({ children,  data, isLoading }: HomeLayoutPro
                             sx={{ 
                                 fontWeight: 700,
                                 fontSize: '1.5rem',
+                                color: 'inherit',
                             }}
                         >
                             {getHeaderTitle()}
@@ -144,6 +145,7 @@ export default function HomeLayout({ children,  data, isLoading }: HomeLayoutPro
                                     sx={{ 
                                         fontWeight: 500,
                                         fontSize: '0.95rem',
+                                        color: 'inherit',
                                     }}
                                 >
                                     {`${data.first_name} ${data.last_name}`}
