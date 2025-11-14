@@ -116,11 +116,11 @@ export function StudentPage() {
 
     useEffect(() => {
         if (isErrorStudent) {
-            displaySnackbar('Ошибка загрузки данных студента', 'error');
+            displaySnackbar('Ошибка загрузки данных ученика', 'error');
             console.error('StudentPage - Student Error:', studentError);
         }
         if (isErrorStudentSubscriptions) {
-            displaySnackbar('Ошибка загрузки абонементов студента', 'error');
+            displaySnackbar('Ошибка загрузки абонементов ученика', 'error');
             console.error('StudentPage - Student Subscriptions Error:', studentSubscriptionsError);
         }
         if (isErrorAllBaseSubscriptions) {
@@ -162,7 +162,7 @@ export function StudentPage() {
         }
         try {
             await addSubscriptionToStudent(payload).unwrap();
-            displaySnackbar('Абонемент успешно добавлен студенту', 'success');
+            displaySnackbar('Абонемент успешно добавлен ученику', 'success');
             refetchStudentSubscriptions();
             handleCloseAddSubscriptionModal();
         } catch (error) {
@@ -194,12 +194,12 @@ export function StudentPage() {
         if (!student) return;
         try {
             await updateStudent({ id: student.id, studentData: values }).unwrap();
-            displaySnackbar('Данные студента успешно обновлены', 'success');
+            displaySnackbar('Данные ученика успешно обновлены', 'success');
             refetchStudent();
             handleCloseEditModal();
         } catch (error) {
-            displaySnackbar('Ошибка при обновлении данных студента', 'error');
-            console.error("Ошибка обновления студента:", error);
+            displaySnackbar('Ошибка при обновлении данных ученика', 'error');
+            console.error("Ошибка обновления ученика:", error);
         }
     };
 
@@ -218,7 +218,7 @@ export function StudentPage() {
     }
 
     if (!student) {
-        return <Typography sx={{p:3, textAlign: 'center'}}>Студент не найден или произошла ошибка загрузки.</Typography>;
+        return <Typography sx={{p:3, textAlign: 'center'}}>Ученик не найден или произошла ошибка загрузки.</Typography>;
     }
 
     // Статистика студента
@@ -497,7 +497,7 @@ export function StudentPage() {
                 onSubmit={handleUpdateStudent}
                 isLoading={isUpdatingStudent}
                 title="Редактировать данные ученика"
-                subtitle="Обновите информацию о студенте"
+                subtitle="Обновите информацию об ученике"
                 isEdit={true}
             />
 

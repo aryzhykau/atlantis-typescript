@@ -96,13 +96,13 @@ const AddStudentToRealTrainingBottomSheet: React.FC<AddStudentToRealTrainingBott
         is_trial: false,
       }).unwrap();
       
-      displaySnackbar(`Студент ${selectedStudent.first_name} ${selectedStudent.last_name} добавлен на тренировку`, 'success');
+      displaySnackbar(`Ученик ${selectedStudent.first_name} ${selectedStudent.last_name} добавлен на тренировку`, 'success');
       setSelectedStudent(null);
       onClose();
     } catch (err: any) {
       console.error('[AddStudentToRealTrainingBottomSheet] Failed to add student:', err);
       displaySnackbar(
-        err?.data?.detail || 'Ошибка при добавлении студента', 
+        err?.data?.detail || 'Ошибка при добавлении ученика', 
         'error'
       );
     }

@@ -161,7 +161,7 @@ const CalendarSearchBar: React.FC<CalendarSearchBarProps> = ({
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           {/* Поиск по тексту */}
           <TextField
-            placeholder="Поиск по названию, тренеру, студенту..."
+            placeholder="Поиск по названию, тренеру, ученику..."
             value={filters.searchText}
             onChange={handleSearchTextChange}
             disabled={isLoading}
@@ -194,7 +194,7 @@ const CalendarSearchBar: React.FC<CalendarSearchBarProps> = ({
               switch (option.type) {
                 case 'trainer': return '👨‍💼 Тренеры';
                 case 'trainingType': return '🏃‍♂️ Типы тренировок';
-                case 'student': return '🎓 Студенты';
+                case 'student': return '🎓 Ученики';
               }
             }}
             getOptionLabel={(option) => option.label}

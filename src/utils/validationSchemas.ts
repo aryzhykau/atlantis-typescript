@@ -288,7 +288,7 @@ export const paymentSchemas = {
       id: commonValidations.id,
       first_name: commonValidations.shortName,
       last_name: commonValidations.shortName,
-    }).nullable().required('Необходимо выбрать студента'),
+    }).nullable().required('Необходимо выбрать ученика'),
     amount: Yup.string()
       .matches(/^\d+(\.\d{1,2})?$/, 'Введите корректную сумму')
       .required('Сумма обязательна'),

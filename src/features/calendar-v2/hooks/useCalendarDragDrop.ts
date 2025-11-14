@@ -153,7 +153,7 @@ export const useCalendarDragDrop = (
             }
           }      debugLog('🎉 Дублирование шаблона завершено успешно');
         const studentCount = originalStudents.length;
-        const studentText = studentCount > 0 ? ` (со ${studentCount} студентами)` : '';
+        const studentText = studentCount > 0 ? ` (с ${studentCount} учениками)` : '';
         displaySnackbar(`📋 Шаблон тренировки "${event.training_type?.name}" продублирован${studentText}`, 'success');
         
         refetchTemplates();
@@ -197,7 +197,7 @@ export const useCalendarDragDrop = (
         
         debugLog('🎉 Дублирование тренировки завершено успешно');
         const studentCount = originalStudents.length;
-        const studentText = studentCount > 0 ? ` (со ${studentCount} студентами)` : '';
+        const studentText = studentCount > 0 ? ` (с ${studentCount} учениками)` : '';
         displaySnackbar(`📋 Тренировка "${event.training_type?.name}" продублирована${studentText}`, 'success');
         
         refetchRealTrainings();

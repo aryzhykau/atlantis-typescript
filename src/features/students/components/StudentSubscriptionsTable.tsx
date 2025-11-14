@@ -19,7 +19,7 @@ export const StudentSubscriptionsTable: React.FC<StudentSubscriptionsTableProps>
                     История абонементов пуста
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-                    У студента пока нет абонементов
+                    У ученика пока нет абонементов
                 </Typography>
             </Box>
         );
@@ -39,7 +39,7 @@ export const StudentSubscriptionsTable: React.FC<StudentSubscriptionsTableProps>
                 pageSizeOptions={[10, 25, 50]}
                 initialPageSize={10}
                 variant="elevated"
-                ariaLabel="Таблица истории абонементов студента"
+                ariaLabel="Таблица истории абонементов ученика"
                 height="auto"
             />
         </Box>

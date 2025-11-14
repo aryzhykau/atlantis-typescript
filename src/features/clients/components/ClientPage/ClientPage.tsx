@@ -298,14 +298,14 @@ export function ClientPage() {
                             });
                             combinedSubscriptionsAggregator = [...combinedSubscriptionsAggregator, ...enrichedSubs];
                         } else if (settledResult.status === 'rejected') {
-                            console.error(`Не удалось получить абонементы для студента ${student.id}:`, settledResult.reason);
+                            console.error(`Не удалось получить абонементы для ученика ${student.id}:`, settledResult.reason);
                         }
                     });
                     
                     setClientStudentSubscriptions(combinedSubscriptionsAggregator);
 
                 } catch (e) {
-                    console.error("Общая ошибка при получении абонементов студентов:", e);
+                    console.error("Общая ошибка при получении абонементов учеников:", e);
                     displaySnackbar("Ошибка при загрузке данных по абонементам", "error");
                 } finally {
                     setIsLoadingCombinedSubscriptions(false);
@@ -315,7 +315,7 @@ export function ClientPage() {
                 setClientStudentSubscriptions([]);
                 setIsLoadingCombinedSubscriptions(false);
             } else if (!allSubscriptions && !isLoadingAllSubscriptions && studentsList && studentsList.length > 0) {
-                 displaySnackbar("Не удалось загрузить базовые типы абонементов. Информация об абонементах студентов может быть неполной.", "warning");
+                 displaySnackbar("Не удалось загрузить базовые типы абонементов. Информация об абонементах учеников может быть неполной.", "warning");
                  setIsLoadingCombinedSubscriptions(false);
             }
         };
@@ -338,8 +338,8 @@ export function ClientPage() {
             console.error("Ошибка получения данных клиента:", clientError);
         }
         if (isErrorStudents) {
-            displaySnackbar("Ошибка при загрузке списка студентов", "error");
-            console.error("Ошибка получения списка студентов:", studentsError);
+            displaySnackbar("Ошибка при загрузке списка учеников", "error");
+            console.error("Ошибка получения списка учеников:", studentsError);
         }
     }, [isErrorClient, clientError, isErrorStudents, studentsError, displaySnackbar]);
 
@@ -383,12 +383,12 @@ export function ClientPage() {
 
         try {
             await createStudent(payload).unwrap();
-            displaySnackbar("Студент успешно добавлен клиенту", "success");
+            displaySnackbar("Ученик успешно добавлен клиенту", "success");
             handleCloseAddStudentModal();
             refetchStudents();
         } catch (err: any) {
-            console.error("Ошибка добавления студента клиенту:", err);
-            const errorDetail = err?.data?.detail || 'Не удалось добавить студента';
+            console.error("Ошибка добавления ученика клиенту:", err);
+            const errorDetail = err?.data?.detail || 'Не удалось добавить ученика';
             displaySnackbar(String(errorDetail), 'error');
         }
     };
@@ -625,7 +625,7 @@ export function ClientPage() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6">Ученики клиента</Typography>
                     <Button variant="contained" onClick={handleOpenAddStudentModal} disabled={!client}>
-                        Добавить студента клиенту
+                        Добавить ученика клиенту
                     </Button>
                 </Box>
                 <StudentsDataCard students={studentsList || []} isLoading={isLoadingStudents} allSubscriptions={allSubscriptions} />
@@ -720,7 +720,7 @@ export function ClientPage() {
                     >
                         <Box sx={{ position: 'relative', zIndex: 1 }}>
                             <Typography id="add-student-to-client-modal-title" variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
-                                👤 Добавить студента клиенту
+                                👤 Добавить ученика клиенту
                             </Typography>
                             <Typography variant="body2" sx={{ opacity: 0.9, mt: 1 }}>
                                 {client?.first_name} {client?.last_name}

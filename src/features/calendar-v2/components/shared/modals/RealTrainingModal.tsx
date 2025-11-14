@@ -208,7 +208,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
       }).unwrap();
       
       dispatch(calendarApiV2.util.invalidateTags([{ type: 'RealTrainingV2', id: realTrainingData.id }]));
-      displaySnackbar(`Студент ${selectedStudentToAdd.first_name} ${selectedStudentToAdd.last_name} добавлен на тренировку`, 'success');
+      displaySnackbar(`Ученик ${selectedStudentToAdd.first_name} ${selectedStudentToAdd.last_name} добавлен на тренировку`, 'success');
       
       // Close dialog and reset selection
       setAddStudentDialogOpen(false);
@@ -216,7 +216,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
     } catch (err: any) {
       console.error('[RealTrainingModal] Failed to add student:', err);
       displaySnackbar(
-        err?.data?.detail || 'Ошибка при добавлении студента', 
+        err?.data?.detail || 'Ошибка при добавлении ученика', 
         'error'
       );
     }
@@ -283,7 +283,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
 
   const renderStudentList = () => {
     if (!realTrainingData) {
-        return <Typography>Загрузка данных о студентах...</Typography>;
+        return <Typography>Загрузка данных об учениках...</Typography>;
     }
       
     const studentsToDisplay = realTrainingData.students || [];
@@ -536,7 +536,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
         <DialogTitle>Отмена тренировки</DialogTitle>
         <DialogContent>
             <Typography sx={{ mb: 2 }}>
-                Отмена тренировки приведет к автоматическому возврату занятий студентам и отмене связанных счетов.
+                Отмена тренировки приведет к автоматическому возврату занятий ученикам и отмене связанных счетов.
             </Typography>
             <TextField
                 fullWidth
@@ -599,7 +599,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
         {salaryResult && (
           <Box sx={{ pt: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Результат обработки отмены студента
+              Результат обработки отмены ученика
             </Typography>
             
             <Box sx={{ mb: 2 }}>
@@ -644,7 +644,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
               
               <Grid item xs={6}>
                 <Typography variant="body2" color="text.secondary">
-                  Оставшиеся студенты:
+                  Оставшиеся ученики:
                 </Typography>
                 <Typography variant="body1">
                   {salaryResult.salary_decision.remaining_students_count}
@@ -718,7 +718,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5, textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-              Добавить студента
+              Добавить ученика
             </Typography>
             {realTrainingData && (
               <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.9rem' }}>
@@ -834,7 +834,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Тренировка заполнена. Нельзя добавить больше студентов.
+                  Тренировка заполнена. Нельзя добавить больше учеников.
                 </Typography>
               </Alert>
             )}
@@ -844,7 +844,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
         {/* Student Selection */}
         <Box sx={{ p: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: theme.palette.text.primary }}>
-            Выберите студента для добавления
+            Выберите ученика для добавления
           </Typography>
           
           <Autocomplete
@@ -856,8 +856,8 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Студент"
-                placeholder="Начните вводить имя студента..."
+                label="Ученик"
+                placeholder="Начните вводить имя ученика..."
                 fullWidth
                 variant="outlined"
                 sx={{
@@ -913,8 +913,8 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
                 <PersonIcon sx={{ fontSize: '3rem', color: alpha(theme.palette.text.primary, 0.3), mb: 1 }} />
                 <Typography variant="body1" color="text.secondary">
                   {getAvailableStudents().length === 0 
-                    ? "Нет доступных студентов для добавления" 
-                    : "Студент не найден"}
+                    ? "Нет доступных учеников для добавления" 
+                    : "Ученик не найден"}
                 </Typography>
               </Box>
             }
@@ -1024,7 +1024,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
             transition: 'all 0.2s ease'
           }}
         >
-          {isAddingStudent ? 'Добавляю студента...' : 'Добавить студента'}
+          {isAddingStudent ? 'Добавляю ученика...' : 'Добавить ученика'}
         </Button>
       </DialogActions>
     </Dialog>

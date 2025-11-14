@@ -29,7 +29,7 @@ export const AttendanceButtons: React.FC<AttendanceButtonsProps> = ({
   const getButtonTitle = () => {
     if (!canMark) return 'Отметки доступны в день тренировки';
     if (currentStatus === 'PRESENT') return 'Статус "Присутствовал" устанавливается автоматически';
-    if (currentStatus === 'ABSENT') return 'Студент уже отмечен как отсутствующий';
+    if (currentStatus === 'ABSENT') return 'Ученик уже отмечен как отсутствующий';
     if (currentStatus === 'REGISTERED') return 'Отметить отсутствие';
     return 'Недоступно для данного статуса';
   };

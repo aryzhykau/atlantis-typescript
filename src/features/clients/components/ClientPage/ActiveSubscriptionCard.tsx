@@ -31,7 +31,7 @@ export const ActiveSubscriptionCard: React.FC<ActiveSubscriptionCardProps> = ({ 
     }
 
     const деталейАбонемента = [
-        { label: "Студент", value: subscription.student_name },
+        { label: "Ученик", value: subscription.student_name },
         { label: "Дата начала", value: dayjs(subscription.start_date).format('DD.MM.YYYY') },
         { label: "Дата окончания", value: dayjs(subscription.end_date).format('DD.MM.YYYY') },
         { label: "Осталось тренировок", value: subscription.sessions_left },

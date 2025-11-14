@@ -208,16 +208,16 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
       dispatch(calendarApiV2.util.invalidateTags([{ type: 'TrainingTemplateV2', id: templateData.id }]));
       setIsAddStudentFormOpen(false);
       setSelectedStudent(null);
-      displaySnackbar(`Студент ${selectedStudent.first_name} ${selectedStudent.last_name} добавлен`, 'success');
+      displaySnackbar(`Ученик ${selectedStudent.first_name} ${selectedStudent.last_name} добавлен`, 'success');
     } catch (err) {
       console.error('[TrainingTemplateModal] Failed to add student:', err);
-      displaySnackbar('Ошибка при добавлении студента', 'error');
+      displaySnackbar('Ошибка при добавлении ученика', 'error');
     }
   };
 
   const renderStudentList = () => {
     if (!templateData) {
-        return <Typography>Загрузка данных о студентах...</Typography>;
+        return <Typography>Загрузка данных об учениках...</Typography>;
     }
       
     const studentsToDisplay = templateData.assigned_students || [];
@@ -227,7 +227,7 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
         <Box sx={{ textAlign: 'center', py: 4, px: 2, color: alpha(theme.palette.text.primary, 0.6) }}>
           <GroupIcon sx={{ fontSize: '3rem', mb: 1, opacity: 0.3 }} />
           <Typography variant="h6" sx={{ mb: 1, fontWeight: 500 }}>Нет записанных учеников</Typography>
-          <Typography variant="body2">Добавьте студентов в этот шаблон</Typography>
+          <Typography variant="body2">Добавьте учеников в этот шаблон</Typography>
         </Box>
       );
     }
@@ -418,13 +418,13 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
         </Box>
         {isAddStudentFormOpen && (
           <Box sx={{ mb: 3, p: 3, borderRadius: 2, backgroundColor: theme.palette.background.paper, border: `2px solid ${alpha(borderColor, 0.4)}` }}>
-            <Typography variant="h6">Добавить студента</Typography>
+            <Typography variant="h6">Добавить ученика</Typography>
             <Autocomplete 
               value={selectedStudent} 
               onChange={(_, newValue) => setSelectedStudent(newValue)} 
               options={availableStudents} 
               getOptionLabel={(s) => `${s.first_name} ${s.last_name}`} 
-              renderInput={(params) => <TextField {...params} label="Выберите студента" />} 
+              renderInput={(params) => <TextField {...params} label="Выберите ученика" />} 
             />
             <TextField 
               label="Дата начала" 

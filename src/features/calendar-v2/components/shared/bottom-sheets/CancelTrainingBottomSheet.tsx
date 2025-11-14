@@ -171,7 +171,7 @@ const CancelTrainingBottomSheet: React.FC<CancelTrainingBottomSheetProps> = ({
         {/* Warning */}
         <Alert severity="warning" sx={{ mb: 3 }}>
           <Typography variant="body2">
-            <strong>Внимание:</strong> Отмена тренировки приведет к автоматическому возврату занятий студентам 
+            <strong>Внимание:</strong> Отмена тренировки приведет к автоматическому возврату занятий ученикам 
             и отмене связанных счетов. Все записанные ученики будут уведомлены об отмене.
           </Typography>
         </Alert>
@@ -180,7 +180,7 @@ const CancelTrainingBottomSheet: React.FC<CancelTrainingBottomSheetProps> = ({
         {studentCount > 0 && (
           <Alert severity="info" sx={{ mb: 3 }}>
             <Typography variant="body2">
-              Будет затронуто студентов: <strong>{studentCount}</strong>
+              Будет затронуто учеников: <strong>{studentCount}</strong>
             </Typography>
           </Alert>
         )}

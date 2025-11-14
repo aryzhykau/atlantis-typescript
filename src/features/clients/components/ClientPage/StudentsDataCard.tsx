@@ -92,7 +92,7 @@ export const StudentsDataCard: React.FC<StudentsDataCardProps> = ({
                     />
                 ) : (
                     <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100px" }}>
-                        <Typography color="text.secondary">У клиента нет студентов</Typography>
+                        <Typography color="text.secondary">У клиента нет учеников</Typography>
                     </Box>
                 )}
             </Box>

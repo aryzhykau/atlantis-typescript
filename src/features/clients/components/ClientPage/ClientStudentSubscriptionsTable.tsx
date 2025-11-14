@@ -20,7 +20,7 @@ const columns: GridColDef<IStudentSubscriptionView>[] = [
     },
     {
         field: 'student_name',
-        headerName: 'Студент',
+        headerName: 'Ученик',
         flex: 1.5,
         renderCell: (params: GridRenderCellParams<IStudentSubscriptionView, string>) => (
             <Typography variant="body2">{params.value}</Typography>

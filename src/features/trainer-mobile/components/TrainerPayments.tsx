@@ -76,7 +76,7 @@ export const TrainerPayments: React.FC = () => {
   const handleFormSubmit = async (values: PaymentFormData) => {
     const selectedStudent = students.find(s => s.id === values.student_id);
     if (!selectedStudent?.client?.id) {
-      displaySnackbar('Ошибка: не найден клиент студента', 'error');
+      displaySnackbar('Ошибка: не найден клиент ученика', 'error');
       return;
     }
 

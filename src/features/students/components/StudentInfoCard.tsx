@@ -138,10 +138,10 @@ export const StudentInfoCard: React.FC<StudentInfoCardProps> = ({ student, onSta
         const statusUpdatePayload: IStudentStatusUpdatePayload = { is_active: newStatus };
         try {
             await updateStudentStatus({ id: student.id, statusData: statusUpdatePayload }).unwrap();
-            displaySnackbar(`Статус студента успешно изменен на "${newStatus ? 'Активен' : 'Неактивен'}"`, 'success');
+            displaySnackbar(`Статус ученика успешно изменен на "${newStatus ? 'Активен' : 'Неактивен'}"`, 'success');
             onStatusHasChanged();
         } catch (error) {
-            displaySnackbar('Ошибка при изменении статуса студента', 'error');
+            displaySnackbar('Ошибка при изменении статуса ученика', 'error');
             console.error("Ошибка изменения статуса:", error);
         }
     };

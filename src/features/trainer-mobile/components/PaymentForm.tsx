@@ -123,10 +123,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Person sx={{ fontSize: 48, color: theme.palette.text.secondary, mb: 2 }} />
               <Typography color="text.secondary" variant="h6">
-                Нет доступных студентов
+                Нет доступных учеников
               </Typography>
               <Typography color="text.secondary" variant="body2">
-                Для регистрации платежа нужны активные студенты
+                Для регистрации платежа нужны активные ученики
               </Typography>
             </Box>
           ) : (
@@ -144,7 +144,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     <Grid item xs={12}>
                       <FormikAutocomplete<Student>
                         name="student"
-                        label="Выберите студента"
+                        label="Выберите ученика"
                         options={students}
                         getOptionLabel={(option) => `${option.first_name} ${option.last_name}`}
                         renderOption={(props, option) => (

@@ -85,7 +85,7 @@ export const createTooltipContent = (displayData: EventDisplayData, event: Calen
   trainer: `👨 ${displayData.trainerName}`,
   students: (
     <div>
-      <span>👥 Студентов: {displayData.capacityText}</span>
+      <span>👥 Учеников: {displayData.capacityText}</span>
       {isRealTraining(event) && event.students.map(student => (
         <div key={student.student_id}>
           <span>{student.student.first_name} {student.student.last_name}</span>
