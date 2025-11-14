@@ -262,8 +262,8 @@ export const FinancialInfoCard: React.FC<FinancialInfoCardProps> = ({ client, in
                         icon={<PaymentsIcon />}
                         label="Нужно доплатить"
                         value={`${amountToPayOff.toLocaleString()} €`}
-                        gradient={amountToPayOff > 0 ? gradients.warning : gradients.success}
-                        status={amountToPayOff > 0 ? 'warning' : 'positive'}
+                        gradient={amountToPayOff > 0 ? gradients.error : gradients.success}
+                        status={amountToPayOff > 0 ? 'negative' : 'positive'}
                         description={amountToPayOff > 0 ? 'Требуется дополнительная оплата' : 'Все оплачено'}
                     />
                 </Box>

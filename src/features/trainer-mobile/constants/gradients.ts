@@ -13,6 +13,9 @@ export const getGradients = (theme: Theme) => ({
   info: theme.palette.mode === 'dark'
     ? 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)'
     : 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+  error: theme.palette.mode === 'dark'
+    ? 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)'
+    : 'linear-gradient(135deg, #f85032 0%, #e73827 100%)',
 });
 
-export type GradientType = 'primary' | 'success' | 'warning' | 'info'; 
+export type GradientType = 'primary' | 'success' | 'warning' | 'info' | 'error'; 
