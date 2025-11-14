@@ -57,7 +57,7 @@ export default function HomeLayout({ children,  data, isLoading }: HomeLayoutPro
 
     const getHeaderTitle = () => {
         if(location.pathname === "/home/" || location.pathname === "/home") {
-            return "Дашборд"
+            return "Клиенты"
         }
         else {
             const page: IMenuItems = MenuItems.filter((item) => item.link === location.pathname.split("/")[2])[0];
