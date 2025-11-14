@@ -75,5 +75,6 @@ export const baseApi = createApi({
         'Admin',
         'AdminStats',
         'OwnerStats',
+        'Invoice',
     ],
 });

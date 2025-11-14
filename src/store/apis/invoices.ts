@@ -15,6 +15,13 @@ export const invoicesApi = baseApi.injectEndpoints({
                 url: '/invoices',
                 method: 'GET',
             }),
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.items.map(({ id }) => ({ type: 'Invoice' as const, id })),
+                        { type: 'Invoice', id: 'LIST' },
+                    ]
+                    : [{ type: 'Invoice', id: 'LIST' }],
             transformResponse: (response: IInvoiceGetResponse) => {
                 return {
                     ...response,
@@ -33,7 +40,26 @@ export const invoicesApi = baseApi.injectEndpoints({
                 } : {},
                 url: `/invoices/client/${client_id}`,
                 method: 'GET',
-            })
+            }),
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.items.map(({ id }) => ({ type: 'Invoice' as const, id })),
+                        { type: 'Invoice', id: 'LIST' },
+                    ]
+                    : [{ type: 'Invoice', id: 'LIST' }],
+        }),
+
+        updateInvoiceComment: builder.mutation<IInvoiceGetResponse, {invoiceId: number; comment: string | null}>({
+            query: ({invoiceId, comment}) => ({
+                url: `/invoices/${invoiceId}/comment`,
+                method: 'PUT',
+                body: { comment }
+            }),
+            invalidatesTags: (_result, _error, { invoiceId }) => [
+                { type: 'Invoice', id: invoiceId },
+                { type: 'Invoice', id: 'LIST' },
+            ],
         }),
         // createInvoice: builder.mutation<IInvoiceGet, {subscriptionData: IInvoice;}>({
         //     query: ({subscriptionData}) =>  ({
@@ -61,4 +87,4 @@ export const invoicesApi = baseApi.injectEndpoints({
     }),
 });
 
-export const { useGetInvoicesQuery, useGetClientInvoicesQuery } = invoicesApi;
+export const { useGetInvoicesQuery, useGetClientInvoicesQuery, useUpdateInvoiceCommentMutation } = invoicesApi;

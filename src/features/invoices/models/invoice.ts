@@ -18,6 +18,7 @@ export interface IInvoiceGet {
   type: InvoiceType;
   amount: number;
   description: string;
+  comment?: string | null;
   status: InvoiceStatus;
   created_at: string;
   paid_at: string | null;

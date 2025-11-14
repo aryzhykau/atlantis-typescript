@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Typography, CircularProgress, Chip } from "@mui/material";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { IInvoiceGet, InvoiceStatus, InvoiceType } from "../../../invoices/models/invoice";
+import { EditableInvoiceComment } from "./EditableInvoiceComment";
 
 interface ClientInvoicesDataCardProps {
     invoices: IInvoiceGet[] | undefined;
@@ -46,7 +47,20 @@ export const ClientInvoicesDataCard: React.FC<ClientInvoicesDataCardProps> = ({
               }
               return 
             }
-        }
+        },
+        { 
+            field: 'comment', 
+            headerName: 'Комментарий', 
+            width: 300,
+            renderCell: (params: GridRenderCellParams<IInvoiceGet>) => {
+                return (
+                    <EditableInvoiceComment
+                        invoiceId={params.row.id}
+                        initialComment={params.row.comment}
+                    />
+                );
+            }
+        },
     ];
 
     return (

@@ -181,4 +181,25 @@ export const createEnhancedInvoiceColumns = (): GridColDef[] => [
       </Typography>
     ),
   },
+  {
+    field: "comment",
+    headerName: "Комментарий",
+    flex: 2,
+    minWidth: 200,
+    sortable: false,
+    renderCell: (params: GridRenderCellParams<IInvoiceGet>) => (
+      <Typography 
+        variant="body2" 
+        sx={{ 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          maxWidth: '100%'
+        }}
+        title={params.row.comment || ''}
+      >
+        {params.row.comment || '—'}
+      </Typography>
+    ),
+  }
 ];
