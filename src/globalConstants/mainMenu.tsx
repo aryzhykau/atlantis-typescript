@@ -26,7 +26,8 @@ export const MenuItems: IMenuItems[] = [
         link: "dashboard",
         icon: <DashboardIcon/>,
         page: <DashboardLayout/>,
-        mobilePage: <></>
+        mobilePage: <></>,
+        ownerOnly: true
     },
     {
         title: "Клиенты",
