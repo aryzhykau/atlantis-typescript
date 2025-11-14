@@ -39,7 +39,7 @@ function App() {
                                   !isAuthenticated ? <Navigate to="/"/> : 
                                   (user?.role === 'TRAINER' ? <Navigate to="/trainer-mobile"/> : <HomePage />)
                               }>
-                                  <Route index element={MenuItems[0].page}/>
+                                  <Route index element={MenuItems[1].page}/>
                                   {
                                       MenuItems.map((item: IMenuItems): ReactNode => {
                                           if (item.link === "clients") {
