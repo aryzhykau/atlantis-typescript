@@ -138,6 +138,7 @@ const RealTrainingView: React.FC<RealTrainingViewProps> = ({
     const cancelled = event.raw.students.filter((s: any) => 
       s.status === 'CANCELLED_SAFE' || s.status === 'CANCELLED_PENALTY'
     );
+    console.log("CANCELLED STUDENTS:", cancelled);
     
     return { activeStudents: active, cancelledStudents: cancelled };
   }, [event.raw?.students]);

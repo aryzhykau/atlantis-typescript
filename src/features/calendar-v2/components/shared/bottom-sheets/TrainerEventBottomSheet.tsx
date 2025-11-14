@@ -88,6 +88,10 @@ const TrainerEventBottomSheet: React.FC<TrainerEventBottomSheetProps> = ({
     const st = (s?.status || '').toString().toUpperCase();
     return st === 'REGISTERED' || st === 'PRESENT' || st === 'ABSENT';
   });
+  const cancelledStudents = (students || []).filter((s: any) => {
+    const st = (s?.status || '').toString().toUpperCase();
+    return st === 'CANCELLED_SAFE' || st === 'CANCELLED_PENALTY';
+  });
 
   // Get attendance status color
   const getStatusColor = (status: string) => {
@@ -107,7 +111,18 @@ const TrainerEventBottomSheet: React.FC<TrainerEventBottomSheetProps> = ({
       case 'ABSENT': return 'Отсутствует';
       case 'REGISTERED': return 'Записан';
       case 'CANCELLED': return 'Отменён';
+      case 'CANCELLED_SAFE': return 'Отменён заранее';
+      case 'CANCELLED_PENALTY': return 'Отменён поздно';
       default: return status;
+    }
+  };
+
+  // Get cancellation type label
+  const getCancellationTypeLabel = (status: string) => {
+    switch (status.toUpperCase()) {
+      case 'CANCELLED_SAFE': return 'Безопасная отмена (>12ч)';
+      case 'CANCELLED_PENALTY': return 'Поздняя отмена (<12ч)';
+      default: return 'Отменён';
     }
   };
 
@@ -359,6 +374,93 @@ const TrainerEventBottomSheet: React.FC<TrainerEventBottomSheetProps> = ({
             <Typography variant="body2">
               На эту тренировку никто не записан
             </Typography>
+          </Box>
+        )}
+
+        {/* Cancelled Students Section */}
+        {cancelledStudents.length > 0 && (
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: theme.palette.text.secondary }}>
+              Отменённые записи ({cancelledStudents.length})
+            </Typography>
+            <List sx={{ bgcolor: 'background.paper', borderRadius: 2, opacity: 0.8 }}>
+              {cancelledStudents.map((studentTraining: any, index: number) => {
+                const student = studentTraining.student;
+                const status = studentTraining.status;
+                const cancelledAt = studentTraining.cancelled_at;
+                const cancellationReason = studentTraining.cancellation_reason;
+                const attendanceId = studentTraining.id || studentTraining.real_training_id || `cancelled-idx-${index}`;
+                
+                return (
+                  <React.Fragment key={attendanceId}>
+                    <ListItem sx={{ py: 1.5 }}>
+                      <ListItemAvatar>
+                        <Avatar sx={{ 
+                          bgcolor: theme.palette.grey[400],
+                          color: theme.palette.grey[100],
+                          width: 40,
+                          height: 40
+                        }}>
+                          <PersonIcon />
+                        </Avatar>
+                      </ListItemAvatar>
+                      
+                      <ListItemText
+                        primary={
+                          <Typography variant="subtitle2" sx={{ fontWeight: 500, color: theme.palette.text.secondary }}>
+                            {student?.first_name} {student?.last_name}
+                          </Typography>
+                        }
+                        secondary={
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip
+                                label={getStatusLabel(status)}
+                                size="small"
+                                sx={{
+                                  backgroundColor: theme.palette.grey[300],
+                                  color: theme.palette.grey[700],
+                                  fontWeight: 500,
+                                  fontSize: '0.75rem',
+                                }}
+                              />
+                              <Chip
+                                label={getCancellationTypeLabel(status)}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  borderColor: status.toUpperCase() === 'CANCELLED_PENALTY' 
+                                    ? theme.palette.error.light 
+                                    : theme.palette.success.light,
+                                  color: status.toUpperCase() === 'CANCELLED_PENALTY' 
+                                    ? theme.palette.error.main 
+                                    : theme.palette.success.main,
+                                  fontWeight: 500,
+                                  fontSize: '0.7rem',
+                                }}
+                              />
+                            </Box>
+                            {cancelledAt && (
+                              <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+                                Отменено: {dayjs(cancelledAt).format('DD.MM.YYYY HH:mm')}
+                              </Typography>
+                            )}
+                            {cancellationReason && (
+                              <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontStyle: 'italic' }}>
+                                Причина: {cancellationReason}
+                              </Typography>
+                            )}
+                          </Box>
+                        }
+                        secondaryTypographyProps={{ component: 'div' }}
+                      />
+                    </ListItem>
+                    
+                    {index < cancelledStudents.length - 1 && <Divider />}
+                  </React.Fragment>
+                );
+              })}
+            </List>
           </Box>
         )}
       </Box>

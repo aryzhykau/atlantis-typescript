@@ -97,18 +97,6 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
   const activeDay = selectedDay || dayjs();
   const activeDayKey = activeDay.format('YYYY-MM-DD');
 
-  // Debug: log raw eventsMap received from backend for inspection
-  React.useEffect(() => {
-    try {
-  console.log('MobileTimeGrid: received eventsMap from backend', {
-        activeDayKey,
-        eventsMapSnapshot: eventsMap,
-      });
-    } catch (e) {
-      // ignore logging errors
-    }
-  }, [eventsMap, activeDayKey]);
-
   // Handle event click - open bottom sheet with selected event
   const handleEventClick = useCallback((event: NormalizedEvent | NormalizedEvent[]) => {
     setSelectedEvent(event);
@@ -119,7 +107,6 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
 
   // Handler invoked from EventBottomSheet when user requests a transfer
   const handleRequestMove = useCallback(async (event: NormalizedEvent, transferData?: any) => {
-  console.log('MobileTimeGrid.handleRequestMove', { eventId: event?.id, transferData });
   if (!event || !transferData) return;
     displaySnackbar('Перемещение...', 'info');
     try {
@@ -154,7 +141,6 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
         const trainingDate = transferData.trainingDate ?? transferData.date ?? event.start.format('YYYY-MM-DD');
         const hour = Number(transferData.hour ?? event.start.hour());
         const startTime = `${String(hour).padStart(2, '0')}:00`;
-        console.debug('MobileTimeGrid.moveRealTraining payload', { id: event.id, trainingDate, startTime });
         await moveRealTraining({ id: event.id, trainingDate, startTime }).unwrap();
         // optimistic local update: move real training in localEventsMap
         try {
@@ -207,7 +193,6 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
 
   // Handler invoked from EventBottomSheet when user requests an edit/save
   const handleRequestEdit = useCallback(async (event: NormalizedEvent, updates?: Partial<NormalizedEvent>) => {
-  console.log('MobileTimeGrid.handleRequestEdit', { eventId: event?.id, updates });
   if (!event) return;
     displaySnackbar('Сохранение изменений...', 'info');
     try {
@@ -235,7 +220,6 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
         displaySnackbar('Тренировка обновлена', 'success');
       }
     } catch (err: any) {
-      console.error('Failed to update event:', err);
       const msg = err?.data?.detail || err?.message || 'Ошибка при сохранении';
       displaySnackbar(msg, 'error');
     }
@@ -261,7 +245,6 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
         }
       }
     } catch (err: any) {
-      console.error('Failed to delete event:', err);
       const msg = err?.data?.detail || err?.message || 'Ошибка при удалении';
       displaySnackbar(msg, 'error');
     }
@@ -333,18 +316,6 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
               return ev;
             });
           }
-          // Debug: log what will be rendered for this hour (IDs and statuses)
-          try {
-            console.log('MobileTimeGrid.renderHour', {
-              activeDayKey,
-              hour,
-              rawDayEvents: dayEvents.map(d => ({ id: d.id, title: d.title, status: (d as any).raw?.status || (d as any).status })),
-              updatedDayEvents: updatedDayEvents.map(d => ({ id: d.id, title: d.title, status: (d as any).raw?.status || (d as any).status })),
-            });
-          } catch (e) {
-            // ignore
-          }
-
           return (
             <MobileTimeRow
               key={hour}
