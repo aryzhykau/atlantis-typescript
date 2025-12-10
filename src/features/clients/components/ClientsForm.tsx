@@ -111,7 +111,7 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
                     email: values.email,
                     phone_country_code: phoneInfo?.countryCallingCode || '',
                     phone_number: phoneInfo?.nationalNumber || '',
-                    date_of_birth: clientDateOfBirth || '',
+                    date_of_birth: clientDateOfBirth || null,
                     whatsapp_country_code: whatsappInfo?.countryCallingCode,
                     whatsapp_number: whatsappInfo?.nationalNumber,
                     is_student: values.is_student,
@@ -200,7 +200,7 @@ export function ClientsForm({initialValues = defaultValues, isEdit = false, clie
                             <Grid item xs={12} sm={6}>
                                 <FormikDatePicker 
                                     name="date_of_birth" 
-                                    label="Дата рождения" 
+                                    label="Дата рождения (необязательно)" 
                                     views={['year', 'month', 'day']}
                                 />
                             </Grid>

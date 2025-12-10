@@ -241,7 +241,7 @@ export const clientSchemas = {
   create: Yup.object({
     first_name: commonValidations.shortName,
     last_name: commonValidations.shortName,
-    date_of_birth: Yup.date().nullable().required('Дата рождения обязательна'),
+    date_of_birth: Yup.date().nullable(),
     email: commonValidations.email,
     phone: commonValidations.phone,
     gender: Yup.string()
@@ -262,7 +262,7 @@ export const clientSchemas = {
   update: Yup.object({
     first_name: commonValidations.shortName,
     last_name: commonValidations.shortName,
-    date_of_birth: Yup.date().nullable().required('Дата рождения обязательна'),
+    date_of_birth: Yup.date().nullable(),
     email: commonValidations.email,
     phone: commonValidations.phone,
     gender: Yup.string()

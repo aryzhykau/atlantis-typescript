@@ -58,7 +58,7 @@ export interface IClientUserFormValues {
 export interface IClientCreatePayload {
     first_name: string;
     last_name: string;
-    date_of_birth: string; // Формат 'YYYY-MM-DD'
+    date_of_birth: string | null; // Формат 'YYYY-MM-DD' или null
     is_student?: boolean; // По умолчанию false в openapi
     email: string;
     phone_country_code: string;
