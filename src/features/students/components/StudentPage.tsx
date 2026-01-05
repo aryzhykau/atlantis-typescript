@@ -9,7 +9,8 @@ import {
     Button, 
     alpha,
     Tabs,
-    Tab
+    Tab,
+    Tooltip
 } from '@mui/material';
 import { MiniSpringLoader } from '../../../components/loading/MiniSpringLoader';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -166,7 +167,9 @@ export function StudentPage() {
             refetchStudentSubscriptions();
             handleCloseAddSubscriptionModal();
         } catch (error) {
-            displaySnackbar('Ошибка при добавлении абонемента', 'error');
+            const maybeError = error as { data?: { detail?: string } };
+            const errorDetail = maybeError?.data?.detail || 'Ошибка при добавлении абонемента';
+            displaySnackbar(errorDetail, 'error');
             console.error("Ошибка добавления абонемента:", error);
         }
     };
@@ -223,6 +226,9 @@ export function StudentPage() {
 
     // Статистика студента
     const activeSubscriptions = enrichedStudentSubscriptions.filter(sub => sub.status === 'ACTIVE');
+    const hasActiveOrFrozenSubscription = enrichedStudentSubscriptions.some(
+        (sub) => sub.status === 'ACTIVE' || sub.status === 'FROZEN'
+    );
     const totalSessions = enrichedStudentSubscriptions
         .filter(sub => sub.status === 'ACTIVE') // Считаем только активные сессии
         .reduce((sum, sub) => sum + (sub.sessions_left || 0), 0);
@@ -271,23 +277,30 @@ export function StudentPage() {
                             </Box>
                         </Box>
                         <Box sx={{ display: 'flex', gap: 2 }}>
-                            <Button 
-                                variant="contained" 
-                                onClick={handleOpenAddSubscriptionModal}
-                                disabled={isLoadingAllBaseSubscriptions || !allBaseSubscriptionsData?.items?.length}
-                                sx={{ 
-                                    background: 'white',
-                                    color: theme.palette.primary.main,
-                                    fontWeight: 600,
-                                    textTransform: 'none',
-                                    px: 3,
-                                    '&:hover': {
-                                        background: alpha('#ffffff', 0.9),
-                                    }
-                                }}
+                            <Tooltip
+                                title={hasActiveOrFrozenSubscription ? 'У ученика уже есть активный или замороженный абонемент' : ''}
+                                disableHoverListener={!hasActiveOrFrozenSubscription}
                             >
-                                Добавить абонемент
-                            </Button>
+                                <span>
+                                    <Button 
+                                        variant="contained" 
+                                        onClick={handleOpenAddSubscriptionModal}
+                                        disabled={hasActiveOrFrozenSubscription || isLoadingAllBaseSubscriptions || !allBaseSubscriptionsData?.items?.length}
+                                        sx={{ 
+                                            background: 'white',
+                                            color: theme.palette.primary.main,
+                                            fontWeight: 600,
+                                            textTransform: 'none',
+                                            px: 3,
+                                            '&:hover': {
+                                                background: alpha('#ffffff', 0.9),
+                                            }
+                                        }}
+                                    >
+                                        Добавить абонемент
+                                    </Button>
+                                </span>
+                            </Tooltip>
                             <IconButton 
                                 onClick={handleOpenEditModal} 
                                 disabled={!student || isLoadingStudent}
