@@ -225,12 +225,12 @@ export function StudentPage() {
     }
 
     // Статистика студента
-    const activeSubscriptions = enrichedStudentSubscriptions.filter(sub => sub.status === 'ACTIVE');
+    const activeSubscriptions = enrichedStudentSubscriptions.filter(sub => sub.status === 'active');
     const hasActiveOrFrozenSubscription = enrichedStudentSubscriptions.some(
-        (sub) => sub.status === 'ACTIVE' || sub.status === 'FROZEN'
+        (sub) => sub.status === 'active' || sub.status === 'frozen'
     );
     const totalSessions = enrichedStudentSubscriptions
-        .filter(sub => sub.status === 'ACTIVE') // Считаем только активные сессии
+        .filter(sub => sub.status === 'active') // Считаем только активные сессии
         .reduce((sum, sub) => sum + (sub.sessions_left || 0), 0);
 
     return (
