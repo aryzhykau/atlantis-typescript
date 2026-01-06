@@ -13,8 +13,6 @@ export function useAuth() {
     const dispatch = useDispatch();
     const [authenticateUser, { isLoading, isError, data }] = useAuthenticateUserMutation();
 
-
-
     // Логика Google авторизации, преобразующая токен Google в серверный
     const googleLogin = useGoogleLogin({
         onSuccess: (response) => {
@@ -22,8 +20,6 @@ export function useAuth() {
             authenticateUser(googleToken)// Отправляем Google токен на сервер для валидации
         },
     });
-
-
 
     // Обновляем токен после валидации на сервере
     useEffect(() => {
@@ -41,7 +37,6 @@ export function useAuth() {
     // invalidate current user cache so UI updates immediately after logout
     try { dispatch(baseApi.util.invalidateTags(['User'] as any)); } catch (e) { /* noop */ }
     }, []);
-
 
     return {
         accessToken,

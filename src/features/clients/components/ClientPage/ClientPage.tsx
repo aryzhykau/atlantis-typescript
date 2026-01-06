@@ -3,7 +3,6 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useGetClientQuery } from "../../../../store/apis/clientsApi";
 import { useSnackbar } from "../../../../hooks/useSnackBar";
@@ -14,7 +13,6 @@ import { useClients } from "../../hooks/clientManagementHooks";
 import { ClientInfoCard } from "./ClientInfoCard";
 import { FinancialInfoCard } from "./FinancialInfoCard";
 import { StudentsDataCard } from "./StudentsDataCard";
-
 import { ClientInvoicesDataCard } from "./ClientInvoicesDataCard";
 import { useGetClientInvoicesQuery } from "../../../../store/apis/invoices";
 import { InvoiceStatus } from "../../../invoices/models/invoice";
@@ -27,19 +25,13 @@ import { IClientUserFormValues } from "../../models/client";
 import dayjs, { Dayjs } from "dayjs";
 import { useGradients } from "../../../trainer-mobile/hooks/useGradients";
 import { useTheme } from "@mui/material";
-
-// Иконки для статистики
 import PeopleIcon from '@mui/icons-material/People';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import PaymentIcon from '@mui/icons-material/Payment';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-
-// Imports for StudentForm
 import { StudentForm } from "../../../students/components/StudentForm";
 import { IStudentCreatePayload, IStudentUpdatePayload } from "../../../students/models/student.ts";
 import { useCreateStudentMutation } from "../../../../store/apis/studentsApi";
-
-// Новые импорты для абонементов
 import { useGetSubscriptionsQuery, useLazyGetStudentSubscriptionsQuery } from "../../../../store/apis/subscriptionsApi";
 import { IStudentSubscriptionResponse, IStudentSubscriptionView } from "../../../subscriptions/models/subscription";
 import { ClientStudentSubscriptionsTable } from "./ClientStudentSubscriptionsTable";

@@ -1,37 +1,21 @@
 import React, { useState } from 'react';
-import { 
-    Paper, 
-    Typography, 
-    Box, 
-    Chip, 
-    CircularProgress, 
-    Button, 
-    Switch,
-    alpha,
-    Tooltip
-} from '@mui/material';
+import { Paper, Box, Chip, CircularProgress, Button, Switch, alpha, Tooltip} from '@mui/material';
 import { IStudentSubscriptionView, IStudentSubscriptionFreezePayload, IStudentSubscriptionAutoRenewalUpdatePayload } from '../../subscriptions/models/subscription';
 import dayjs, { Dayjs } from 'dayjs';
-import { 
-    useFreezeStudentSubscriptionMutation, 
-    useUnfreezeStudentSubscriptionMutation,
-    useUpdateStudentSubscriptionAutoRenewalMutation 
-} from '../../../store/apis/subscriptionsApi';
+import { useFreezeStudentSubscriptionMutation, useUnfreezeStudentSubscriptionMutation, useUpdateStudentSubscriptionAutoRenewalMutation } from '../../../store/apis/subscriptionsApi';
 import { useSnackbar } from '../../../hooks/useSnackBar';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import { useTheme } from '@mui/material';
 import { FreezeSubscriptionForm } from './FreezeSubscriptionForm';
-
-// Иконки
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
-// import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
-// import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import PaymentIcon from '@mui/icons-material/Payment';
-import CardMembershipIcon from '@mui/icons-material/CardMembership';
+import { StudentInfoItem } from './studentsPage/studentSubscriptions/StudentInfoItem';
+import { SubscriptionCardHeader } from './studentsPage/studentSubscriptions/SubscriptionCardHeader';
+import { SubscriptionCardST } from '../styles/styles';
 
 interface StudentActiveSubscriptionCardProps {
     subscriptions: IStudentSubscriptionView[];
@@ -39,92 +23,6 @@ interface StudentActiveSubscriptionCardProps {
     studentId: number;
     onSubscriptionUpdate?: () => void;
 }
-
-interface InfoItemProps {
-    icon: React.ReactNode;
-    label: string;
-    value: React.ReactNode;
-    color?: 'primary' | 'success' | 'warning' | 'info';
-    children?: React.ReactNode;
-}
-
-const InfoItem: React.FC<InfoItemProps> = ({ icon, label, value, color = 'primary', children }) => {
-    const theme = useTheme();
-    const gradients = useGradients();
-    
-    return (
-        <Paper
-            elevation={0}
-            sx={{
-                p: 2,
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                background: theme.palette.background.paper,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                    boxShadow: theme.shadows[4],
-                    borderColor: alpha(theme.palette[color].main, 0.3),
-                    background: alpha(theme.palette[color].main, 0.02),
-                }
-            }}
-        >
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Box
-                    sx={{
-                        p: 1,
-                        borderRadius: 2,
-                        background: gradients[color],
-                        color: 'white',
-                        mr: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minWidth: 40,
-                        height: 40,
-                    }}
-                >
-                    {icon}
-                </Box>
-                <Typography 
-                    variant="caption" 
-                    sx={{ 
-                        color: 'text.secondary',
-                        fontWeight: 500,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5
-                    }}
-                >
-                    {label}
-                </Typography>
-            </Box>
-            <Box sx={{ pl: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                    {typeof value === 'string' ? (
-                        <Typography 
-                            variant="body1" 
-                            sx={{ 
-                                fontWeight: 500,
-                                color: value === 'Не указан' || value === 'Не указана' 
-                                    ? 'text.secondary' 
-                                    : 'text.primary'
-                            }}
-                        >
-                            {value}
-                        </Typography>
-                    ) : (
-                        value
-                    )}
-                </Box>
-                {children && (
-                    <Box sx={{ ml: 2 }}>
-                        {children}
-                    </Box>
-                )}
-            </Box>
-        </Paper>
-    );
-};
 
 export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCardProps> = ({ subscriptions, isLoading, studentId, onSubscriptionUpdate }) => {
     const { displaySnackbar } = useSnackbar();
@@ -136,7 +34,6 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
     );
 
     const isFrozen = !!(activeSubscription?.freeze_start_date && activeSubscription?.freeze_end_date);
-
     const [isFreezeModalOpen, setIsFreezeModalOpen] = useState(false);
     
     const [freezeSubscription, { isLoading: isFreezing }] = useFreezeStudentSubscriptionMutation();
@@ -206,177 +103,71 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
     ? 'активна до отмены'
     : '...';
 
-    const getStatusColor = () => {
-        if (!activeSubscription) return 'default';
-        const status = activeSubscription.status?.toLowerCase();
-        if (status === 'active') return 'success';
-        if (status === 'frozen') return 'info';
-        if (status === 'expired') return 'error';
-        return 'default';
-    };
-
-    const getStatusGradient = () => {
-        const color = getStatusColor();
-        if (color === 'default') return gradients.primary;
-        if (color === 'error') return gradients.warning; // Используем warning для error
-        return gradients[color];
-    };
-
     return (
-        <Paper
-            elevation={0}
-            sx={{
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                overflow: 'hidden',
-                background: theme.palette.background.paper,
-            }}
-        >
-            {/* Градиентный заголовок */}
-            <Box
-                sx={{
-                    p: 3,
-                    background: gradients.primary,
-                    color: 'white',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0, left: 0, right: 0, bottom: 0,
-                        background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-                        opacity: 0.3,
-                    }
-                }}
-            >
-                <Box sx={{ position: 'relative', zIndex: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <CardMembershipIcon sx={{ fontSize: 32, mr: 2 }} />
-                            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                                Активный абонемент
-                            </Typography>
-                        </Box>
-                    </Box>
-                    
-                    {isLoading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 2 }}>
-                            <CircularProgress sx={{ color: 'white' }} />
-                        </Box>
-                    ) : activeSubscription ? (
-                        <Box>
-                            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, textAlign: 'center' }}>
-                                {activeSubscription.subscription_name}
-                            </Typography>
-                            
-                            {/* Статус абонемента */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                                <Chip
-                                    label={
-                                        activeSubscription.status?.toLowerCase() === 'active' ? 'Активен' :
-                                        activeSubscription.status?.toLowerCase() === 'frozen' ? 'Заморожен' :
-                                        activeSubscription.status?.toLowerCase() === 'expired' ? 'Истёк' :
-                                        'Неизвестен'
-                                    }
-                                    color={getStatusColor()}
-                                    size="small"
-                                    sx={{
-                                        background: getStatusGradient(),
-                                        color: 'white',
-                                        fontWeight: 600,
-                                        '& .MuiChip-label': {
-                                            color: 'white',
-                                        }
-                                    }}
-                                />
-                            </Box>
-                        </Box>
-                    ) : (
-                        <Typography variant="body1" sx={{ textAlign: 'center', opacity: 0.9 }}>
-                            Нет активного абонемента
-                        </Typography>
-                    )}
-                </Box>
-            </Box>
-
-            {/* Контент карточки */}
+        <Paper elevation={0} sx={SubscriptionCardST(theme)}>
+            <SubscriptionCardHeader isLoading={isLoading} activeSubscription={activeSubscription}/>
             {!isLoading && activeSubscription && (
                 <Box sx={{ p: 3 }}>
-                    <Box sx={{ mb: 3 }}>
-                        <InfoItem
-                            icon={<EventAvailableIcon />}
-                            label="Дата начала"
-                            value={dayjs(activeSubscription.start_date).format('DD.MM.YYYY HH:mm')}
-                            color="success"
-                        />
-                    </Box>
+                    <StudentInfoItem
+                        icon={<EventAvailableIcon />}
+                        label="Дата начала"
+                        value={dayjs(activeSubscription.start_date).format('DD.MM.YYYY HH:mm')}
+                        color="success"
+                    />
+                    
+                    <StudentInfoItem
+                        icon={<EventBusyIcon />}
+                        label= "Дата окончания"
+                        value={dayjs(activeSubscription.end_date).format('DD.MM.YYYY HH:mm')}
+                        color="warning"
+                    />
+                   
+                    <StudentInfoItem
+                        icon={<FitnessCenterIcon />}
+                        label="Осталось занятий"
+                        value={activeSubscription.sessions_left}
+                        color="primary"
+                    />
+                    {activeSubscription.transferred_sessions > 0 && (
+                        
+                    <StudentInfoItem
+                        icon={<FitnessCenterIcon />}
+                        label="Перенесенные занятия"
+                        value={activeSubscription.transferred_sessions}
+                        color="info"
+                    />)}
 
-                    <Box sx={{ mb: 3 }}>
-                        <InfoItem
-                            icon={<EventBusyIcon />}
-                            label="Дата окончания"
-                            value={dayjs(activeSubscription.end_date).format('DD.MM.YYYY HH:mm')}
+                    <StudentInfoItem
+                        icon={<AutorenewIcon />}
+                        label="Автопродление"
+                        value={
+                            <Chip 
+                                label={activeSubscription.is_auto_renew ? 'Включено' : 'Выключено'} 
+                                color={activeSubscription.is_auto_renew ? 'success' : 'default'} 
+                                size="small" 
+                            />
+                        }
+                        color="info"
+                    >
+                        <Switch 
+                            checked={activeSubscription.is_auto_renew}
+                            onChange={handleToggleAutoRenewal}
+                            disabled={isUpdatingAutoRenewal || isLoading}
+                            size="small"
+                            color={activeSubscription.is_auto_renew ? 'success' : 'default'}
+                        />
+                    </StudentInfoItem>
+                
+                    {activeSubscription.is_auto_renew && activeSubscription.end_date && (
+                        <StudentInfoItem
+                            icon={<PaymentIcon />}
+                            label="Следующий платеж"
+                            value={dayjs(activeSubscription.end_date).add(1, 'day').format('DD.MM.YYYY')}
                             color="warning"
                         />
-                    </Box>
-
-                    <Box sx={{ mb: 3 }}>
-                        <InfoItem
-                            icon={<FitnessCenterIcon />}
-                            label="Осталось занятий"
-                            value={activeSubscription.sessions_left}
-                            color="primary"
-                        />
-                    </Box>
-
-                    {activeSubscription.transferred_sessions > 0 && (
-                        <Box sx={{ mb: 3 }}>
-                            <InfoItem
-                                icon={<FitnessCenterIcon />}
-                                label="Перенесенные занятия"
-                                value={activeSubscription.transferred_sessions}
-                                color="info"
-                            />
-                        </Box>
                     )}
 
-                    <Box sx={{ mb: 3 }}>
-                        <InfoItem
-                            icon={<AutorenewIcon />}
-                            label="Автопродление"
-                            value={
-                                <Chip 
-                                    label={activeSubscription.is_auto_renew ? 'Включено' : 'Выключено'} 
-                                    color={activeSubscription.is_auto_renew ? 'success' : 'default'} 
-                                    size="small" 
-                                />
-                            }
-                            color="info"
-                        >
-                            <Switch 
-                                checked={activeSubscription.is_auto_renew}
-                                onChange={handleToggleAutoRenewal}
-                                disabled={isUpdatingAutoRenewal || isLoading}
-                                size="small"
-                                color={activeSubscription.is_auto_renew ? 'success' : 'default'}
-                            />
-                        </InfoItem>
-                    </Box>
-
-                    {activeSubscription.is_auto_renew && activeSubscription.end_date && (
-                        <Box sx={{ mb: 3 }}>
-                            <InfoItem
-                                icon={<PaymentIcon />}
-                                label="Следующий платеж"
-                                value={dayjs(activeSubscription.end_date).add(1, 'day').format('DD.MM.YYYY')}
-                                color="warning"
-                            />
-                        </Box>
-                    )}
-
-                    <Box sx={{ mb: 3 }}>
-                        <InfoItem
+                        <StudentInfoItem
                             icon={<AcUnitIcon />}
                             label="Статус заморозки"
                             value={
@@ -390,8 +181,7 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
                             }
                             color="info"
                         />
-                    </Box>
-
+                   
                     {/* Кнопки управления */}
                     <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
                         <Tooltip title={isFrozen ? 'Разморозить абонемент' : 'Заморозить абонемент'}>
@@ -416,8 +206,6 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
                     </Box>
                 </Box>
             )}
-
-            {/* Модальное окно заморозки */}
             <FreezeSubscriptionForm
                 open={isFreezeModalOpen}
                 onClose={handleCloseFreezeModal}
