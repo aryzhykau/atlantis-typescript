@@ -1,20 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { 
-    Box, 
-    Typography, 
-    Grid, 
-    Paper, 
-    IconButton, 
-    Button, 
-    alpha,
-    Tabs,
-    Tab,
-    Tooltip
-} from '@mui/material';
+import { useParams} from 'react-router-dom';
+import { Box, Typography, Grid, Paper, Tabs, Tab} from '@mui/material';
 import { MiniSpringLoader } from '../../../components/loading/MiniSpringLoader';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import EditIcon from '@mui/icons-material/Edit';
 import { useGetStudentByIdQuery, useUpdateStudentMutation } from '../../../store/apis/studentsApi';
 import { useGetStudentSubscriptionsQuery, useGetSubscriptionsQuery, useAddSubscriptionToStudentMutation } from '../../../store/apis/subscriptionsApi';
 import { IStudentUpdatePayload } from '../models/student';
@@ -38,10 +25,8 @@ import { StudentForm } from './StudentForm';
 import { AddSubscriptionForm } from './AddSubscriptionForm';
 
 // Иконки для статистики
-import SchoolIcon from '@mui/icons-material/School';
-import CardMembershipIcon from '@mui/icons-material/CardMembership';
-import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import { StudentHeader } from './StudentHeader';
+import { StudentStatistics } from './StudentStatistics';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -71,7 +56,7 @@ function TabPanel(props: TabPanelProps) {
 
 export function StudentPage() {
     const { studentId } = useParams<{ studentId: string }>();
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const { displaySnackbar } = useSnackbar();
     const theme = useTheme();
     const gradients = useGradients();
@@ -110,9 +95,7 @@ export function StudentPage() {
     } = useGetSubscriptionsQuery(undefined, {skip: !student}); // Передаем undefined как первый аргумент и skip во втором
 
     const [addSubscriptionToStudent, { isLoading: isAddingSubscription }] = useAddSubscriptionToStudentMutation();
-
     const [enrichedStudentSubscriptions, setEnrichedStudentSubscriptions] = useState<IStudentSubscriptionView[]>([]);
-
     const [updateStudent, { isLoading: isUpdatingStudent }] = useUpdateStudentMutation();
 
     useEffect(() => {
@@ -144,11 +127,7 @@ export function StudentPage() {
         }
     }, [student, studentSubscriptionsData, allBaseSubscriptionsData]);
 
-    const handleBackClick = () => {
-        navigate(-1);
-    };
-
-    const handleOpenAddSubscriptionModal = () => {
+    const handleOpenAddSubscriptionModalHandler = () => {
         setIsAddSubscriptionModalOpen(true);
     };
 
@@ -185,7 +164,7 @@ export function StudentPage() {
         refetchStudent(); // Также обновляем данные самого студента, т.к. статус абонемента (FROZEN) может влиять на поле active_subscription_id или другие вычисляемые поля
     };
 
-    const handleOpenEditModal = () => {
+    const handleOpenEditModalHandler = () => {
         setIsEditModalOpen(true);
     };
 
@@ -235,7 +214,6 @@ export function StudentPage() {
 
     return (
         <Box sx={{ maxHeight: '90vh', overflow: "scroll", background: theme.palette.background.default }}>
-            {/* Градиентный заголовок */}
             <Box
                 sx={{
                     borderRadius: 3,
@@ -253,181 +231,20 @@ export function StudentPage() {
                 }}
             >
                 <Box sx={{ position: 'relative', zIndex: 1, p: 3 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <IconButton 
-                                onClick={handleBackClick}
-                                sx={{ 
-                                    color: 'white',
-                                    mr: 2,
-                                    '&:hover': {
-                                        background: alpha('#ffffff', 0.1),
-                                    }
-                                }}
-                            >
-                                <ArrowBackIcon />
-                            </IconButton>
-                            <Box>
-                                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                                    {student.first_name} {student.last_name}
-                                </Typography>
-                                <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                                    Ученик #{student.id} • {calculateAge(student.date_of_birth)} лет
-                                </Typography>
-                            </Box>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 2 }}>
-                            <Tooltip
-                                title={hasActiveOrFrozenSubscription ? 'У ученика уже есть активный или замороженный абонемент' : ''}
-                                disableHoverListener={!hasActiveOrFrozenSubscription}
-                            >
-                                <span>
-                                    <Button 
-                                        variant="contained" 
-                                        onClick={handleOpenAddSubscriptionModal}
-                                        disabled={hasActiveOrFrozenSubscription || isLoadingAllBaseSubscriptions || !allBaseSubscriptionsData?.items?.length}
-                                        sx={{ 
-                                            background: 'white',
-                                            color: theme.palette.primary.main,
-                                            fontWeight: 600,
-                                            textTransform: 'none',
-                                            px: 3,
-                                            '&:hover': {
-                                                background: alpha('#ffffff', 0.9),
-                                            }
-                                        }}
-                                    >
-                                        Добавить абонемент
-                                    </Button>
-                                </span>
-                            </Tooltip>
-                            <IconButton 
-                                onClick={handleOpenEditModal} 
-                                disabled={!student || isLoadingStudent}
-                                sx={{ 
-                                    color: 'white',
-                                    background: alpha('#ffffff', 0.1),
-                                    '&:hover': {
-                                        background: alpha('#ffffff', 0.2),
-                                    }
-                                }}
-                            >
-                                <EditIcon />
-                            </IconButton>
-                        </Box>
-                    </Box>
-
-                    {/* Статистические карточки */}
-                    <Grid container spacing={3} sx={{ mt: 2 }}>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Paper
-                                elevation={0}
-                                sx={{
-                                    p: 2,
-                                    borderRadius: 3,
-                                    border: '1px solid',
-                                    borderColor: alpha('#ffffff', 0.2),
-                                    background: alpha('#ffffff', 0.1),
-                                    backdropFilter: 'blur(10px)',
-                                    textAlign: 'center',
-                                    transition: 'all 0.3s ease',
-                                    '&:hover': {
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: theme.shadows[8],
-                                    }
-                                }}
-                            >
-                                <SchoolIcon sx={{ fontSize: 32, mb: 1, opacity: 0.9 }} />
-                                <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                    {calculateAge(student.date_of_birth)}
-                                </Typography>
-                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                    Возраст
-                                </Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Paper
-                                elevation={0}
-                                sx={{
-                                    p: 2,
-                                    borderRadius: 3,
-                                    border: '1px solid',
-                                    borderColor: alpha('#ffffff', 0.2),
-                                    background: alpha('#ffffff', 0.1),
-                                    backdropFilter: 'blur(10px)',
-                                    textAlign: 'center',
-                                    transition: 'all 0.3s ease',
-                                    '&:hover': {
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: theme.shadows[8],
-                                    }
-                                }}
-                            >
-                                <CardMembershipIcon sx={{ fontSize: 32, mb: 1, opacity: 0.9 }} />
-                                <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                    {activeSubscriptions.length}
-                                </Typography>
-                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                    Активных абонементов
-                                </Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Paper
-                                elevation={0}
-                                sx={{
-                                    p: 2,
-                                    borderRadius: 3,
-                                    border: '1px solid',
-                                    borderColor: alpha('#ffffff', 0.2),
-                                    background: alpha('#ffffff', 0.1),
-                                    backdropFilter: 'blur(10px)',
-                                    textAlign: 'center',
-                                    transition: 'all 0.3s ease',
-                                    '&:hover': {
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: theme.shadows[8],
-                                    }
-                                }}
-                            >
-                                <FitnessCenterIcon sx={{ fontSize: 32, mb: 1, opacity: 0.9 }} />
-                                <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                    {totalSessions}
-                                </Typography>
-                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                    Осталось занятий
-                                </Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
-                            <Paper
-                                elevation={0}
-                                sx={{
-                                    p: 2,
-                                    borderRadius: 3,
-                                    border: '1px solid',
-                                    borderColor: alpha('#ffffff', 0.2),
-                                    background: alpha('#ffffff', 0.1),
-                                    backdropFilter: 'blur(10px)',
-                                    textAlign: 'center',
-                                    transition: 'all 0.3s ease',
-                                    '&:hover': {
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: theme.shadows[8],
-                                    }
-                                }}
-                            >
-                                <EventAvailableIcon sx={{ fontSize: 32, mb: 1, opacity: 0.9 }} />
-                                <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-                                    {enrichedStudentSubscriptions.length}
-                                </Typography>
-                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                    Всего абонементов
-                                </Typography>
-                            </Paper>
-                        </Grid>
-                    </Grid>
+                    <StudentHeader 
+                        handleOpenAddSubscriptionModal={handleOpenAddSubscriptionModalHandler} 
+                        handleOpenEditModal={handleOpenEditModalHandler} 
+                        subscriptionInfo={{hasActiveOrFrozenSubscription, isLoadingAllBaseSubscriptions, allBaseSubscriptionsData}} 
+                        student={student} 
+                        age={calculateAge(student.date_of_birth)}
+                        isLoadingStudent={isLoadingStudent}
+                    />
+                    <StudentStatistics 
+                        age={calculateAge(student.date_of_birth)}
+                        activeSubscriptions={activeSubscriptions.length}
+                        totalSessions={totalSessions}
+                        enrichedStudentSubscriptions={enrichedStudentSubscriptions.length}
+                    />
                 </Box>
             </Box>
 
@@ -513,9 +330,6 @@ export function StudentPage() {
                 subtitle="Обновите информацию об ученике"
                 isEdit={true}
             />
-
-            
-               
             <AddSubscriptionForm 
                 open={isAddSubscriptionModalOpen}
                 studentId={student.id}
@@ -524,8 +338,6 @@ export function StudentPage() {
                 isLoading={isAddingSubscription}
                 onClose={handleCloseAddSubscriptionModal}
             />
-                
-            
         </Box>
     );
 } 
