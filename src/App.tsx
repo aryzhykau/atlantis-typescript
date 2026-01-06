@@ -10,7 +10,7 @@ import {ReactNode} from "react";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import "dayjs/locale/ru";
 import { ClientPage } from "./features/clients/components/ClientPage/ClientPage.tsx";
-import { StudentPage } from './features/students/components/StudentPage.tsx';
+import { StudentPage } from './features/students/components/studentsPage/StudentPage.tsx';
 import { TrainerPage } from './features/trainers/components/TrainerPage';
 import { TrainerMobileApp } from './features/trainer-mobile/components/TrainerMobileApp';
 import { useGetCurrentUserQuery } from './store/apis/userApi';

@@ -1,69 +1,34 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams} from 'react-router-dom';
-import { Box, Typography, Grid, Paper, Tabs, Tab} from '@mui/material';
-import { MiniSpringLoader } from '../../../components/loading/MiniSpringLoader';
-import { useGetStudentByIdQuery, useUpdateStudentMutation } from '../../../store/apis/studentsApi';
-import { useGetStudentSubscriptionsQuery, useGetSubscriptionsQuery, useAddSubscriptionToStudentMutation } from '../../../store/apis/subscriptionsApi';
-import { IStudentUpdatePayload } from '../models/student';
-import { IStudentSubscriptionView, IStudentSubscriptionCreatePayload } from '../../subscriptions/models/subscription';
-import { useSnackbar } from '../../../hooks/useSnackBar';
-import { useGradients } from '../../trainer-mobile/hooks/useGradients';
+import { Box, Typography} from '@mui/material';
+import { MiniSpringLoader } from '../../../../components/loading/MiniSpringLoader';
+import { useGetStudentByIdQuery, useUpdateStudentMutation } from '../../../../store/apis/studentsApi';
+import { useGetStudentSubscriptionsQuery, useGetSubscriptionsQuery, useAddSubscriptionToStudentMutation } from '../../../../store/apis/subscriptionsApi';
+import { IStudentUpdatePayload } from '../../models/student';
+import { IStudentSubscriptionView, IStudentSubscriptionCreatePayload } from '../../../subscriptions/models/subscription';
+import { useSnackbar } from '../../../../hooks/useSnackBar';
 import { useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
-import { studentSchemas } from '../../../utils/validationSchemas';
+import { studentSchemas } from '../../../../utils/validationSchemas';
+import { StudentForm } from '../StudentForm';
+import { AddSubscriptionForm } from '../AddSubscriptionForm';
+import { StudentHeader } from './StudentHeader';
+import { StudentStatistics } from './StudentStatistics';
+import { StudentContent } from './StudentContent';
+import { headerContainerST } from '../../styles/styles';
+import { calculateAge, getTotalSessions } from '../../helpers/helpers';
+import { useGradients } from '../../../trainer-mobile/hooks/useGradients';
 
 dayjs.extend(isBetween);
 
-// Импортируем созданные компоненты
-import { StudentInfoCard } from './StudentInfoCard';
-import { StudentParentInfoCard } from './StudentParentInfoCard';
-import { StudentActiveSubscriptionCard } from './StudentActiveSubscriptionCard';
-import { StudentSubscriptionsTable } from './StudentSubscriptionsTable';
-import { StudentForm } from './StudentForm';
-// Dialog imports intentionally omitted; use StudentForm which provides its own dialog when needed
-import { AddSubscriptionForm } from './AddSubscriptionForm';
-
-// Иконки для статистики
-import { StudentHeader } from './StudentHeader';
-import { StudentStatistics } from './StudentStatistics';
-
-interface TabPanelProps {
-    children?: React.ReactNode;
-    index: number;
-    value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-    const { children, value, index, ...other } = props;
-
-    return (
-        <div
-            role="tabpanel"
-            hidden={value !== index}
-            id={`student-tabpanel-${index}`}
-            aria-labelledby={`student-tab-${index}`}
-            {...other}
-        >
-            {value === index && (
-                <Box sx={{ p: 2 }}>
-                    {children}
-                </Box>
-            )}
-        </div>
-    );
-}
-
 export function StudentPage() {
     const { studentId } = useParams<{ studentId: string }>();
-    // const navigate = useNavigate();
     const { displaySnackbar } = useSnackbar();
     const theme = useTheme();
     const gradients = useGradients();
-
     const [isAddSubscriptionModalOpen, setIsAddSubscriptionModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [tabValue, setTabValue] = useState(0);
 
     const { 
         data: student, 
@@ -75,7 +40,6 @@ export function StudentPage() {
         skip: !studentId,
         refetchOnMountOrArgChange: true,
     });
-
     const { 
         data: studentSubscriptionsData, 
         isLoading: isLoadingStudentSubscriptions, 
@@ -185,14 +149,6 @@ export function StudentPage() {
         }
     };
 
-    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-        setTabValue(newValue);
-    };
-
-    const calculateAge = (dateOfBirth: string): number => {
-        return dayjs().diff(dayjs(dateOfBirth), 'year');
-    };
-
     if (isLoadingStudent || (student && (isLoadingAllBaseSubscriptions || isLoadingStudentSubscriptions && !studentSubscriptionsData))) {
         // Показываем основной лоадер, если грузится студент, 
         // или если студент загружен, но еще грузятся его абонементы или базовые абонементы
@@ -208,28 +164,11 @@ export function StudentPage() {
     const hasActiveOrFrozenSubscription = enrichedStudentSubscriptions.some(
         (sub) => sub.status === 'active' || sub.status === 'frozen'
     );
-    const totalSessions = enrichedStudentSubscriptions
-        .filter(sub => sub.status === 'active') // Считаем только активные сессии
-        .reduce((sum, sub) => sum + (sub.sessions_left || 0), 0);
+    const totalSessions = getTotalSessions(enrichedStudentSubscriptions)
 
     return (
         <Box sx={{ maxHeight: '90vh', overflow: "scroll", background: theme.palette.background.default }}>
-            <Box
-                sx={{
-                    borderRadius: 3,
-                    background: gradients.primary,
-                    color: 'white',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0, left: 0, right: 0, bottom: 0,
-                        background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-                        opacity: 0.3,
-                    }
-                }}
-            >
+            <Box sx={headerContainerST(gradients)}>
                 <Box sx={{ position: 'relative', zIndex: 1, p: 3 }}>
                     <StudentHeader 
                         handleOpenAddSubscriptionModal={handleOpenAddSubscriptionModalHandler} 
@@ -247,73 +186,13 @@ export function StudentPage() {
                     />
                 </Box>
             </Box>
-
-            {/* Контент страницы */}
-            <Box sx={{ p: 3 }}>
-                {/* Табы */}
-                <Paper
-                    elevation={0}
-                    sx={{
-                        borderRadius: 3,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        overflow: 'hidden',
-                        mb: 3,
-                    }}
-                >
-                    <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                        <Tabs 
-                            value={tabValue} 
-                            onChange={handleTabChange}
-                            sx={{
-                                '& .MuiTab-root': {
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    fontSize: '1rem',
-                                },
-                                '& .Mui-selected': {
-                                    color: theme.palette.primary.main,
-                                },
-                                '& .MuiTabs-indicator': {
-                                    background: gradients.primary,
-                                    height: 3,
-                                }
-                            }}
-                        >
-                            <Tab label="Информация" />
-                            <Tab label="Абонементы" />
-                        </Tabs>
-                    </Box>
-
-                    <TabPanel value={tabValue} index={0}>
-                        <Grid container spacing={3}>
-                            <Grid item xs={12} md={6} lg={4}>
-                                <StudentInfoCard student={student} onStatusHasChanged={handleStudentStatusHasChanged} />
-                            </Grid>
-                            <Grid item xs={12} md={6} lg={4}>
-                                <StudentParentInfoCard parentData={student.client} />
-                            </Grid>
-                            <Grid item xs={12} md={12} lg={4}>
-                                <StudentActiveSubscriptionCard 
-                                    subscriptions={enrichedStudentSubscriptions}
-                                    isLoading={isLoadingStudentSubscriptions}
-                                    studentId={student.id}
-                                    onSubscriptionUpdate={handleSubscriptionDataUpdate}
-                                />
-                            </Grid>
-                        </Grid>
-                    </TabPanel>
-
-                    <TabPanel value={tabValue} index={1}>
-                        <StudentSubscriptionsTable 
-                            subscriptions={enrichedStudentSubscriptions}
-                            isLoading={isLoadingStudentSubscriptions}
-                        />
-                    </TabPanel>
-                </Paper>
-            </Box>
-
-            {/* Модальные окна */}
+            <StudentContent 
+                handleStudentStatusHasChanged={handleStudentStatusHasChanged} 
+                handleSubscriptionDataUpdate={handleSubscriptionDataUpdate}
+                enrichedStudentSubscriptions={enrichedStudentSubscriptions}
+                isLoadingStudentSubscriptions={isLoadingStudentSubscriptions}
+                student={student}
+            />
             <StudentForm 
                 open={isEditModalOpen} 
                 onClose={handleCloseEditModal}

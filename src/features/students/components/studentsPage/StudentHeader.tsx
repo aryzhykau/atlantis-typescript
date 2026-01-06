@@ -1,10 +1,11 @@
-import { Box, Button, IconButton, Tooltip, Typography, alpha } from "@mui/material";
+import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import { useNavigate } from "react-router-dom";
-import { ISubscriptionListResponse } from "../../subscriptions/models/subscription";
-import { IStudent } from "../models/student";
+import { ISubscriptionListResponse } from "../../../subscriptions/models/subscription";
+import { IStudent } from "../../models/student";
 import { useTheme } from '@mui/material';
+import { EditButtonST, GoBackButtonST, HeaderButtonST } from "../../styles/styles";
 
 export type StudentHeaderProps = {
     handleOpenAddSubscriptionModal: () => void;
@@ -23,25 +24,14 @@ type SubscriptionInfo = {
 
 export const StudentHeader = ({handleOpenAddSubscriptionModal, handleOpenEditModal, subscriptionInfo, student, age, isLoadingStudent }: StudentHeaderProps) =>  {
     const navigate = useNavigate();
-    const handleBackClick = () => {
-        navigate(-1);
-    };
+    const handleBackClick = () => navigate(-1);
     const {hasActiveOrFrozenSubscription, isLoadingAllBaseSubscriptions, allBaseSubscriptionsData} = subscriptionInfo;
     const theme = useTheme();
     
     return (
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <IconButton 
-                    onClick={handleBackClick}
-                    sx={{ 
-                        color: 'white',
-                        mr: 2,
-                        '&:hover': {
-                            background: alpha('#ffffff', 0.1),
-                        }
-                    }}
-                >
+                <IconButton onClick={handleBackClick} sx={GoBackButtonST}>
                     <ArrowBackIcon />
                 </IconButton>
                 <Box>
@@ -63,32 +53,13 @@ export const StudentHeader = ({handleOpenAddSubscriptionModal, handleOpenEditMod
                             variant="contained" 
                             onClick={handleOpenAddSubscriptionModal}
                             disabled={hasActiveOrFrozenSubscription || isLoadingAllBaseSubscriptions || !allBaseSubscriptionsData?.items?.length}
-                            sx={{ 
-                                background: 'white',
-                                color: theme.palette.primary.main,
-                                fontWeight: 600,
-                                textTransform: 'none',
-                                px: 3,
-                                '&:hover': {
-                                    background: alpha('#ffffff', 0.9),
-                                }
-                            }}
+                            sx={HeaderButtonST(theme)}
                         >
                             Добавить абонемент
                         </Button>
                     </span>
                 </Tooltip>
-                <IconButton 
-                    onClick={handleOpenEditModal} 
-                    disabled={!student || isLoadingStudent}
-                    sx={{ 
-                        color: 'white',
-                        background: alpha('#ffffff', 0.1),
-                        '&:hover': {
-                            background: alpha('#ffffff', 0.2),
-                        }
-                    }}
-                >
+                <IconButton onClick={handleOpenEditModal} disabled={!student || isLoadingStudent} sx={EditButtonST}>
                     <EditIcon />
                 </IconButton>
             </Box>

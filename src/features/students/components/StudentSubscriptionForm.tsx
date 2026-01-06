@@ -1,19 +1,14 @@
 import { Formik, Form } from "formik";
 import { Box, Typography, Divider, MenuItem } from "@mui/material";
-
 import { useSnackbar } from "../../../hooks/useSnackBar.tsx";
 import { useSubscriptions } from "../../subscriptions/hooks/useSubscriptions.ts";
 import { useGetStudentsQuery } from "../../../store/apis/studentsApi.ts";
 import { IStudent } from "../models/student.ts";
 import { useEffect } from "react";
 import { IStudentSubscriptionCreatePayload } from "../../subscriptions/models/subscription.ts";
-
 import { FormikSelectField } from "../../../components/forms/fields/FormikSelectField";
 import { FormActions } from "../../../components/forms/layout/FormActions";
 import { subscriptionSchemas } from "../../../utils/validationSchemas";
-
-
-
 
 const defaultValues = {
     subscription_id: 0,
@@ -29,17 +24,12 @@ export function StudentSubscriptionForm({student, onClose }: ClientsFormProps) {
         console.log(student)
     },[])
 
-
-
     const {addSubscriptionToStudent} = useSubscriptions();
     const {refetch} = useGetStudentsQuery();
     const {displaySnackbar} = useSnackbar();
     const { subscriptions } = useSubscriptions();
 
-
     const validationSchema = subscriptionSchemas.addToStudent;
-
-
     const handleSubmit = async (values: typeof defaultValues, {resetForm}: {resetForm: () => void}) => {
         try {
             console.log(student.id)
@@ -66,20 +56,11 @@ export function StudentSubscriptionForm({student, onClose }: ClientsFormProps) {
 
             displaySnackbar(errorMessage, "error");
         }
-
-
-
     }
-
-
 
     return (
         <>
-            <Formik
-                initialValues={defaultValues}
-                validationSchema={validationSchema}
-                onSubmit={handleSubmit}
-            >
+            <Formik initialValues={defaultValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
                 {({isSubmitting}) => (
                     <Form>
                         <Box
@@ -94,11 +75,7 @@ export function StudentSubscriptionForm({student, onClose }: ClientsFormProps) {
                             </Typography>
                             <Divider sx={{ my: 2 }} />
 
-                            <FormikSelectField
-                                name="subscription_id"
-                                label="Абонемент"
-                                required
-                            >
+                            <FormikSelectField name="subscription_id" label="Абонемент" required>
                                 {subscriptions.map(subscription => (
                                     <MenuItem key={subscription.id} value={subscription.id}>
                                         {subscription.name}
