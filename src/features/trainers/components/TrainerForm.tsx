@@ -17,6 +17,7 @@ import { ITrainerCreatePayload, ITrainerUpdatePayload, ITrainerResponse } from "
 import { parsePhoneNumber } from 'libphonenumber-js';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import { useIsOwner } from '../../../hooks/usePermissions';
 
 dayjs.extend(utc);
 
@@ -72,6 +73,7 @@ interface TrainerFormProps {
 
 export function TrainerForm({ title, initialValues, onSubmit, isEdit, onClose, isLoading }: TrainerFormProps) {
     const formInitialValues = React.useMemo(() => getInitialValues(initialValues), [initialValues]);
+    const isOwner = useIsOwner();
 
     // Form submission hook
     const { submit, isLoading: isSubmissionLoading } = useFormSubmission({
@@ -89,6 +91,13 @@ export function TrainerForm({ title, initialValues, onSubmit, isEdit, onClose, i
                 phone_number: phoneInfo?.nationalNumber || null,
             };
             delete (payload as any).phone;
+
+            // Если не владелец, удаляем поля зарплаты из payload, чтобы не перезаписать их (при редактировании)
+            // или просто не отправлять (при создании)
+            if (!isOwner) {
+                delete (payload as any).salary;
+                delete (payload as any).is_fixed_salary;
+            }
 
             if (isEdit) {
                 onSubmit(payload as ITrainerUpdatePayload, initialValues?.id);
@@ -180,29 +189,33 @@ export function TrainerForm({ title, initialValues, onSubmit, isEdit, onClose, i
                                 />
                             </Grid>
 
-                            {/* --- Зарплата --- */}
-                            <Grid item xs={12}>
-                                <Typography variant="h6" sx={{ mt: 2, mb: 2, fontWeight: 600 }}>
-                                    Зарплата
-                                </Typography>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <FormikSwitch
-                                    name="is_fixed_salary"
-                                    label="Фиксированная месячная зарплата"
-                                />
-                            </Grid>
-                            {values.is_fixed_salary && (
-                                <Grid item xs={12} sm={6}>
-                                    <FormikNumberField
-                                        name="salary"
-                                        label="Месячная зарплата"
-                                        suffix="€"
-                                        min={0}
-                                        decimalPlaces={2}
-                                        fullWidth
-                                    />
-                                </Grid>
+                            {/* --- Зарплата (Только для владельца) --- */}
+                            {isOwner && (
+                                <>
+                                    <Grid item xs={12}>
+                                        <Typography variant="h6" sx={{ mt: 2, mb: 2, fontWeight: 600 }}>
+                                            Зарплата
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <FormikSwitch
+                                            name="is_fixed_salary"
+                                            label="Фиксированная месячная зарплата"
+                                        />
+                                    </Grid>
+                                    {values.is_fixed_salary && (
+                                        <Grid item xs={12} sm={6}>
+                                            <FormikNumberField
+                                                name="salary"
+                                                label="Месячная зарплата"
+                                                suffix="€"
+                                                min={0}
+                                                decimalPlaces={2}
+                                                fullWidth
+                                            />
+                                        </Grid>
+                                    )}
+                                </>
                             )}
 
                             <Grid item xs={12}>

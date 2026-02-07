@@ -29,8 +29,8 @@ export interface ITrainerResponse {
     phone_number: string;
     role: UserRole;
     is_authenticated_with_google: boolean;
-    salary: number | null;
-    is_fixed_salary: boolean | null;
+    salary: number | null; // Null if not set OR if user has no permission (only OWNER sees this)
+    is_fixed_salary: boolean | null; // Null if not set OR if user has no permission (only OWNER sees this)
     is_active: boolean | null;
     deactivation_date: string | null; // Формат 'YYYY-MM-DDTHH:mm:ss.sssZ' или аналогичный ISO date-time
 }

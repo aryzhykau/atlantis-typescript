@@ -34,7 +34,7 @@ import {
   useCreateExpenseMutation,
   useUpdateExpenseMutation,
   useDeleteExpenseMutation,
-} from '../../../store/apis/trainersApi';
+} from '../../../store/apis/expensesApi';
 import { useGetCurrentUserQuery } from '../../../store/apis/userApi';
 import dayjs from 'dayjs';
 import { Expense } from '../models/index';
