@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Formik, Form } from 'formik';
 import { Box, Typography, IconButton, MenuItem } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { IExpense, IExpenseCreate, IExpenseType } from '../models';
+import { IExpense, IExpenseCreate } from '../models';
 import { useCreateExpenseMutation, useUpdateExpenseMutation, useGetExpenseTypesQuery } from '../../../store/apis/expensesApi';
 import { useGetCurrentUserQuery } from '../../../store/apis/userApi';
 import { useSnackbar } from "../../../hooks/useSnackBar";
@@ -84,7 +84,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({initialValues = {}, onClose, i
             </Box>
 
             <Formik
-                initialValues={formInitialValues}
+                initialValues={formInitialValues as any}
                 validationSchema={creationSchema}
                 onSubmit={handleSubmit}
                 enableReinitialize
@@ -116,8 +116,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({initialValues = {}, onClose, i
                             <FormActions
                                 onCancel={onClose}
                                 isLoading={isCreatingLoading || isUpdatingLoading}
-                                submitLabel={isCreating ? "Создать" : "Сохранить"}
-                                cancelLabel="Отмена"
+                                submitText={isCreating ? "Создать" : "Сохранить"}
+                                cancelText="Отмена"
                                 disabled={!isValid || (!dirty && !isCreating)}
                             />
                         </Box>
