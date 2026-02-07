@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { 
   Box, 
   Paper, 
@@ -6,7 +6,6 @@ import {
   Button,
   Dialog,
   DialogContent,
-  useTheme
 } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -25,7 +24,6 @@ const expenseTypeInitialValues: Partial<IExpenseType> = {
 
 export const UnifiedExpenseTypesDataView: React.FC = () => {
   const gradients = useGradients();
-  const theme = useTheme();
   
   const [modalOpen, setModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(true);
@@ -158,9 +156,7 @@ export const UnifiedExpenseTypesDataView: React.FC = () => {
           rows={expenseTypes}
           columns={columns}
           loading={isLoading}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 10 } },
-          }}
+          initialPageSize={10}
         />
       </Paper>
 

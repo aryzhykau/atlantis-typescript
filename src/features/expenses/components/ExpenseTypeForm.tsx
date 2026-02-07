@@ -69,8 +69,8 @@ const ExpenseTypeForm: React.FC<ExpenseTypeFormProps> = ({initialValues = {}, on
                             <FormActions
                                 onCancel={onClose}
                                 isLoading={isCreatingLoading || isUpdatingLoading}
-                                submitLabel={isCreating ? "Создать" : "Сохранить"}
-                                cancelLabel="Отмена"
+                                submitText={isCreating ? "Создать" : "Сохранить"}
+                                cancelText="Отмена"
                                 disabled={!isValid || (!dirty && !isCreating)}
                             />
                         </Box>

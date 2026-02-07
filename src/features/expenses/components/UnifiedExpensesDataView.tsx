@@ -182,10 +182,7 @@ export const UnifiedExpensesDataView: React.FC = () => {
           rows={expenses}
           columns={columns}
           loading={isLoading}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 10 } },
-            sorting: { sortModel: [{ field: 'expense_date', sort: 'desc' }] },
-          }}
+          initialPageSize={10}
         />
       </Paper>
 
