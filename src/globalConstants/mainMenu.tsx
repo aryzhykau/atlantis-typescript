@@ -19,6 +19,8 @@ import CallIcon from '@mui/icons-material/Call';
 import { UnifiedClientContactsDataGrid } from "../features/client-contacts/components/UnifiedClientContactsDataGrid";
 import AdminManagementPage from "../features/admin-management/components/AdminManagementPage.tsx";
 import AdminIcon from '@mui/icons-material/AdminPanelSettings';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import {ExpensesSettings} from "../layouts/expenses/ExpensesSettings.tsx";
 
 export const MenuItems: IMenuItems[] = [
     {
@@ -55,7 +57,7 @@ export const MenuItems: IMenuItems[] = [
         link: "trainers",
         icon: <SportsIcon/>,
         page: <UnifiedTrainersDataGrid/>,
-        mobilePage: <UnifiedTrainersDataGrid/>
+        mobilePage: <UnifiedTrainersDataGrid/>,
     },
     {
         title: "Тренировки и абонементы",
@@ -77,6 +79,14 @@ export const MenuItems: IMenuItems[] = [
         icon: <CalendarTodayIcon />,
         page: <CalendarV2Page />,
     mobilePage: <MobileFullCalendarV2Page />
+    },
+    {
+        title: "Расходы",
+        link: "expenses",
+        icon: <ReceiptLongIcon />,
+        page: <ExpensesSettings />,
+        mobilePage: <ExpensesSettings />,
+        ownerOnly: true
     },
     {
         title: "Управление администраторами",
