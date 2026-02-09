@@ -6,6 +6,9 @@ import {
   Button,
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogActions,
+  DialogContentText,
 } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -28,6 +31,8 @@ export const UnifiedExpenseTypesDataView: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(true);
   const [currentExpenseTypeForForm, setCurrentExpenseTypeForForm] = useState<Partial<IExpenseType> | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [expenseTypeIdToDelete, setExpenseTypeIdToDelete] = useState<number | null>(null);
   
   const { data: expenseTypesResponse, isLoading } = useGetExpenseTypesQuery();
   const [deleteExpenseType] = useDeleteExpenseTypeMutation();
@@ -47,16 +52,27 @@ export const UnifiedExpenseTypesDataView: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-      if (confirm('Вы уверены, что хотите удалить этот тип расходов?')) {
-          try {
-              await deleteExpenseType(id).unwrap();
-              displaySnackbar('Тип расходов удален', 'success');
-          } catch (e) {
-              console.error(e);
-              displaySnackbar('Ошибка при удалении', 'error');
-          }
-      }
+  const handleDelete = (id: number) => {
+    setExpenseTypeIdToDelete(id);
+    setDeleteDialogOpen(true);
+  }
+
+  const handleConfirmDelete = async () => {
+    if (expenseTypeIdToDelete) {
+        try {
+            await deleteExpenseType(expenseTypeIdToDelete).unwrap();
+            displaySnackbar('Тип расходов удален', 'success');
+            setDeleteDialogOpen(false);
+        } catch (e) {
+            console.error(e);
+            displaySnackbar('Ошибка при удалении', 'error');
+        }
+    }
+  }
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setExpenseTypeIdToDelete(null);
   }
 
   const onFormClose = () => {
@@ -171,6 +187,36 @@ export const UnifiedExpenseTypesDataView: React.FC = () => {
              />
            )}
         </DialogContent>
+      </Dialog>
+      
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+        PaperProps={{
+            sx: {
+                borderRadius: 2,
+                p: 1
+            }
+        }}
+      >
+        <DialogTitle id="alert-dialog-title" sx={{ fontWeight: 700 }}>
+          {"Удалить тип расходов?"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Вы собираетесь удалить категорию расходов. Это действие нельзя будет отменить.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog} color="inherit">
+            Отмена
+          </Button>
+          <Button onClick={handleConfirmDelete} color="error" variant="contained" autoFocus>
+            Удалить
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );
