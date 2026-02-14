@@ -11,7 +11,10 @@ import {
     Grid, 
     Dialog, 
     DialogContent,
-    alpha
+    alpha,
+    SpeedDial,
+    SpeedDialAction,
+    SpeedDialIcon
 } from '@mui/material';
 import { MiniSpringLoader } from '../../../components/loading/MiniSpringLoader';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -26,12 +29,15 @@ import { useTheme } from '@mui/material';
 import TrainerPaymentsTab from './TrainerPaymentsTab';
 import TrainerSalaryTab from './TrainerSalaryTab';
 import { useIsOwner } from '../../../hooks/usePermissions';
+import { MobileFormBottomSheet } from '../../../components/mobile-kit';
 
 // Иконки для статистики
 import PersonIcon from '@mui/icons-material/Person';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WorkIcon from '@mui/icons-material/Work';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import EditIcon from '@mui/icons-material/Edit';
+import useMobile from '../../../hooks/useMobile.tsx';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -159,12 +165,14 @@ const TrainerStats: React.FC<TrainerStatsProps> = ({ age, salary, isActive, isFi
 };
 
 export function TrainerPage() {
+    const isBottomSheetFormEnabled = import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
     const { trainerId } = useParams<{ trainerId: string }>();
     const navigate = useNavigate();
     const { displaySnackbar } = useSnackbar();
     const theme = useTheme();
     const gradients = useGradients();
     const isOwner = useIsOwner();
+    const isMobile = useMobile();
     const [activeTab, setActiveTab] = React.useState(0);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTrainerData, setEditingTrainerData] = useState<Partial<ITrainerResponse> | null>(null);
@@ -370,6 +378,7 @@ export function TrainerPage() {
                         onEdit={handleOpenEditModal} 
                         onStatusChange={handleChangeStatus}
                         showSalary={isOwner}
+                        hideActions={isMobile}
                     />
                 </TabPanel>
 
@@ -388,46 +397,12 @@ export function TrainerPage() {
                 )}
             </Box>
             
-            <Dialog 
-                open={isEditModalOpen} 
-                onClose={handleCloseEditModal} 
-                maxWidth="sm" 
-                fullWidth 
-                PaperProps={{ 
-                    sx: { 
-                        m: 1, 
-                        borderRadius: 3,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        overflow: 'hidden',
-                    } 
-                }}
-            >
-                {/* Градиентный заголовок модального окна */}
-                <Box
-                    sx={{
-                        p: 3,
-                        background: gradients.primary,
-                        color: 'white',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        '&::before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0, left: 0, right: 0, bottom: 0,
-                            background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-                            opacity: 0.3,
-                        }
-                    }}
+            {isBottomSheetFormEnabled ? (
+                <MobileFormBottomSheet
+                    open={isEditModalOpen}
+                    onClose={handleCloseEditModal}
+                    title="✏️ Редактировать тренера"
                 >
-                    <Box sx={{ position: 'relative', zIndex: 1 }}>
-                        <Typography variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
-                            ✏️ Редактировать тренера
-                        </Typography>
-                    </Box>
-                </Box>
-                
-                <DialogContent sx={{ p: 0, '&:first-of-type': { pt: 0 } }}> 
                     {editingTrainerData && (
                         <TrainerForm
                             title="Редактировать тренера"
@@ -436,10 +411,97 @@ export function TrainerPage() {
                             onClose={handleCloseEditModal}
                             isEdit={true}
                             isLoading={isUpdatingTrainer}
+                            useDialogContainer={false}
                         />
                     )}
-                </DialogContent>
-            </Dialog>
+                </MobileFormBottomSheet>
+            ) : (
+                <Dialog 
+                    open={isEditModalOpen} 
+                    onClose={handleCloseEditModal} 
+                    maxWidth="sm" 
+                    fullWidth 
+                    PaperProps={{ 
+                        sx: { 
+                            m: 1, 
+                            borderRadius: 3,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            overflow: 'hidden',
+                        } 
+                    }}
+                >
+                    {/* Градиентный заголовок модального окна */}
+                    <Box
+                        sx={{
+                            p: 3,
+                            background: gradients.primary,
+                            color: 'white',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0, left: 0, right: 0, bottom: 0,
+                                background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                                opacity: 0.3,
+                            }
+                        }}
+                    >
+                        <Box sx={{ position: 'relative', zIndex: 1 }}>
+                            <Typography variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                                ✏️ Редактировать тренера
+                            </Typography>
+                        </Box>
+                    </Box>
+                    
+                    <DialogContent sx={{ p: 0, '&:first-of-type': { pt: 0 } }}> 
+                        {editingTrainerData && (
+                            <TrainerForm
+                                title="Редактировать тренера"
+                                initialValues={editingTrainerData}
+                                onSubmit={handleEditFormSubmit}
+                                onClose={handleCloseEditModal}
+                                isEdit={true}
+                                isLoading={isUpdatingTrainer}
+                            />
+                        )}
+                    </DialogContent>
+                </Dialog>
+            )}
+
+            {isMobile && (
+                <SpeedDial
+                    ariaLabel="Trainer detail actions"
+                    sx={{
+                        position: 'fixed',
+                        bottom: 16,
+                        right: 16,
+                        '& .MuiFab-primary': {
+                            background: gradients.primary,
+                            color: 'white',
+                            '&:hover': {
+                                background: gradients.primary,
+                                filter: 'brightness(0.95)',
+                            },
+                        },
+                    }}
+                    icon={<SpeedDialIcon />}
+                >
+                    <SpeedDialAction
+                        icon={<EditIcon />}
+                        tooltipTitle="Редактировать тренера"
+                        onClick={handleOpenEditModal}
+                        FabProps={{
+                            sx: {
+                                background: gradients.primary,
+                                color: 'white',
+                                '&:hover': { background: gradients.primary, filter: 'brightness(0.95)' },
+                            },
+                        }}
+                    />
+                </SpeedDial>
+            )}
         </Box>
     );
 } 

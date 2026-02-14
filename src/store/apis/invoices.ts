@@ -61,6 +61,16 @@ export const invoicesApi = baseApi.injectEndpoints({
                 { type: 'Invoice', id: 'LIST' },
             ],
         }),
+        cancelInvoice: builder.mutation<void, { invoiceId: number }>({
+            query: ({ invoiceId }) => ({
+                url: `/invoices/${invoiceId}/cancel`,
+                method: 'POST',
+            }),
+            invalidatesTags: (_result, _error, { invoiceId }) => [
+                { type: 'Invoice', id: invoiceId },
+                { type: 'Invoice', id: 'LIST' },
+            ],
+        }),
         // createInvoice: builder.mutation<IInvoiceGet, {subscriptionData: IInvoice;}>({
         //     query: ({subscriptionData}) =>  ({
         //         url: '/invoices',
@@ -87,4 +97,4 @@ export const invoicesApi = baseApi.injectEndpoints({
     }),
 });
 
-export const { useGetInvoicesQuery, useGetClientInvoicesQuery, useUpdateInvoiceCommentMutation } = invoicesApi;
+export const { useGetInvoicesQuery, useGetClientInvoicesQuery, useUpdateInvoiceCommentMutation, useCancelInvoiceMutation } = invoicesApi;

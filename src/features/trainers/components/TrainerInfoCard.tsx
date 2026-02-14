@@ -31,6 +31,7 @@ interface TrainerInfoCardProps {
     onEdit: () => void;
     onStatusChange: () => void;
     showSalary?: boolean;
+    hideActions?: boolean;
 }
 
 interface InfoItemProps {
@@ -129,7 +130,7 @@ const InfoItem: React.FC<InfoItemProps> = ({ icon, label, value, color = 'primar
     return content;
 };
 
-export const TrainerInfoCard: React.FC<TrainerInfoCardProps> = ({ trainer, onEdit, onStatusChange, showSalary = true }) => {
+export const TrainerInfoCard: React.FC<TrainerInfoCardProps> = ({ trainer, onEdit, onStatusChange, showSalary = true, hideActions = false }) => {
     const theme = useTheme();
     const gradients = useGradients();
 
@@ -188,19 +189,21 @@ export const TrainerInfoCard: React.FC<TrainerInfoCardProps> = ({ trainer, onEdi
                                 Основная информация
                             </Typography>
                         </Box>
-                        <Tooltip title="Редактировать">
-                            <IconButton
-                                sx={{
-                                    color: 'white',
-                                    '&:hover': {
-                                        background: alpha('#ffffff', 0.2),
-                                    }
-                                }}
-                                onClick={onEdit}
-                            >
-                                <EditIcon />
-                            </IconButton>
-                        </Tooltip>
+                        {!hideActions && (
+                            <Tooltip title="Редактировать">
+                                <IconButton
+                                    sx={{
+                                        color: 'white',
+                                        '&:hover': {
+                                            background: alpha('#ffffff', 0.2),
+                                        }
+                                    }}
+                                    onClick={onEdit}
+                                >
+                                    <EditIcon />
+                                </IconButton>
+                            </Tooltip>
+                        )}
                     </Box>
                     
                     {/* Статус тренера */}
@@ -238,7 +241,7 @@ export const TrainerInfoCard: React.FC<TrainerInfoCardProps> = ({ trainer, onEdi
                                             color: 'white',
                                         }
                                     }}
-                                    onClick={onStatusChange}
+                                    onClick={hideActions ? undefined : onStatusChange}
                                 />
                             </Box>
                         </Box>
