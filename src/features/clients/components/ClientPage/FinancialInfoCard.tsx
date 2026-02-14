@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { 
     Box, 
     Button, 
@@ -13,6 +13,7 @@ import { IInvoiceGet } from "../../../invoices/models/invoice";
 import { AddUserPaymentForm } from "./AddUserPaymentForm";
 import { useGradients } from "../../../trainer-mobile/hooks/useGradients";
 import { useTheme } from "@mui/material";
+import { MobileFormBottomSheet } from "../../../../components/mobile-kit";
 
 // Иконки
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
@@ -27,6 +28,9 @@ interface FinancialInfoCardProps {
     client: IClientUserGet;
     invoices: IInvoiceGet[];
     invalidateFunction: () => void;
+    useBottomSheetVariant?: boolean;
+    hideAddPaymentButton?: boolean;
+    openPaymentFormSignal?: number;
 }
 
 interface FinancialItemProps {
@@ -149,7 +153,14 @@ const modalStyle = {
     borderColor: 'divider',
 };
 
-export const FinancialInfoCard: React.FC<FinancialInfoCardProps> = ({ client, invoices, invalidateFunction}) => {
+export const FinancialInfoCard: React.FC<FinancialInfoCardProps> = ({
+    client,
+    invoices,
+    invalidateFunction,
+    useBottomSheetVariant = false,
+    hideAddPaymentButton = false,
+    openPaymentFormSignal = 0,
+}) => {
     const theme = useTheme();
     const gradients = useGradients();
     const [open, setOpen] = useState(false);
@@ -169,6 +180,12 @@ export const FinancialInfoCard: React.FC<FinancialInfoCardProps> = ({ client, in
         setOpen(false);
         invalidateFunction();
     };
+
+    useEffect(() => {
+        if (openPaymentFormSignal > 0) {
+            setOpen(true);
+        }
+    }, [openPaymentFormSignal]);
 
     return (
         <Paper
@@ -209,26 +226,28 @@ export const FinancialInfoCard: React.FC<FinancialInfoCardProps> = ({ client, in
                                 Финансовая информация
                             </Typography>
                         </Box>
-                        <Tooltip title="Добавить платеж">
-                            <Button
-                                variant="contained"
-                                startIcon={<AddIcon />}
-                                onClick={() => setOpen(true)}
-                                sx={{
-                                    background: 'white',
-                                    color: theme.palette.success.main,
-                                    fontWeight: 600,
-                                    textTransform: 'none',
-                                    px: 2,
-                                    py: 1,
-                                    '&:hover': {
-                                        background: alpha('#ffffff', 0.9),
-                                    }
-                                }}
-                            >
-                                Добавить платеж
-                            </Button>
-                        </Tooltip>
+                        {!hideAddPaymentButton && (
+                            <Tooltip title="Добавить платеж">
+                                <Button
+                                    variant="contained"
+                                    startIcon={<AddIcon />}
+                                    onClick={() => setOpen(true)}
+                                    sx={{
+                                        background: 'white',
+                                        color: theme.palette.success.main,
+                                        fontWeight: 600,
+                                        textTransform: 'none',
+                                        px: 2,
+                                        py: 1,
+                                        '&:hover': {
+                                            background: alpha('#ffffff', 0.9),
+                                        }
+                                    }}
+                                >
+                                    Добавить платеж
+                                </Button>
+                            </Tooltip>
+                        )}
                     </Box>
                 </Box>
             </Box>
@@ -280,50 +299,68 @@ export const FinancialInfoCard: React.FC<FinancialInfoCardProps> = ({ client, in
                 </Box>
             </Box>
 
-            {/* Модальное окно добавления платежа */}
-            <Modal open={open} onClose={() => setOpen(false)}>
-                <Box sx={modalStyle}>
-                    {/* Градиентный заголовок модального окна */}
-                    <Box
-                        sx={{
-                            p: 3,
-                            background: gradients.success,
-                            color: 'white',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: 0, left: 0, right: 0, bottom: 0,
-                                background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-                                opacity: 0.3,
-                            }
+            {/* Варианты открытия формы добавления платежа */}
+            {useBottomSheetVariant ? (
+                <MobileFormBottomSheet
+                    open={open}
+                    onClose={handleClose}
+                    title="💰 Добавить платеж"
+                >
+                    <AddUserPaymentForm
+                        initialValues={{
+                            client_id: client.id,
+                            amount: unpaidSumFromInvoices > 0 ? amountToPayOff : 0,
+                            description: "",
                         }}
-                    >
-                        <Box sx={{ position: 'relative', zIndex: 1 }}>
-                            <Typography variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
-                                💰 Добавить платеж
-                            </Typography>
-                            <Typography variant="body2" sx={{ opacity: 0.9, mt: 1 }}>
-                                {client.first_name} {client.last_name}
-                            </Typography>
+                        client_name={`${client.first_name} ${client.last_name}`}
+                        onClose={handleClose}
+                    />
+                </MobileFormBottomSheet>
+            ) : (
+                <Modal open={open} onClose={() => setOpen(false)}>
+                    <Box sx={modalStyle}>
+                        {/* Градиентный заголовок модального окна */}
+                        <Box
+                            sx={{
+                                p: 3,
+                                background: gradients.success,
+                                color: 'white',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                '&::before': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    top: 0, left: 0, right: 0, bottom: 0,
+                                    background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                                    opacity: 0.3,
+                                }
+                            }}
+                        >
+                            <Box sx={{ position: 'relative', zIndex: 1 }}>
+                                <Typography variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                                    💰 Добавить платеж
+                                </Typography>
+                                <Typography variant="body2" sx={{ opacity: 0.9, mt: 1 }}>
+                                    {client.first_name} {client.last_name}
+                                </Typography>
+                            </Box>
+                        </Box>
+                        
+                        {/* Контент модального окна */}
+                        <Box sx={{ p: 3 }}>
+                            <AddUserPaymentForm
+                                initialValues={{
+                                    client_id: client.id,
+                                    amount: unpaidSumFromInvoices > 0 ? amountToPayOff : 0,
+                                    description: "",
+                                }}
+                                client_name={`${client.first_name} ${client.last_name}`}
+                                onClose={handleClose}
+                            />
                         </Box>
                     </Box>
-                    
-                    {/* Контент модального окна */}
-                    <Box sx={{ p: 3 }}>
-                        <AddUserPaymentForm
-                            initialValues={{
-                                client_id: client.id,
-                                amount: unpaidSumFromInvoices > 0 ? amountToPayOff : 0,
-                                description: "",
-                            }}
-                            client_name={`${client.first_name} ${client.last_name}`}
-                            onClose={handleClose}
-                        />
-                    </Box>
-                </Box>
-            </Modal>
+                </Modal>
+            )}
         </Paper>
     );
 }; 

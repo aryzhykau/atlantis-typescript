@@ -90,6 +90,7 @@ export const {
     useGetClientsQuery, 
     useGetClientQuery,
     useGetClientStudentsQuery, 
+    useLazyGetClientStudentsQuery,
     useUpdateClientMutation, 
     useDeleteClientMutation, 
     useUpdateClientStatusMutation
