@@ -19,9 +19,25 @@ interface SubscriptionFormProps {
     initialValues: Partial<ISubscriptionResponse>;
     isCreating: boolean;
     onClose: () => void;
+    open?: boolean;
+    useDialogContainer?: boolean;
+    onSubmit?: (values: {
+        name: string;
+        price: number;
+        number_of_sessions: number;
+        validity_days: number;
+        is_active: boolean;
+    }) => Promise<void> | void;
 }
 
-const SubscriptionForm: React.FC<SubscriptionFormProps> = ({ isCreating, initialValues, onClose }) => {
+const SubscriptionForm: React.FC<SubscriptionFormProps> = ({
+    isCreating,
+    initialValues,
+    onClose,
+    open = true,
+    useDialogContainer = true,
+    onSubmit,
+}) => {
     const [createSubscription] = useCreateSubscriptionMutation();
     const [updateSubscription] = useUpdateSubscriptionMutation();
 
@@ -41,82 +57,94 @@ const SubscriptionForm: React.FC<SubscriptionFormProps> = ({ isCreating, initial
 
     const handleSubmit = async (values: typeof formInitialValues, { resetForm }: { resetForm: () => void }) => {
         await submit(async () => {
-            if (isCreating) {
-                await createSubscription(values as ISubscriptionCreatePayload).unwrap();
-            } else if (initialValues.id) {
-                await updateSubscription({
-                    id: initialValues.id,
-                    payload: values as ISubscriptionUpdatePayload
-                }).unwrap();
+            if (onSubmit) {
+                await onSubmit(values);
+            } else {
+                if (isCreating) {
+                    await createSubscription(values as ISubscriptionCreatePayload).unwrap();
+                } else if (initialValues.id) {
+                    await updateSubscription({
+                        id: initialValues.id,
+                        payload: values as ISubscriptionUpdatePayload
+                    }).unwrap();
+                }
             }
             resetForm();
         });
     };
 
+    const formContent = (
+        <Formik
+            initialValues={formInitialValues}
+            validationSchema={isCreating ? subscriptionSchemas.create : subscriptionSchemas.update}
+            onSubmit={handleSubmit}
+            enableReinitialize
+        >
+            {({ isSubmitting, isValid }) => (
+                <Form>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <FormikTextField
+                            name="name"
+                            label="Название"
+                            fullWidth
+                        />
+
+                        <FormikNumberField
+                            name="price"
+                            label="Стоимость абонемента"
+                            suffix="€"
+                            min={0}
+                            decimalPlaces={2}
+                            fullWidth
+                        />
+
+                        <FormikNumberField
+                            name="validity_days"
+                            label="Срок действия (дней)"
+                            min={1}
+                            max={3650}
+                            fullWidth
+                        />
+
+                        <FormikNumberField
+                            name="number_of_sessions"
+                            label="Количество занятий"
+                            min={0}
+                            max={1000}
+                            fullWidth
+                        />
+
+                        <FormikCheckboxField
+                            name="is_active"
+                            label="Активен"
+                        />
+                    </Box>
+
+                    <FormActions
+                        onCancel={onClose}
+                        submitText={isCreating ? 'Добавить' : 'Изменить'}
+                        isLoading={isLoading || isSubmitting}
+                        disabled={isLoading || isSubmitting || !isValid}
+                    />
+                </Form>
+            )}
+        </Formik>
+    );
+
+    if (!useDialogContainer) {
+        return formContent;
+    }
+
     return (
         <FormikDialog
-            open={true}
+            open={open}
             onClose={onClose}
             title={isCreating ? 'Добавление абонемента' : 'Изменение абонемента'}
             subtitle="Заполните информацию об абонементе"
             icon={<AccountBalance />}
             maxWidth="sm"
         >
-            <Formik
-                initialValues={formInitialValues}
-                validationSchema={isCreating ? subscriptionSchemas.create : subscriptionSchemas.update}
-                onSubmit={handleSubmit}
-                enableReinitialize
-            >
-                {({ isSubmitting, isValid }) => (
-                    <Form>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                            <FormikTextField
-                                name="name"
-                                label="Название"
-                                fullWidth
-                            />
-
-                            <FormikNumberField
-                                name="price"
-                                label="Стоимость абонемента"
-                                suffix="€"
-                                min={0}
-                                decimalPlaces={2}
-                                fullWidth
-                            />
-
-                            <FormikNumberField
-                                name="validity_days"
-                                label="Срок действия (дней)"
-                                min={1}
-                                max={3650}
-                                fullWidth
-                            />
-
-                            <FormikNumberField
-                                name="number_of_sessions"
-                                label="Количество занятий"
-                                min={0}
-                                max={1000}
-                                fullWidth
-                            />
-
-                            <FormikCheckboxField
-                                name="is_active"
-                                label="Активен"
-                            />
-                        </Box>
-
-                        <FormActions
-                            onCancel={onClose}
-                            submitText={isCreating ? 'Добавить' : 'Изменить'}
-                            isLoading={isLoading || isSubmitting}
-                            disabled={isLoading || isSubmitting || !isValid}
-                        />
-                    </Form>
-                )}
-            </Formik>
+            {formContent}
         </FormikDialog>
     );
 };

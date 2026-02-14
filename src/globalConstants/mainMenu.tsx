@@ -12,16 +12,21 @@ import {DashboardLayout} from "../layouts/Dashboard.tsx";
 import { TrainingSettings } from "../layouts/trainingTypesSubscriptions/TrainingSettings.tsx";
 import {MobileClients} from "../layouts/clients/MobileClients.tsx";
 import InvoicesPayments from "../layouts/invoicesPyaments/InvoicesPayments.tsx";
+import { MobileInvoicesPaymentsPage } from "../features/invoices/components/MobileInvoicesPaymentsPage";
 import { StudentsListPage } from '../features/students/components/StudentsListPage.tsx';
 import { MobileStudentsListPage } from '../features/students/components/MobileStudentsListPage.tsx';
+import { MobileTrainersListPage } from '../features/trainers/components/MobileTrainersListPage.tsx';
 import CalendarV2Page from "../features/calendar-v2/components/desktop/layout/CalendarV2Page";
 import MobileFullCalendarV2Page from "../features/calendar-v2/components/mobile/layout/MobileFullCalendarV2Page";
 import CallIcon from '@mui/icons-material/Call';
 import { UnifiedClientContactsDataGrid } from "../features/client-contacts/components/UnifiedClientContactsDataGrid";
+import { MobileClientContactsPage } from "../features/client-contacts/components/MobileClientContactsPage";
 import AdminManagementPage from "../features/admin-management/components/AdminManagementPage.tsx";
 import AdminIcon from '@mui/icons-material/AdminPanelSettings';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import {ExpensesSettings} from "../layouts/expenses/ExpensesSettings.tsx";
+import { MobileTrainingTypesSubscriptionsPage } from "../features/trainingTypes/components/MobileTrainingTypesSubscriptionsPage";
+import { MobileExpensesPage } from "../features/expenses/components/MobileExpensesPage";
 
 export const MenuItems: IMenuItems[] = [
     {
@@ -44,7 +49,7 @@ export const MenuItems: IMenuItems[] = [
         link: "client-contacts",
         icon: <CallIcon />,
         page: <UnifiedClientContactsDataGrid />,
-        mobilePage: <UnifiedClientContactsDataGrid />
+        mobilePage: <MobileClientContactsPage />
     },
     {
         title: "Ученики",
@@ -58,21 +63,21 @@ export const MenuItems: IMenuItems[] = [
         link: "trainers",
         icon: <SportsIcon/>,
         page: <UnifiedTrainersDataGrid/>,
-        mobilePage: <UnifiedTrainersDataGrid/>,
+        mobilePage: <MobileTrainersListPage/>,
     },
     {
         title: "Тренировки и абонементы",
         link: "trainings-and-abonements",
         icon: <PoolIcon/>,
         page: <TrainingSettings></TrainingSettings>,
-        mobilePage: <></>
+        mobilePage: <MobileTrainingTypesSubscriptionsPage />
     },
     {
         title: "Платежи",
         link: "invoices",
         icon: <PaymentsIcon/>,
         page: <InvoicesPayments/>,
-        mobilePage: <></>
+        mobilePage: <MobileInvoicesPaymentsPage/>
     },
     {
         title: "Календарь",
@@ -86,7 +91,7 @@ export const MenuItems: IMenuItems[] = [
         link: "expenses",
         icon: <ReceiptLongIcon />,
         page: <ExpensesSettings />,
-        mobilePage: <ExpensesSettings />,
+        mobilePage: <MobileExpensesPage />,
         ownerOnly: true
     },
     {

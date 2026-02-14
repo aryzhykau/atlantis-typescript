@@ -1,4 +1,4 @@
-import { Box, Button, Drawer, Stack, Typography } from '@mui/material';
+import { Box, Button, Stack, SwipeableDrawer, Typography } from '@mui/material';
 import React from 'react';
 
 interface QuickAddBottomSheetProps {
@@ -23,7 +23,13 @@ export function QuickAddBottomSheet({
   children,
 }: QuickAddBottomSheetProps) {
   return (
-    <Drawer anchor="bottom" open={open} onClose={onClose}>
+    <SwipeableDrawer
+      anchor="bottom"
+      open={open}
+      onClose={onClose}
+      onOpen={() => {}}
+      disableSwipeToOpen
+    >
       <Box
         sx={{
           p: 2,
@@ -45,16 +51,38 @@ export function QuickAddBottomSheet({
         {children}
 
         <Stack spacing={1.25} sx={{ mt: 2.5 }}>
-          <Button variant="contained" onClick={onSubmit}>
+          <Button
+            variant="contained"
+            onClick={onSubmit}
+            sx={{
+              background: 'linear-gradient(135deg, #7C4DFF 0%, #5E35B1 100%)',
+              color: 'white',
+              fontWeight: 700,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #7346f2 0%, #512da8 100%)',
+              },
+            }}
+          >
             {submitLabel}
           </Button>
           {onSubmitAndAddAnother && (
-            <Button variant="outlined" onClick={onSubmitAndAddAnother}>
+            <Button
+              variant="contained"
+              onClick={onSubmitAndAddAnother}
+              sx={{
+                background: 'linear-gradient(135deg, #26A69A 0%, #00897B 100%)',
+                color: 'white',
+                fontWeight: 700,
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #23998e 0%, #00796b 100%)',
+                },
+              }}
+            >
               {submitAnotherLabel}
             </Button>
           )}
         </Stack>
       </Box>
-    </Drawer>
+    </SwipeableDrawer>
   );
 }

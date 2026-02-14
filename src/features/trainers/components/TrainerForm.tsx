@@ -68,10 +68,21 @@ interface TrainerFormProps {
     onClose: () => void;
     isEdit: boolean;
     isLoading?: boolean;
+    open?: boolean;
+    useDialogContainer?: boolean;
 }
 
 
-export function TrainerForm({ title, initialValues, onSubmit, isEdit, onClose, isLoading }: TrainerFormProps) {
+export function TrainerForm({
+    title,
+    initialValues,
+    onSubmit,
+    isEdit,
+    onClose,
+    isLoading,
+    open = true,
+    useDialogContainer = true,
+}: TrainerFormProps) {
     const formInitialValues = React.useMemo(() => getInitialValues(initialValues), [initialValues]);
     const isOwner = useIsOwner();
 
@@ -109,24 +120,16 @@ export function TrainerForm({ title, initialValues, onSubmit, isEdit, onClose, i
 
     const combinedIsLoading = isLoading || isSubmissionLoading;
 
-    return (
-        <FormikDialog
-            open={true}
-            onClose={onClose}
-            title={title}
-            subtitle={isEdit ? "Редактирование информации о тренере" : "Добавление нового тренера"}
-            icon={<Person />}
-            maxWidth="md"
+    const formContent = (
+        <Formik
+            initialValues={formInitialValues}
+            validationSchema={isEdit ? trainerSchemas.update : trainerSchemas.create}
+            onSubmit={handleFormSubmit}
+            enableReinitialize
         >
-            <Formik
-                initialValues={formInitialValues}
-                validationSchema={isEdit ? trainerSchemas.update : trainerSchemas.create}
-                onSubmit={handleFormSubmit}
-                enableReinitialize
-            >
-                {({ isSubmitting, values }) => (
-                    <Form>
-                        <Grid container spacing={3}>
+            {({ isSubmitting, values }) => (
+                <Form>
+                    <Grid container spacing={3}>
                             {/* --- Основная информация --- */}
                             <Grid item xs={12}>
                                 <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
@@ -226,10 +229,26 @@ export function TrainerForm({ title, initialValues, onSubmit, isEdit, onClose, i
                                     disabled={combinedIsLoading || isSubmitting}
                                 />
                             </Grid>
-                        </Grid>
-                    </Form>
-                )}
-            </Formik>
+                    </Grid>
+                </Form>
+            )}
+        </Formik>
+    );
+
+    if (!useDialogContainer) {
+        return formContent;
+    }
+
+    return (
+        <FormikDialog
+            open={open}
+            onClose={onClose}
+            title={title}
+            subtitle={isEdit ? "Редактирование информации о тренере" : "Добавление нового тренера"}
+            icon={<Person />}
+            maxWidth="md"
+        >
+            {formContent}
         </FormikDialog>
     );
 }

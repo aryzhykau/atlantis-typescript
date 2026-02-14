@@ -225,6 +225,7 @@ export const UnifiedSubscriptionsDataView: React.FC = () => {
             isCreating={isCreating}
             initialValues={formInitValues}
             onClose={onFormClose}
+            useDialogContainer={false}
             key={subscriptionId || 'new'}
           />
         </DialogContent>

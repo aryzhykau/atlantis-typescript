@@ -161,7 +161,7 @@ const TrainingTypeForm: React.FC<TrainingTypeFormProps> = ({initialValues = {}, 
                             <CloseIcon/>
                         </IconButton>
                         
-                        <Box sx={{ position: 'relative', minWidth: 400, p: 3 }}>
+                        <Box sx={{ position: 'relative', minWidth: { xs: '100%', sm: 400 }, p: 3 }}>
                             <Typography variant="h6" component="h2" gutterBottom sx={{textAlign: 'center', mb: 3}}>
                                 {isCreating ? "Добавление вида тренировки" : "Изменение вида тренировки"}
                             </Typography>
