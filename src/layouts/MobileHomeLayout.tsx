@@ -7,6 +7,7 @@ import {MobileSideBar} from "../components/sideBar/MobileSidebar.tsx";
 import {useAuth} from "../hooks/useAuth.tsx";
 
 export function MobileHomeLayout({children}:{children: React.ReactNode}) {
+    const HEADER_HEIGHT = 80;
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
     const { doLogout } = useAuth();
@@ -33,13 +34,17 @@ export function MobileHomeLayout({children}:{children: React.ReactNode}) {
         <Box
             bgcolor={theme => theme.palette.background.paper}
             sx={{
-                position: "relative",
+                position: "fixed",
                 top: 0,
+                left: 0,
+                right: 0,
+                zIndex: (theme) => theme.zIndex.appBar,
                 pt: "env(safe-area-inset-top)",
                 px: "env(safe-area-inset-left)",
-                height: 80,
+                height: HEADER_HEIGHT,
                 width: "100%",
-
+                borderBottom: '1px solid',
+                borderColor: 'divider',
             }}
         >
             <Typography variant="h5" component="h1" align="center" sx={{fontSize: '1.5rem'}}>
@@ -87,7 +92,7 @@ export function MobileHomeLayout({children}:{children: React.ReactNode}) {
                 </Box>
             </Box>
         </Box>
-        <Box>
+        <Box sx={{ mt: `calc(${HEADER_HEIGHT}px + env(safe-area-inset-top))` }}>
             {children}
         </Box>
 

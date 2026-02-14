@@ -1,4 +1,4 @@
-import { Box, Typography, CircularProgress, Grid, Tabs, Tab, IconButton, Button, Select, MenuItem, SelectChangeEvent, Modal, Paper, alpha } from "@mui/material";
+import { Box, Typography, CircularProgress, Grid, Tabs, Tab, IconButton, Button, Select, MenuItem, SelectChangeEvent, Modal, Paper, alpha, Stack, SpeedDial, SpeedDialAction, SpeedDialIcon } from "@mui/material";
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -9,6 +9,10 @@ import { useSnackbar } from "../../../../hooks/useSnackBar";
 import React, { useEffect, useState } from "react";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import PaymentsIconOutlined from '@mui/icons-material/PaymentsOutlined';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import TuneIcon from '@mui/icons-material/Tune';
 import { useClients } from "../../hooks/clientManagementHooks";
 import { ClientInfoCard } from "./ClientInfoCard";
 import { FinancialInfoCard } from "./FinancialInfoCard";
@@ -35,6 +39,7 @@ import { useCreateStudentMutation } from "../../../../store/apis/studentsApi";
 import { useGetSubscriptionsQuery, useLazyGetStudentSubscriptionsQuery } from "../../../../store/apis/subscriptionsApi";
 import { IStudentSubscriptionResponse, IStudentSubscriptionView } from "../../../subscriptions/models/subscription";
 import { ClientStudentSubscriptionsTable } from "./ClientStudentSubscriptionsTable";
+import { MobileFilterBottomSheet, MobileFormBottomSheet } from "../../../../components/mobile-kit";
 
 // Вспомогательный компонент для панелей вкладок
 interface TabPanelProps {
@@ -194,6 +199,7 @@ const modalStyle = {
 };
 
 export function ClientPage() {
+    const isBottomSheetFormEnabled = import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
     const { clientId } = useParams<{ clientId: string }>();
     const navigate = useNavigate();
     const { displaySnackbar } = useSnackbar();
@@ -204,12 +210,15 @@ export function ClientPage() {
     
     const [selectedInvoiceStatus, setSelectedInvoiceStatus] = useState<InvoiceStatus | null>(null);
     const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>("all");
+    const [invoiceFilterSheetOpen, setInvoiceFilterSheetOpen] = useState(false);
+    const [paymentFilterSheetOpen, setPaymentFilterSheetOpen] = useState(false);
     
     const [activeTab, setActiveTab] = React.useState(0);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [addStudentModalOpen, setAddStudentModalOpen] = useState(false);
     const [cancelPaymentModalOpen, setCancelPaymentModalOpen] = useState(false);
     const [paymentToCancelId, setPaymentToCancelId] = useState<number | null>(null);
+    const [paymentFormSignal, setPaymentFormSignal] = useState(0);
 
     // State for StudentForm initial values when adding to a client
     const [studentFormInitialValues, setStudentFormInitialValues] = useState<StudentFormValuesClientPage>(baseInitialStudentValuesClientPage);
@@ -486,17 +495,6 @@ export function ClientPage() {
                                 Карточка клиента #{client.id}
                             </Typography>
                         </Box>
-                        <IconButton 
-                            onClick={handleOpenEditModal} 
-                            sx={{
-                                color: 'white',
-                                '&:hover': {
-                                    background: alpha('#ffffff', 0.2),
-                                }
-                            }}
-                        >
-                            <EditIcon />
-                        </IconButton>
                     </Box>
                 </Box>
             </Paper>
@@ -568,7 +566,16 @@ export function ClientPage() {
                         )}
                     </Grid>
                     <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
-                        {client && <FinancialInfoCard client={client} invoices={invoices?.items || []} invalidateFunction={invalidateQueries} />}
+                        {client && (
+                            <FinancialInfoCard
+                                client={client}
+                                invoices={invoices?.items || []}
+                                invalidateFunction={invalidateQueries}
+                                useBottomSheetVariant={isBottomSheetFormEnabled}
+                                hideAddPaymentButton
+                                openPaymentFormSignal={paymentFormSignal}
+                            />
+                        )}
                     </Grid>
                 </Grid>
             </TabPanel>
@@ -576,17 +583,23 @@ export function ClientPage() {
             <TabPanel value={activeTab} index={1}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6">Инвойсы клиента</Typography>
-                    <Select
-                        value={selectedInvoiceStatus ?? "ALL"}
-                        onChange={handleInvoiceStatusChange}
-                        size="small"
-                        sx={{ minWidth: 180 }}
-                    >
-                        <MenuItem value={"ALL"}>Все статусы</MenuItem>
-                        <MenuItem value={"UNPAID"}>Неоплаченные</MenuItem>
-                        <MenuItem value={"PAID"}>Оплаченные</MenuItem>
-                        <MenuItem value={"CANCELLED"}>Отмененные</MenuItem>
-                    </Select>
+                    {isBottomSheetFormEnabled ? (
+                        <Button variant="outlined" onClick={() => setInvoiceFilterSheetOpen(true)}>
+                            Фильтр: {selectedInvoiceStatus ?? 'ALL'}
+                        </Button>
+                    ) : (
+                        <Select
+                            value={selectedInvoiceStatus ?? "ALL"}
+                            onChange={handleInvoiceStatusChange}
+                            size="small"
+                            sx={{ minWidth: 180 }}
+                        >
+                            <MenuItem value={"ALL"}>Все статусы</MenuItem>
+                            <MenuItem value={"UNPAID"}>Неоплаченные</MenuItem>
+                            <MenuItem value={"PAID"}>Оплаченные</MenuItem>
+                            <MenuItem value={"CANCELLED"}>Отмененные</MenuItem>
+                        </Select>
+                    )}
                 </Box>
                 <ClientInvoicesDataCard 
                     invoices={invoices?.items} 
@@ -596,16 +609,22 @@ export function ClientPage() {
             <TabPanel value={activeTab} index={2}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6">Платежи клиента</Typography>
-                    <Select
-                        value={selectedPaymentStatus}
-                        onChange={handlePaymentStatusChange}
-                        size="small"
-                        sx={{ minWidth: 180 }}
-                    >
-                        <MenuItem value={"all"}>Все платежи</MenuItem>
-                        <MenuItem value={"not_cancelled"}>Принятые</MenuItem>
-                        <MenuItem value={"cancelled"}>Отмененные</MenuItem>
-                    </Select>
+                    {isBottomSheetFormEnabled ? (
+                        <Button variant="outlined" onClick={() => setPaymentFilterSheetOpen(true)}>
+                            Фильтр: {selectedPaymentStatus}
+                        </Button>
+                    ) : (
+                        <Select
+                            value={selectedPaymentStatus}
+                            onChange={handlePaymentStatusChange}
+                            size="small"
+                            sx={{ minWidth: 180 }}
+                        >
+                            <MenuItem value={"all"}>Все платежи</MenuItem>
+                            <MenuItem value={"not_cancelled"}>Принятые</MenuItem>
+                            <MenuItem value={"cancelled"}>Отмененные</MenuItem>
+                        </Select>
+                    )}
                 </Box>
                 <ClientPaymentsDataCard 
                     payments={payments} 
@@ -616,9 +635,6 @@ export function ClientPage() {
             <TabPanel value={activeTab} index={3}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6">Ученики клиента</Typography>
-                    <Button variant="contained" onClick={handleOpenAddStudentModal} disabled={!client}>
-                        Добавить ученика клиенту
-                    </Button>
                 </Box>
                 <StudentsDataCard students={studentsList || []} isLoading={isLoadingStudents} allSubscriptions={allSubscriptions} />
             </TabPanel>
@@ -629,108 +645,190 @@ export function ClientPage() {
                  />
             </TabPanel>
 
-            <Modal
-                open={editModalOpen}
-                onClose={handleCloseEditModal}
-                aria-labelledby="edit-client-modal-title"
-            >
-                <Box sx={modalStyle}>
-                    {/* Градиентный заголовок модального окна */}
-                    <Box
-                        sx={{
-                            p: 3,
-                            background: gradients.primary,
-                            color: 'white',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: 0, left: 0, right: 0, bottom: 0,
-                                background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-                                opacity: 0.3,
-                            }
-                        }}
-                    >
-                        <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Typography id="edit-client-modal-title" variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
-                                ✏️ Редактировать данные клиента
-                            </Typography>
-                            <IconButton
-                                aria-label="Закрыть"
-                                onClick={handleCloseEditModal}
-                                sx={{
-                                    color: 'white',
-                                    ml: 2,
-                                    '&:hover': {
-                                        background: alpha('#ffffff', 0.15),
-                                    }
-                                }}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                            </IconButton>
-                        </Box>
-                    </Box>
-                    
-                    {/* Контент модального окна */}
-                    <Box sx={{ p: 3 }}>
-                        {initialFormValues && client && (
-                            <ClientsForm
-                                title="Редактировать данные клиента"
-                                initialValues={initialFormValues}
-                                isEdit={true}
-                                clientId={client.id}
-                                onClose={handleCloseEditModal}
-                            />
-                        )}
-                    </Box>
-                </Box>
-            </Modal>
-
-            <Modal
-                open={addStudentModalOpen}
-                onClose={handleCloseAddStudentModal}
-                aria-labelledby="add-student-to-client-modal-title"
-            >
-                <Box sx={modalStyle}>
-                    {/* Градиентный заголовок модального окна */}
-                    <Box
-                        sx={{
-                            p: 3,
-                            background: gradients.success,
-                            color: 'white',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: 0, left: 0, right: 0, bottom: 0,
-                                background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-                                opacity: 0.3,
-                            }
-                        }}
-                    >
-                        <Box sx={{ position: 'relative', zIndex: 1 }}>
-                            <Typography id="add-student-to-client-modal-title" variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
-                                👤 Добавить ученика клиенту
-                            </Typography>
-                            <Typography variant="body2" sx={{ opacity: 0.9, mt: 1 }}>
-                                {client?.first_name} {client?.last_name}
-                            </Typography>
-                        </Box>
-                    </Box>
-                    
-                    {/* Контент модального окна */}
-                    <Box sx={{ p: 3 }}>
-                        <StudentForm
-                            initialValues={studentFormInitialValues}
-                            onSubmit={handleCreateStudentSubmit}
-                            onClose={handleCloseAddStudentModal}
-                            isLoading={isCreatingStudent}
+            {isBottomSheetFormEnabled ? (
+                <MobileFormBottomSheet
+                    open={editModalOpen}
+                    onClose={handleCloseEditModal}
+                    title="✏️ Редактировать данные клиента"
+                >
+                    {initialFormValues && client && (
+                        <ClientsForm
+                            title="Редактировать данные клиента"
+                            initialValues={initialFormValues}
+                            isEdit={true}
+                            clientId={client.id}
+                            onClose={handleCloseEditModal}
                         />
+                    )}
+                </MobileFormBottomSheet>
+            ) : (
+                <Modal
+                    open={editModalOpen}
+                    onClose={handleCloseEditModal}
+                    aria-labelledby="edit-client-modal-title"
+                >
+                    <Box sx={modalStyle}>
+                        {/* Градиентный заголовок модального окна */}
+                        <Box
+                            sx={{
+                                p: 3,
+                                background: gradients.primary,
+                                color: 'white',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                '&::before': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    top: 0, left: 0, right: 0, bottom: 0,
+                                    background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                                    opacity: 0.3,
+                                }
+                            }}
+                        >
+                            <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <Typography id="edit-client-modal-title" variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                                    ✏️ Редактировать данные клиента
+                                </Typography>
+                                <IconButton
+                                    aria-label="Закрыть"
+                                    onClick={handleCloseEditModal}
+                                    sx={{
+                                        color: 'white',
+                                        ml: 2,
+                                        '&:hover': {
+                                            background: alpha('#ffffff', 0.15),
+                                        }
+                                    }}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                                </IconButton>
+                            </Box>
+                        </Box>
+                        
+                        {/* Контент модального окна */}
+                        <Box sx={{ p: 3 }}>
+                            {initialFormValues && client && (
+                                <ClientsForm
+                                    title="Редактировать данные клиента"
+                                    initialValues={initialFormValues}
+                                    isEdit={true}
+                                    clientId={client.id}
+                                    onClose={handleCloseEditModal}
+                                />
+                            )}
+                        </Box>
                     </Box>
-                </Box>
-            </Modal>
+                </Modal>
+            )}
+
+            <MobileFilterBottomSheet
+                open={invoiceFilterSheetOpen && isBottomSheetFormEnabled}
+                onClose={() => setInvoiceFilterSheetOpen(false)}
+                onApply={() => setInvoiceFilterSheetOpen(false)}
+                onReset={() => {
+                    setSelectedInvoiceStatus(null);
+                    setInvoiceFilterSheetOpen(false);
+                }}
+                title="Фильтр инвойсов"
+            >
+                <Stack spacing={1}>
+                    <Button variant={selectedInvoiceStatus === null ? 'contained' : 'outlined'} onClick={() => setSelectedInvoiceStatus(null)}>
+                        Все статусы
+                    </Button>
+                    <Button variant={selectedInvoiceStatus === 'UNPAID' ? 'contained' : 'outlined'} onClick={() => setSelectedInvoiceStatus('UNPAID')}>
+                        Неоплаченные
+                    </Button>
+                    <Button variant={selectedInvoiceStatus === 'PAID' ? 'contained' : 'outlined'} onClick={() => setSelectedInvoiceStatus('PAID')}>
+                        Оплаченные
+                    </Button>
+                    <Button variant={selectedInvoiceStatus === 'CANCELLED' ? 'contained' : 'outlined'} onClick={() => setSelectedInvoiceStatus('CANCELLED')}>
+                        Отмененные
+                    </Button>
+                </Stack>
+            </MobileFilterBottomSheet>
+
+            <MobileFilterBottomSheet
+                open={paymentFilterSheetOpen && isBottomSheetFormEnabled}
+                onClose={() => setPaymentFilterSheetOpen(false)}
+                onApply={() => setPaymentFilterSheetOpen(false)}
+                onReset={() => {
+                    setSelectedPaymentStatus('all');
+                    setPaymentFilterSheetOpen(false);
+                }}
+                title="Фильтр платежей"
+            >
+                <Stack spacing={1}>
+                    <Button variant={selectedPaymentStatus === 'all' ? 'contained' : 'outlined'} onClick={() => setSelectedPaymentStatus('all')}>
+                        Все платежи
+                    </Button>
+                    <Button variant={selectedPaymentStatus === 'not_cancelled' ? 'contained' : 'outlined'} onClick={() => setSelectedPaymentStatus('not_cancelled')}>
+                        Принятые
+                    </Button>
+                    <Button variant={selectedPaymentStatus === 'cancelled' ? 'contained' : 'outlined'} onClick={() => setSelectedPaymentStatus('cancelled')}>
+                        Отмененные
+                    </Button>
+                </Stack>
+            </MobileFilterBottomSheet>
+
+            {isBottomSheetFormEnabled ? (
+                <MobileFormBottomSheet
+                    open={addStudentModalOpen}
+                    onClose={handleCloseAddStudentModal}
+                    title={`👤 Добавить ученика${client ? ` · ${client.first_name} ${client.last_name}` : ''}`}
+                >
+                    <StudentForm
+                        initialValues={studentFormInitialValues}
+                        onSubmit={handleCreateStudentSubmit}
+                        onClose={handleCloseAddStudentModal}
+                        isLoading={isCreatingStudent}
+                    />
+                </MobileFormBottomSheet>
+            ) : (
+                <Modal
+                    open={addStudentModalOpen}
+                    onClose={handleCloseAddStudentModal}
+                    aria-labelledby="add-student-to-client-modal-title"
+                >
+                    <Box sx={modalStyle}>
+                        {/* Градиентный заголовок модального окна */}
+                        <Box
+                            sx={{
+                                p: 3,
+                                background: gradients.success,
+                                color: 'white',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                '&::before': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    top: 0, left: 0, right: 0, bottom: 0,
+                                    background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                                    opacity: 0.3,
+                                }
+                            }}
+                        >
+                            <Box sx={{ position: 'relative', zIndex: 1 }}>
+                                <Typography id="add-student-to-client-modal-title" variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                                    👤 Добавить ученика клиенту
+                                </Typography>
+                                <Typography variant="body2" sx={{ opacity: 0.9, mt: 1 }}>
+                                    {client?.first_name} {client?.last_name}
+                                </Typography>
+                            </Box>
+                        </Box>
+                        
+                        {/* Контент модального окна */}
+                        <Box sx={{ p: 3 }}>
+                            <StudentForm
+                                initialValues={studentFormInitialValues}
+                                onSubmit={handleCreateStudentSubmit}
+                                onClose={handleCloseAddStudentModal}
+                                isLoading={isCreatingStudent}
+                            />
+                        </Box>
+                    </Box>
+                </Modal>
+            )}
 
             <Dialog
                 open={cancelPaymentModalOpen}
@@ -812,6 +910,113 @@ export function ClientPage() {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <SpeedDial
+                ariaLabel="Client page actions"
+                sx={{
+                    position: 'fixed',
+                    bottom: 16,
+                    right: 16,
+                    '& .MuiFab-primary': {
+                        background: gradients.primary,
+                        color: 'white',
+                        '&:hover': {
+                            background: gradients.primary,
+                            filter: 'brightness(0.95)',
+                        },
+                    },
+                }}
+                icon={<SpeedDialIcon />}
+            >
+                <SpeedDialAction
+                    icon={<EditIcon />}
+                    tooltipTitle="Редактировать клиента"
+                    onClick={handleOpenEditModal}
+                    FabProps={{
+                        sx: {
+                            background: gradients.primary,
+                            color: 'white',
+                            '&:hover': {
+                                background: gradients.primary,
+                                filter: 'brightness(0.95)',
+                            },
+                        },
+                    }}
+                />
+                <SpeedDialAction
+                    icon={<PaymentsIconOutlined />}
+                    tooltipTitle="Добавить платеж"
+                    onClick={() => {
+                        setActiveTab(0);
+                        setPaymentFormSignal((prev) => prev + 1);
+                    }}
+                    FabProps={{
+                        sx: {
+                            background: gradients.success,
+                            color: 'white',
+                            '&:hover': {
+                                background: gradients.success,
+                                filter: 'brightness(0.95)',
+                            },
+                        },
+                    }}
+                />
+                <SpeedDialAction
+                    icon={<PersonAddIcon />}
+                    tooltipTitle="Добавить ученика"
+                    onClick={handleOpenAddStudentModal}
+                    FabProps={{
+                        sx: {
+                            background: gradients.info,
+                            color: 'white',
+                            '&:hover': {
+                                background: gradients.info,
+                                filter: 'brightness(0.95)',
+                            },
+                        },
+                    }}
+                />
+                <SpeedDialAction
+                    icon={<ReceiptLongIcon />}
+                    tooltipTitle="Фильтр инвойсов"
+                    onClick={() => {
+                        setActiveTab(1);
+                        if (isBottomSheetFormEnabled) {
+                            setInvoiceFilterSheetOpen(true);
+                        }
+                    }}
+                    FabProps={{
+                        sx: {
+                            background: gradients.warning,
+                            color: 'white',
+                            '&:hover': {
+                                background: gradients.warning,
+                                filter: 'brightness(0.95)',
+                            },
+                        },
+                    }}
+                />
+                <SpeedDialAction
+                    icon={<TuneIcon />}
+                    tooltipTitle="Фильтр платежей"
+                    onClick={() => {
+                        setActiveTab(2);
+                        if (isBottomSheetFormEnabled) {
+                            setPaymentFilterSheetOpen(true);
+                        }
+                    }}
+                    FabProps={{
+                        sx: {
+                            background: gradients.error,
+                            color: 'white',
+                            '&:hover': {
+                                background: gradients.error,
+                                filter: 'brightness(0.95)',
+                            },
+                        },
+                    }}
+                />
+            </SpeedDial>
         </Box>
     );
 } 
