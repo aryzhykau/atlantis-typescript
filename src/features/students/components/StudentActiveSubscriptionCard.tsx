@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
-import { Paper, Box, Chip, CircularProgress, Button, Switch, alpha, Tooltip} from '@mui/material';
-import { IStudentSubscriptionView, IStudentSubscriptionFreezePayload, IStudentSubscriptionAutoRenewalUpdatePayload } from '../../subscriptions/models/subscription';
-import dayjs, { Dayjs } from 'dayjs';
-import { useFreezeStudentSubscriptionMutation, useUnfreezeStudentSubscriptionMutation, useUpdateStudentSubscriptionAutoRenewalMutation } from '../../../store/apis/subscriptionsApi';
+import React from 'react';
+import { Paper, Box, Chip, Switch } from '@mui/material';
+import { IStudentSubscriptionView, IStudentSubscriptionAutoRenewalUpdatePayload } from '../../subscriptions/models/subscription';
+import dayjs from 'dayjs';
+import { useUpdateStudentSubscriptionAutoRenewalMutation } from '../../../store/apis/subscriptionsApi';
 import { useSnackbar } from '../../../hooks/useSnackBar';
-import { useGradients } from '../../trainer-mobile/hooks/useGradients';
 import { useTheme } from '@mui/material';
-import { FreezeSubscriptionForm } from './FreezeSubscriptionForm';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
@@ -20,66 +18,19 @@ import { SubscriptionCardST } from '../styles/styles';
 interface StudentActiveSubscriptionCardProps {
     subscriptions: IStudentSubscriptionView[];
     isLoading: boolean;
-    studentId: number;
     onSubscriptionUpdate?: () => void;
 }
 
-export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCardProps> = ({ subscriptions, isLoading, studentId, onSubscriptionUpdate }) => {
+export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCardProps> = ({ subscriptions, isLoading, onSubscriptionUpdate }) => {
     const { displaySnackbar } = useSnackbar();
     const theme = useTheme();
-    const gradients = useGradients();
     const now = dayjs();
     const activeSubscription = subscriptions.find(sub => 
         now.isBetween(dayjs(sub.start_date), dayjs(sub.end_date), null, '[]')
     );
 
     const isFrozen = !!(activeSubscription?.freeze_start_date && activeSubscription?.freeze_end_date);
-    const [isFreezeModalOpen, setIsFreezeModalOpen] = useState(false);
-    
-    const [freezeSubscription, { isLoading: isFreezing }] = useFreezeStudentSubscriptionMutation();
-    const [unfreezeSubscription, { isLoading: isUnfreezing }] = useUnfreezeStudentSubscriptionMutation();
     const [updateAutoRenewal, { isLoading: isUpdatingAutoRenewal }] = useUpdateStudentSubscriptionAutoRenewalMutation();
-
-    const handleOpenFreezeModal = () => setIsFreezeModalOpen(true);
-    const handleCloseFreezeModal = () => setIsFreezeModalOpen(false);
-
-    interface FreezeFormValues {
-        freeze_start_date: Dayjs | null;
-        freeze_duration_days: number;
-    }
-
-    const handleFreezeSubmit = async (values: FreezeFormValues) => {
-        if (!activeSubscription || !values.freeze_start_date) return;
-
-        const payload: IStudentSubscriptionFreezePayload = {
-            freeze_start_date: values.freeze_start_date.toISOString(),
-            freeze_duration_days: values.freeze_duration_days,
-        };
-
-        try {
-            await freezeSubscription({ studentSubscriptionId: activeSubscription.id, payload }).unwrap();
-            displaySnackbar('Абонемент успешно заморожен', 'success');
-            handleCloseFreezeModal();
-            onSubscriptionUpdate?.();
-        } catch (error: any) {
-            console.error("Ошибка заморозки абонемента:", error);
-            const errorDetail = error?.data?.detail || 'Ошибка при заморозке абонемента';
-            displaySnackbar(String(errorDetail), 'error');
-        }
-    };
-
-    const handleUnfreeze = async () => {
-        if (!activeSubscription) return;
-        try {
-            await unfreezeSubscription({ studentSubscriptionId: activeSubscription.id, studentId }).unwrap();
-            displaySnackbar('Абонемент успешно разморожен', 'success');
-            onSubscriptionUpdate?.();
-        } catch (error: any) {
-            console.error("Ошибка разморозки абонемента:", error);
-            const errorDetail = error?.data?.detail || 'Ошибка при разморозке абонемента';
-            displaySnackbar(String(errorDetail), 'error');
-        }
-    };
 
     const handleToggleAutoRenewal = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!activeSubscription) return;
@@ -182,36 +133,8 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
                             color="info"
                         />
                    
-                    {/* Кнопки управления */}
-                    <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-                        <Tooltip title={isFrozen ? 'Разморозить абонемент' : 'Заморозить абонемент'}>
-                            <Button
-                                variant="contained"
-                                onClick={isFrozen ? handleUnfreeze : handleOpenFreezeModal}
-                                disabled={isFreezing || isUnfreezing}
-                                sx={{
-                                    background: isFrozen ? gradients.success : gradients.warning,
-                                    color: 'white',
-                                    fontWeight: 600,
-                                    textTransform: 'none',
-                                    flex: 1,
-                                    '&:hover': {
-                                        background: isFrozen ? alpha(theme.palette.success.main, 0.8) : alpha(theme.palette.warning.main, 0.8),
-                                    }
-                                }}
-                            >
-                                {isFreezing || isUnfreezing ? <CircularProgress size={20} /> : (isFrozen ? 'Разморозить' : 'Заморозить')}
-                            </Button>
-                        </Tooltip>
-                    </Box>
                 </Box>
             )}
-            <FreezeSubscriptionForm
-                open={isFreezeModalOpen}
-                onClose={handleCloseFreezeModal}
-                onSubmit={handleFreezeSubmit}
-                isLoading={isFreezing}
-            />
         </Paper>
     );
 }; 

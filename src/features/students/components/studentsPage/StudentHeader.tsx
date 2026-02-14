@@ -14,6 +14,7 @@ export type StudentHeaderProps = {
     student: IStudent;
     age: number;
     isLoadingStudent: boolean;
+    hideActions?: boolean;
 }
 
 type SubscriptionInfo = {
@@ -22,7 +23,7 @@ type SubscriptionInfo = {
     allBaseSubscriptionsData: ISubscriptionListResponse | undefined;
 }
 
-export const StudentHeader = ({handleOpenAddSubscriptionModal, handleOpenEditModal, subscriptionInfo, student, age, isLoadingStudent }: StudentHeaderProps) =>  {
+export const StudentHeader = ({handleOpenAddSubscriptionModal, handleOpenEditModal, subscriptionInfo, student, age, isLoadingStudent, hideActions = false }: StudentHeaderProps) =>  {
     const navigate = useNavigate();
     const handleBackClick = () => navigate(-1);
     const {hasActiveOrFrozenSubscription, isLoadingAllBaseSubscriptions, allBaseSubscriptionsData} = subscriptionInfo;
@@ -43,26 +44,28 @@ export const StudentHeader = ({handleOpenAddSubscriptionModal, handleOpenEditMod
                     </Typography>
                 </Box>
             </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-                <Tooltip
-                    title={hasActiveOrFrozenSubscription ? 'У ученика уже есть активный или замороженный абонемент' : ''}
-                    disableHoverListener={!hasActiveOrFrozenSubscription}
-                >
-                    <span>
-                        <Button 
-                            variant="contained" 
-                            onClick={handleOpenAddSubscriptionModal}
-                            disabled={hasActiveOrFrozenSubscription || isLoadingAllBaseSubscriptions || !allBaseSubscriptionsData?.items?.length}
-                            sx={HeaderButtonST(theme)}
-                        >
-                            Добавить абонемент
-                        </Button>
-                    </span>
-                </Tooltip>
-                <IconButton onClick={handleOpenEditModal} disabled={!student || isLoadingStudent} sx={EditButtonST}>
-                    <EditIcon />
-                </IconButton>
-            </Box>
+            {!hideActions && (
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Tooltip
+                        title={hasActiveOrFrozenSubscription ? 'У ученика уже есть активный или замороженный абонемент' : ''}
+                        disableHoverListener={!hasActiveOrFrozenSubscription}
+                    >
+                        <span>
+                            <Button 
+                                variant="contained" 
+                                onClick={handleOpenAddSubscriptionModal}
+                                disabled={hasActiveOrFrozenSubscription || isLoadingAllBaseSubscriptions || !allBaseSubscriptionsData?.items?.length}
+                                sx={HeaderButtonST(theme)}
+                            >
+                                Добавить абонемент
+                            </Button>
+                        </span>
+                    </Tooltip>
+                    <IconButton onClick={handleOpenEditModal} disabled={!student || isLoadingStudent} sx={EditButtonST}>
+                        <EditIcon />
+                    </IconButton>
+                </Box>
+            )}
         </Box>
     )
 }

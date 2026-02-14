@@ -10,7 +10,7 @@ Out of scope (frozen): Trainer mobile UI, Calendar (trainer/admin/owner), Dashbo
 
 1. Unified detail-page pattern for all detailed pages.
 2. Card-based UX for list/data-grid flows (replace desktop-grid feel on mobile).
-3. Swipe actions can be attempted broadly (lists and detail sublists), with safe guards.
+3. Swipe actions are allowed, but final preferred pattern is **left-swipe reveal action panel** (persistent until swipe right/close).
 4. Global pull-to-refresh per page.
 5. Invoices mobile: view + cancel only (no create/edit).
 6. Training Types & Subscriptions: full read + create/edit on mobile.
@@ -19,7 +19,10 @@ Out of scope (frozen): Trainer mobile UI, Calendar (trainer/admin/owner), Dashbo
 9. Search: collapsible and easy access.
 10. Filters/actions: use bottom sheets.
 11. Forms: scrollable forms.
-12. Data display: bold numbers; show both relative + absolute date/time when useful.
+12. Data display: bold numbers; avoid low-value timestamps in list cards.
+13. Main mobile header (`ATLANTIS` + burger) should stay fixed at top.
+14. Client-detail primary actions should be centralized in a gradient SpeedDial FAB.
+15. Form container should support feature-flag switch: dialog vs bottom sheet.
 
 ---
 
@@ -33,6 +36,7 @@ Every page uses:
 3. **Primary actions row** (context actions, e.g. add, filter, export/cancel where relevant)
 4. **Main content sections** (stacked cards/sections, scrollable)
 5. **Sticky/Floating action** (FAB where creation/quick entry is relevant)
+6. **Fixed top header** for mobile home context
 
 ### 2.2 List/card model (for former data grids)
 
@@ -44,12 +48,16 @@ Every page uses:
 ### 2.3 Interaction model
 
 - **Pull-to-refresh**: one global refresh per page.
-- **Swipe actions**:
-  - Right swipe: primary safe action (`Edit`, `Open`, `Mark done`)
-  - Left swipe: risky action (`Archive`, `Cancel`, `Delete`) with confirmation sheet/dialog.
+- **Pull-to-refresh must be disabled while overlays are open/closing** (bottom sheets, dialogs, modals).
+- **Swipe actions (preferred implemented pattern):**
+  - Swipe left to reveal action panel.
+  - Action panel stays open until swipe right/close.
+  - Actions do not execute on swipe itself; user taps revealed action.
+  - Destructive action always asks confirmation.
 - **Collapsible search**: compact search trigger in header; expands inline.
 - **Filters in bottom sheet**: status/date/type chips + reset/apply.
 - **Confirmation**: all destructive actions require explicit confirm.
+- **First-visit guidance**: use one lightweight dismissible hint, not per-card hints.
 
 ### 2.4 Responsive behavior
 
@@ -57,6 +65,7 @@ Every page uses:
 - Minimum touch target: 44px.
 - Sticky page controls where needed (search/filter action bar).
 - Avoid horizontal scrolling except micro-stat rows if necessary.
+- Stack lists are full-width on mobile (edge-to-edge blocks are allowed where visually better).
 
 ### 2.5 Role visibility policy
 
@@ -81,17 +90,20 @@ Current route: `/home/clients`
 3. Search trigger + filter sheet (active status, has students, debt flag, last payment age).
 4. Card list (new card design).
 5. FAB: `Добавить клиента`.
+6. One-time swipe hint banner (dismissible).
 
 ### Card design (new)
 - Top row: full name + status chip + debt badge if needed.
 - Middle row: phone/email concise.
-- Footer row: students count, last invoice/payment date (relative + absolute tooltip/subtext).
+- Footer row: students count + balance pill.
 - Tap card: open details.
-- Swipe right: edit.
-- Swipe left: deactivate/delete (with confirmation).
+- Swipe left: reveal action panel.
+- Revealed actions: `Редакт.` + `Статус` (activate/deactivate).
+- Swipe right: close revealed panel.
 
 ### Notes
 - Replace old accordion-heavy visual style with cleaner card hierarchy and better spacing.
+- Students count must come from reliable source (lazy `/clients/{id}/students` fetch), not only embedded list payload.
 
 ---
 
@@ -106,7 +118,12 @@ Current route: `/home/clients/:clientId`
 ### Structure (stacked, scrollable)
 1. Hero summary (name, contact, status, debt snapshot).
 2. Quick stats cards: students, invoices, payments, balance.
-3. Primary actions: edit client, add student, create contact task.
+3. Primary actions centralized in SpeedDial FAB:
+  - edit client
+  - add payment
+  - add student
+  - invoice filter
+  - payment filter
 4. Section: `Контакты и профиль`.
 5. Section: `Ученики` (cards + quick add).
 6. Section: `Абонементы учеников` (important surface).
@@ -118,6 +135,17 @@ Current route: `/home/clients/:clientId`
 - Replace tabs with collapsible section cards.
 - Keep only most recent N items with “Показать все” expansion.
 - Use bottom sheets for filters within invoices/payments sublists.
+- Remove duplicated inline CTA buttons if action exists in SpeedDial.
+
+### Container variant policy (implemented)
+- Use env feature flag for client forms on mobile:
+  - `VITE_MOBILE_CLIENT_FORM_VARIANT="dialog"` → modal/dialog
+  - `VITE_MOBILE_CLIENT_FORM_VARIANT="bottomsheet"` → bottom sheet
+- Applies to:
+  - edit client form
+  - add payment form
+  - add student form
+  - invoice/payment filter pickers
 
 ---
 
@@ -357,6 +385,7 @@ Current route: `/home/expenses`
 7. `MetricPillCard` (bold KPI)
 8. `SectionCard` (stacked detail block)
 9. `QuickAddBottomSheet` (expenses first, reusable)
+10. `MobileFormBottomSheet` (form container variant for mobile)
 
 All components must preserve Atlantis gradients and base styling from current design system.
 
@@ -367,11 +396,10 @@ All components must preserve Atlantis gradients and base styling from current de
 - Destructive swipe never executes immediately; always confirm.
 - Keep one primary CTA per screen context.
 - Financial values use strong visual hierarchy.
-- Dates show both:
-  - relative (e.g., “2 дня назад”)
-  - absolute (e.g., “12.02.2026 14:35”)
+- Do not show noisy timestamps in list rows unless they carry business value.
 - Empty states always include next best action.
 - Loading uses skeleton cards, not blank space.
+- In dark theme, SpeedDial actions must be high-contrast (no default gray).
 
 ---
 
@@ -392,11 +420,30 @@ All components must preserve Atlantis gradients and base styling from current de
 - No desktop-style dense grid as primary mobile pattern.
 - Card-based list and stacked details are used.
 - Pull-to-refresh works globally on each page.
+- Pull-to-refresh is blocked when overlays are open.
 - Search is collapsible; filters/actions use bottom sheets.
 - Swipe actions present with confirmations.
+- Swipe list behavior uses left-reveal persistent action panel.
 - Trainer salary hidden for admins and visible for owners.
 - Invoices page allows view/cancel only.
 - Expenses supports quick-add via bottom sheet FAB.
+
+---
+
+## 9) Reusable rollout checklist for remaining pages
+
+Use this checklist for `Students`, `Trainers`, `Client Contacts`, `Invoices`, `Training Types/Subscriptions`, `Expenses`:
+
+1. Add `MobilePageShell` + gradient hero.
+2. Add 2–4 `MetricPillCard` KPIs.
+3. Convert desktop rows to full-width stack cards.
+4. Add `SwipeableActionCard` with left-reveal persistent actions.
+5. Add one-time hint banner (dismissible) only if gesture is new.
+6. Use collapsible search + `MobileFilterBottomSheet`.
+7. Add FAB/SpeedDial as single action entrypoint.
+8. Move duplicate inline buttons into FAB/SpeedDial actions.
+9. If forms are complex, support dialog/bottomsheet variant behind env flag.
+10. Ensure pull-to-refresh is disabled while overlays are open.
 
 ---
 
