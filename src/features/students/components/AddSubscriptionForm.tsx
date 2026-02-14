@@ -6,6 +6,7 @@ import { FormikDialog, FormikSelectField, FormikCheckboxField, FormActions } fro
 import { useFormSubmission } from '../../../hooks/forms';
 import { subscriptionSchemas } from '../../../utils/validationSchemas';
 import { ISubscriptionResponse, IStudentSubscriptionCreatePayload } from '../../subscriptions/models/subscription';
+import { MobileFormBottomSheet } from '../../../components/mobile-kit';
 
 interface AddSubscriptionFormValues {
     subscription_id: string;
@@ -20,6 +21,7 @@ interface AddSubscriptionFormProps {
     studentId: number;
     availableSubscriptions: ISubscriptionResponse[];
     isLoadingSubscriptions?: boolean;
+    useBottomSheetVariant?: boolean;
 }
 
 export const AddSubscriptionForm: React.FC<AddSubscriptionFormProps> = ({
@@ -30,6 +32,7 @@ export const AddSubscriptionForm: React.FC<AddSubscriptionFormProps> = ({
     studentId,
     availableSubscriptions,
     isLoadingSubscriptions,
+    useBottomSheetVariant = false,
 }) => {
     const initialFormValues: AddSubscriptionFormValues = {
         subscription_id: '',
@@ -56,15 +59,8 @@ export const AddSubscriptionForm: React.FC<AddSubscriptionFormProps> = ({
 
     const combinedIsLoading = isLoading || isSubmissionLoading;
 
-    return (
-        <FormikDialog
-            open={open}
-            onClose={onClose}
-            title="Добавить абонемент ученику"
-            subtitle="Выберите абонемент и настройте параметры"
-            icon={<AccountBalance />}
-            maxWidth="sm"
-        >
+    const formBody = (
+        <>
             <Formik
                 initialValues={initialFormValues}
                 validationSchema={subscriptionSchemas.addToStudent}
@@ -104,6 +100,31 @@ export const AddSubscriptionForm: React.FC<AddSubscriptionFormProps> = ({
                     </Form>
                 )}
             </Formik>
+        </>
+    );
+
+    if (useBottomSheetVariant) {
+        return (
+            <MobileFormBottomSheet
+                open={open}
+                onClose={onClose}
+                title="🎫 Добавить абонемент ученику"
+            >
+                {formBody}
+            </MobileFormBottomSheet>
+        );
+    }
+
+    return (
+        <FormikDialog
+            open={open}
+            onClose={onClose}
+            title="Добавить абонемент ученику"
+            subtitle="Выберите абонемент и настройте параметры"
+            icon={<AccountBalance />}
+            maxWidth="sm"
+        >
+            {formBody}
         </FormikDialog>
     );
 }; 

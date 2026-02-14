@@ -13,6 +13,7 @@ import { TrainingSettings } from "../layouts/trainingTypesSubscriptions/Training
 import {MobileClients} from "../layouts/clients/MobileClients.tsx";
 import InvoicesPayments from "../layouts/invoicesPyaments/InvoicesPayments.tsx";
 import { StudentsListPage } from '../features/students/components/StudentsListPage.tsx';
+import { MobileStudentsListPage } from '../features/students/components/MobileStudentsListPage.tsx';
 import CalendarV2Page from "../features/calendar-v2/components/desktop/layout/CalendarV2Page";
 import MobileFullCalendarV2Page from "../features/calendar-v2/components/mobile/layout/MobileFullCalendarV2Page";
 import CallIcon from '@mui/icons-material/Call';
@@ -50,7 +51,7 @@ export const MenuItems: IMenuItems[] = [
         link: "students",
         icon: <SchoolIcon/>,
         page: <StudentsListPage/>,
-        mobilePage: <StudentsListPage/>
+        mobilePage: <MobileStudentsListPage/>
     },
     {
         title: "Тренеры",

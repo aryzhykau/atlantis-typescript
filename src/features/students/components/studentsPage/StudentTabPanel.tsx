@@ -18,7 +18,7 @@ export const StudentTabPanel = (props: TabPanelProps) => {
             {...other}
         >
             {value === index && (
-                <Box sx={{ p: 2 }}>
+                <Box sx={{ pt: 3 }}>
                     {children}
                 </Box>
             )}

@@ -1,4 +1,4 @@
-import { Box, Grid, Paper, Tab, Tabs, useTheme } from "@mui/material"
+import { Box, Grid, Paper, Tab, Tabs, alpha, useTheme } from "@mui/material"
 import { StudentParentInfoCard } from "../StudentParentInfoCard"
 import { StudentInfoCard } from "../StudentInfoCard"
 import { StudentActiveSubscriptionCard } from "../StudentActiveSubscriptionCard"
@@ -8,7 +8,6 @@ import { StudentSubscriptionsTable } from "../StudentSubscriptionsTable"
 import { IStudentSubscriptionView } from "../../../subscriptions/models/subscription"
 import { IStudent } from "../../models/student"
 import { useGradients } from "../../../trainer-mobile/hooks/useGradients"
-import { TabsST } from "../../styles/styles"
 
 
 export type StudentContentType = {  
@@ -35,25 +34,57 @@ export const StudentContent = ({
         setTabValue(newValue);
     };
 
+    const a11yProps = (index: number) => ({
+        id: `student-tab-${index}`,
+        'aria-controls': `student-tabpanel-${index}`,
+    });
+
     return(
         <Box sx={{ p: 3 }}>
             <Paper
                 elevation={0}
-                sx={{borderRadius: 3,
-                border: '1px solid',
-                borderColor: 'divider',
-                overflow: 'hidden',
-                mb: 3}}
+                sx={{
+                    mb: 3,
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    overflow: 'hidden',
+                }}
             >
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <Tabs value={tabValue} onChange={handleTabChange} sx={TabsST(theme, gradients)}>
-                    <Tab label="Информация" />
-                    <Tab label="Абонементы" />
+                <Tabs
+                    value={tabValue}
+                    onChange={handleTabChange}
+                    aria-label="Student details tabs"
+                    sx={{
+                        background: alpha(theme.palette.primary.main, 0.05),
+                        '& .MuiTab-root': {
+                            minHeight: 64,
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            textTransform: 'none',
+                            color: 'text.secondary',
+                            '&.Mui-selected': {
+                                color: theme.palette.primary.main,
+                                background: theme.palette.background.paper,
+                            },
+                            '&:hover': {
+                                background: alpha(theme.palette.primary.main, 0.1),
+                                color: theme.palette.primary.main,
+                            }
+                        },
+                        '& .MuiTabs-indicator': {
+                            background: gradients.primary,
+                            height: 3,
+                        }
+                    }}
+                >
+                    <Tab label="📊 Информация" {...a11yProps(0)} />
+                    <Tab label="🎫 Абонементы" {...a11yProps(1)} />
                 </Tabs>
-            </Box>
+            </Paper>
 
             <StudentTabPanel value={tabValue} index={0}>
-                <Grid container spacing={3}>
+                <Grid container spacing={2} alignItems="stretch">
                     <Grid item xs={12} md={6} lg={4}>
                         <StudentInfoCard student={student} onStatusHasChanged={handleStudentStatusHasChanged} />
                     </Grid>
@@ -64,7 +95,6 @@ export const StudentContent = ({
                         <StudentActiveSubscriptionCard 
                             subscriptions={enrichedStudentSubscriptions}
                             isLoading={isLoadingStudentSubscriptions}
-                            studentId={student.id}
                             onSubscriptionUpdate={handleSubscriptionDataUpdate}
                         />
                     </Grid>
@@ -77,7 +107,6 @@ export const StudentContent = ({
                     isLoading={isLoadingStudentSubscriptions}
                 />
             </StudentTabPanel>
-        </Paper>
         </Box>  
     )
 }
