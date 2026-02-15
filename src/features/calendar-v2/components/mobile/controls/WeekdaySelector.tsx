@@ -10,19 +10,23 @@ import {
   ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import dayjs, { Dayjs } from 'dayjs';
+import { CalendarViewMode } from '../../desktop/layout/CalendarV2Page';
 
 interface WeekdaySelectorProps {
   weekStart: Dayjs;
   selectedDay?: Dayjs;
   onDaySelect?: (day: Dayjs) => void;
+  viewMode?: CalendarViewMode;
 }
 
 const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
   weekStart,
   selectedDay,
   onDaySelect,
+  viewMode,
 }) => {
   const theme = useTheme();
+  const isTemplateMode = viewMode === 'scheduleTemplate';
 
   // Generate weekdays
   const weekdays = React.useMemo(() => {
@@ -139,45 +143,47 @@ const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                 {day.format('dd')}
               </Typography>
               
-              {/* Day number in circle */}
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: shouldHighlight
-                    ? theme.palette.primary.main
-                    : isToday
-                    ? theme.palette.primary.main + '20'
-                    : 'transparent',
-                  border: isToday && !shouldHighlight
-                    ? `1px solid ${theme.palette.primary.main}`
-                    : shouldHighlight
-                    ? 'none'
-                    : `1px solid ${theme.palette.divider}`,
-                  transition: theme.transitions.create(['background', 'border'], {
-                    duration: theme.transitions.duration.short,
-                  }),
-                }}
-              >
-                <Typography
-                  variant="body2"
+              {/* Day number in circle - Hidden in template mode */}
+              {!isTemplateMode && (
+                <Box
                   sx={{
-                    fontWeight: shouldHighlight ? 700 : 600,
-                    fontSize: '0.8rem',
-                    color: shouldHighlight
-                      ? 'white'
-                      : isToday
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: shouldHighlight
                       ? theme.palette.primary.main
-                      : theme.palette.text.primary,
+                      : isToday
+                      ? theme.palette.primary.main + '20'
+                      : 'transparent',
+                    border: isToday && !shouldHighlight
+                      ? `1px solid ${theme.palette.primary.main}`
+                      : shouldHighlight
+                      ? 'none'
+                      : `1px solid ${theme.palette.divider}`,
+                    transition: theme.transitions.create(['background', 'border'], {
+                      duration: theme.transitions.duration.short,
+                    }),
                   }}
                 >
-                  {day.format('D')}
-                </Typography>
-              </Box>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: shouldHighlight ? 700 : 600,
+                      fontSize: '0.8rem',
+                      color: shouldHighlight
+                        ? 'white'
+                        : isToday
+                        ? theme.palette.primary.main
+                        : theme.palette.text.primary,
+                    }}
+                  >
+                    {day.format('D')}
+                  </Typography>
+                </Box>
+              )}
             </Box>
           );
         })}

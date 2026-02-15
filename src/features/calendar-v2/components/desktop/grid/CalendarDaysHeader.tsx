@@ -2,11 +2,13 @@ import React from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
+import { CalendarViewMode } from '../layout/CalendarV2Page';
 
 interface CalendarDaysHeaderProps {
   daysOfWeek: Dayjs[];
   isMobile: boolean;
   responsiveStyles: any;
+  viewMode: CalendarViewMode;
 }
 
 /**
@@ -16,8 +18,10 @@ export const CalendarDaysHeader: React.FC<CalendarDaysHeaderProps> = ({
   daysOfWeek,
   isMobile,
   responsiveStyles,
+  viewMode,
 }) => {
   const theme = useTheme();
+  const isTemplateMode = viewMode === 'scheduleTemplate';
 
   return (
     <Box sx={{ 
@@ -65,40 +69,42 @@ export const CalendarDaysHeader: React.FC<CalendarDaysHeaderProps> = ({
             {isMobile ? day.format('dd') : day.format('ddd')}
           </Typography>
 
-          {/* Date and month */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              minWidth: isMobile ? '24px' : '40px',
-            }}
-          >
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                fontWeight: day.isSame(dayjs(), 'day') ? 700 : 500,
-                fontSize: isMobile ? '1rem' : '1.25rem',
-                color: day.isSame(dayjs(), 'day') ? theme.palette.primary.main : theme.palette.text.primary,
-                lineHeight: 1,
+          {/* Date and month - Hidden in template mode */}
+          {!isTemplateMode && (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                minWidth: isMobile ? '24px' : '40px',
               }}
             >
-              {day.format('D')}
-            </Typography>
-            {!isMobile && (
               <Typography 
-                variant="caption" 
+                variant="h6" 
                 sx={{ 
-                  fontSize: '0.7rem',
-                  color: theme.palette.text.secondary,
+                  fontWeight: day.isSame(dayjs(), 'day') ? 700 : 500,
+                  fontSize: isMobile ? '1rem' : '1.25rem',
+                  color: day.isSame(dayjs(), 'day') ? theme.palette.primary.main : theme.palette.text.primary,
                   lineHeight: 1,
-                  textTransform: 'capitalize',
                 }}
               >
-                {day.format('MMM')}
+                {day.format('D')}
               </Typography>
-            )}
-          </Box>
+              {!isMobile && (
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    fontSize: '0.7rem',
+                    color: theme.palette.text.secondary,
+                    lineHeight: 1,
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {day.format('MMM')}
+                </Typography>
+              )}
+            </Box>
+          )}
         </Box>
       ))}
     </Box>
