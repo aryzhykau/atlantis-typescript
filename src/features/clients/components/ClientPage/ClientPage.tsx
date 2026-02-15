@@ -173,7 +173,7 @@ const ClientStats: React.FC<ClientStatsProps> = ({ studentsCount, invoicesCount,
             <Grid item xs={6} sm={3}>
                 <StatCard
                     icon={<AccountBalanceIcon sx={{ fontSize: 32 }} />}
-                    value={`${balance.toLocaleString()} ₽`}
+                    value={`${balance.toLocaleString()} €`}
                     label="Баланс"
                     gradient={gradients.warning}
                 />
