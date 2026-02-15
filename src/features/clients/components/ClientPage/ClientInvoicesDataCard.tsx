@@ -1,11 +1,9 @@
 import React from "react";
-import { Box, Typography, CircularProgress, Chip, Button, Stack } from "@mui/material";
+import { Box, Typography, CircularProgress, Chip } from "@mui/material";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { IInvoiceGet, InvoiceStatus, InvoiceType } from "../../../invoices/models/invoice";
 import { EditableInvoiceComment } from "./EditableInvoiceComment";
 import useIsMobile from "../../../../hooks/useMobile";
-import { SwipeableActionCard } from "../../../../components/mobile-kit";
-import { useGradients } from "../../../trainer-mobile/hooks/useGradients";
 import dayjs from "dayjs";
 
 interface ClientInvoicesDataCardProps {
@@ -18,7 +16,6 @@ export const ClientInvoicesDataCard: React.FC<ClientInvoicesDataCardProps> = ({
     isLoading
 }) => {
     const isMobile = useIsMobile();
-    const gradients = useGradients();
 
     const invoiceColumns: GridColDef[] = [
         { field: 'id', headerName: 'ID', width: 70 },
@@ -116,72 +113,51 @@ export const ClientInvoicesDataCard: React.FC<ClientInvoicesDataCardProps> = ({
                     const typeLabel = invoiceTypeMeta(invoice.type);
 
                     return (
-                        <SwipeableActionCard
+                        <Box
                             key={invoice.id}
-                            revealContent={(
-                                <Stack direction="row" sx={{ width: '100%' }}>
-                                    <Button
-                                        fullWidth
-                                        variant="contained"
-                                        sx={{
-                                            borderRadius: 0,
-                                            background: gradients.info,
-                                            color: 'white',
-                                            fontWeight: 700,
-                                            '&:hover': { background: gradients.info, filter: 'brightness(0.95)' },
-                                        }}
-                                    >
-                                        Просмотр
-                                    </Button>
-                                </Stack>
-                            )}
-                            revealWidth={128}
+                            sx={{
+                                backgroundColor: 'background.paper',
+                                borderRadius: 0,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderLeft: 'none',
+                                borderRight: 'none',
+                                borderTop: 'none',
+                                p: 2,
+                            }}
                         >
-                            <Box
-                                sx={{
-                                    backgroundColor: 'background.paper',
-                                    borderRadius: 0,
-                                    border: '1px solid',
-                                    borderColor: 'divider',
-                                    borderLeft: 'none',
-                                    borderRight: 'none',
-                                    borderTop: 'none',
-                                    p: 2,
-                                }}
-                            >
-                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
-                                    <Box sx={{ minWidth: 0 }}>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: 800 }} noWrap>
-                                            Инвойс #{invoice.id}
-                                        </Typography>
-                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
-                                            {typeLabel}
-                                        </Typography>
-                                    </Box>
-
-                                    <Chip size="small" label={meta.label} color={meta.color} />
-                                </Box>
-
-                                <Box sx={{ mt: 1.25, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                        {invoice.amount.toFixed(2)} €
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
+                                <Box sx={{ minWidth: 0 }}>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 800 }} noWrap>
+                                        Инвойс #{invoice.id}
                                     </Typography>
-                                    {invoice.description && (
-                                        <Typography variant="body2" color="text.secondary" noWrap>
-                                            {invoice.description}
-                                        </Typography>
-                                    )}
-                                    {invoice.comment && (
-                                        <Typography variant="caption" color="text.disabled" sx={{ fontStyle: 'italic' }}>
-                                            {invoice.comment}
-                                        </Typography>
-                                    )}
-                                    <Typography variant="caption" color="text.disabled">
-                                        Создан: {dayjs(invoice.created_at).format('DD.MM.YYYY')}
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
+                                        {typeLabel}
                                     </Typography>
                                 </Box>
+
+                                <Chip size="small" label={meta.label} color={meta.color} />
                             </Box>
-                        </SwipeableActionCard>
+
+                            <Box sx={{ mt: 1.25, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {invoice.amount.toFixed(2)} €
+                                </Typography>
+                                {invoice.description && (
+                                    <Typography variant="body2" color="text.secondary" noWrap>
+                                        {invoice.description}
+                                    </Typography>
+                                )}
+                                {invoice.comment && (
+                                    <Typography variant="caption" color="text.disabled" sx={{ fontStyle: 'italic' }}>
+                                        {invoice.comment}
+                                    </Typography>
+                                )}
+                                <Typography variant="caption" color="text.disabled">
+                                    Создан: {dayjs(invoice.created_at).format('DD.MM.YYYY')}
+                                </Typography>
+                            </Box>
+                        </Box>
                     );
                 })}
             </Box>
