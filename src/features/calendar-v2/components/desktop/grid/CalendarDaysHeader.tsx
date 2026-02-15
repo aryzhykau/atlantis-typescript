@@ -69,7 +69,7 @@ export const CalendarDaysHeader: React.FC<CalendarDaysHeaderProps> = ({
             {isMobile ? day.format('dd') : day.format('ddd')}
           </Typography>
 
-          {/* Date and month - Hidden in template mode */}
+          {/* Date and month - Only shown in non-template mode */}
           {!isTemplateMode && (
             <Box
               sx={{

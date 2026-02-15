@@ -143,7 +143,7 @@ const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
                 {day.format('dd')}
               </Typography>
               
-              {/* Day number in circle - Hidden in template mode */}
+              {/* Day number in circle - Only shown in non-template mode */}
               {!isTemplateMode && (
                 <Box
                   sx={{
