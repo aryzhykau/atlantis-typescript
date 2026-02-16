@@ -66,6 +66,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           daysOfWeek={daysOfWeek} 
           isMobile={isMobile}
           responsiveStyles={responsiveStyles}
+          viewMode={viewMode}
         />
         
         {/* Calendar body */}

@@ -128,6 +128,7 @@ const MobileFullCalendarV2Page: React.FC = () => {
             weekStart={weekStart}
             selectedDay={selectedDay}
             onDaySelect={handleDaySelect}
+            viewMode={viewMode}
           />
         </Box>
 
