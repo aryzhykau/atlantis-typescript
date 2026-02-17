@@ -3,6 +3,7 @@ import { Box, Typography, Avatar, Button, IconButton, useTheme, alpha } from '@m
 import { PersonAdd as PersonAddIcon, Delete as DeleteIcon, CalendarToday as CalendarTodayIcon } from '@mui/icons-material';
 import { AssignedStudentsProps, StudentTemplate } from './types';
 import dayjs from 'dayjs';
+import { getStartDateColorsAndStatus } from '../../../utils/studentStartDateHelper';
 
 /**
  * AssignedStudents - Manages assigned students display and interaction
@@ -135,34 +136,7 @@ const AssignedStudents: React.FC<AssignedStudentsProps> = ({
               {/* Start Date with Color Coding and Status Text */}
               {studentTemplate.start_date && (() => {
                 const startDate = dayjs(studentTemplate.start_date).startOf('day');
-                const today = dayjs().startOf('day');
-                const isPast = startDate.isBefore(today);
-                const isFuture = startDate.isAfter(today);
-                
-                // Determine colors and status text based on date status
-                const getColorsAndStatus = () => {
-                  if (isPast) {
-                    return {
-                      icon: alpha(theme.palette.error.main, 0.6),
-                      text: alpha(theme.palette.error.main, 0.8),
-                      statusText: 'уже начал(а)',
-                    };
-                  }
-                  if (isFuture) {
-                    return {
-                      icon: alpha(theme.palette.success.main, 0.6),
-                      text: alpha(theme.palette.success.main, 0.8),
-                      statusText: 'еще не начал(а) посещать',
-                    };
-                  }
-                  return {
-                    icon: alpha(theme.palette.text.primary, 0.5),
-                    text: alpha(theme.palette.text.primary, 0.7),
-                    statusText: 'начинает сегодня',
-                  };
-                };
-                
-                const { icon, text, statusText } = getColorsAndStatus();
+                const { icon, text, statusText } = getStartDateColorsAndStatus(studentTemplate.start_date, theme);
                 
                 return (
                   <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5, mt: 0.75 }}>
@@ -170,12 +144,12 @@ const AssignedStudents: React.FC<AssignedStudentsProps> = ({
                       <CalendarTodayIcon sx={{ 
                         fontSize: '0.75rem', 
                         mr: 0.5, 
-                        color: icon
+                        color: alpha(icon, 0.6)
                       }} />
                       <Typography 
                         variant="caption" 
                         sx={{ 
-                          color: text, 
+                          color: alpha(text, 0.8), 
                           fontWeight: 500,
                           fontSize: '0.7rem',
                         }}
@@ -186,7 +160,7 @@ const AssignedStudents: React.FC<AssignedStudentsProps> = ({
                     <Typography 
                       variant="caption" 
                       sx={{ 
-                        color: text,
+                        color: alpha(text, 0.8),
                         fontStyle: 'italic',
                         fontSize: '0.65rem'
                       }}
