@@ -322,8 +322,7 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
                     </Box>
                   )}
                   {s_template.start_date && (() => {
-                    const startDate = dayjs(s_template.start_date).startOf('day');
-                    const { icon, text, statusText } = getStartDateColorsAndStatus(s_template.start_date, theme);
+                    const { icon, text, statusText, formattedDate } = getStartDateColorsAndStatus(s_template.start_date, theme);
                     
                     return (
                       <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
@@ -340,7 +339,7 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
                               fontWeight: 500 
                             }}
                           >
-                            Начало: {startDate.format('DD.MM.YYYY')}
+                            Начало: {formattedDate}
                           </Typography>
                         </Box>
                         <Typography 

@@ -2,7 +2,6 @@ import React from 'react';
 import { Box, Typography, Avatar, Button, IconButton, useTheme, alpha } from '@mui/material';
 import { PersonAdd as PersonAddIcon, Delete as DeleteIcon, CalendarToday as CalendarTodayIcon } from '@mui/icons-material';
 import { AssignedStudentsProps, StudentTemplate } from './types';
-import dayjs from 'dayjs';
 import { getStartDateColorsAndStatus } from '../../../utils/studentStartDateHelper';
 
 /**
@@ -135,8 +134,7 @@ const AssignedStudents: React.FC<AssignedStudentsProps> = ({
               
               {/* Start Date with Color Coding and Status Text */}
               {studentTemplate.start_date && (() => {
-                const startDate = dayjs(studentTemplate.start_date).startOf('day');
-                const { icon, text, statusText } = getStartDateColorsAndStatus(studentTemplate.start_date, theme);
+                const { icon, text, statusText, formattedDate } = getStartDateColorsAndStatus(studentTemplate.start_date, theme);
                 
                 return (
                   <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5, mt: 0.75 }}>
@@ -154,7 +152,7 @@ const AssignedStudents: React.FC<AssignedStudentsProps> = ({
                           fontSize: '0.7rem',
                         }}
                       >
-                        {startDate.format('DD.MM.YYYY')}
+                        {formattedDate}
                       </Typography>
                     </Box>
                     <Typography 
