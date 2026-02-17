@@ -332,14 +332,14 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
                         return {
                           icon: alpha(theme.palette.error.main, 0.6),
                           text: alpha(theme.palette.error.main, 0.8),
-                          statusText: 'уже начал',
+                          statusText: 'уже начал(а)',
                         };
                       }
                       if (isFuture) {
                         return {
                           icon: alpha(theme.palette.success.main, 0.6),
                           text: alpha(theme.palette.success.main, 0.8),
-                          statusText: 'еще не начал посещать',
+                          statusText: 'еще не начал(а) посещать',
                         };
                       }
                       return {
