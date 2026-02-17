@@ -21,7 +21,7 @@ import { useDispatch } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
-
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PhoneIcon from '@mui/icons-material/Phone';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -40,6 +40,7 @@ import { useGetTrainersQuery } from '../../../../../store/apis/trainersApi';
 import { TrainingStudentTemplateCreate } from '../../../models/trainingStudentTemplate';
 import { TrainingTemplateUpdate, TrainingTemplateCreate } from '../../../models/trainingTemplate';
 import { useSnackbar } from '../../../../../hooks/useSnackBar';
+import { getStartDateColorsAndStatus } from '../../../utils/studentStartDateHelper';
 
 interface TrainingTemplateModalProps {
   open: boolean;
@@ -320,6 +321,40 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
                       )}
                     </Box>
                   )}
+                  {s_template.start_date && (() => {
+                    const { icon, text, statusText, formattedDate } = getStartDateColorsAndStatus(s_template.start_date, theme);
+                    
+                    return (
+                      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <CalendarTodayIcon sx={{ 
+                            fontSize: '0.9rem', 
+                            mr: 0.5, 
+                            color: alpha(icon, 0.6)
+                          }} />
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              color: alpha(text, 0.8), 
+                              fontWeight: 500 
+                            }}
+                          >
+                            Начало: {formattedDate}
+                          </Typography>
+                        </Box>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: alpha(text, 0.8),
+                            fontStyle: 'italic',
+                            fontSize: '0.85rem'
+                          }}
+                        >
+                          ({statusText})
+                        </Typography>
+                      </Box>
+                    );
+                  })()}
                 </Box>
               </Box>
               

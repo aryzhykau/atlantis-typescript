@@ -1,7 +1,8 @@
 import React from 'react';
-import { Box, Typography, Avatar, Button, IconButton, useTheme } from '@mui/material';
-import { PersonAdd as PersonAddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Box, Typography, Avatar, Button, IconButton, useTheme, alpha } from '@mui/material';
+import { PersonAdd as PersonAddIcon, Delete as DeleteIcon, CalendarToday as CalendarTodayIcon } from '@mui/icons-material';
 import { AssignedStudentsProps, StudentTemplate } from './types';
+import { getStartDateColorsAndStatus } from '../../../utils/studentStartDateHelper';
 
 /**
  * AssignedStudents - Manages assigned students display and interaction
@@ -130,6 +131,43 @@ const AssignedStudents: React.FC<AssignedStudentsProps> = ({
               >
                 В шаблоне
               </Typography>
+              
+              {/* Start Date with Color Coding and Status Text */}
+              {studentTemplate.start_date && (() => {
+                const { icon, text, statusText, formattedDate } = getStartDateColorsAndStatus(studentTemplate.start_date, theme);
+                
+                return (
+                  <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5, mt: 0.75 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <CalendarTodayIcon sx={{ 
+                        fontSize: '0.75rem', 
+                        mr: 0.5, 
+                        color: alpha(icon, 0.6)
+                      }} />
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: alpha(text, 0.8), 
+                          fontWeight: 500,
+                          fontSize: '0.7rem',
+                        }}
+                      >
+                        {formattedDate}
+                      </Typography>
+                    </Box>
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: alpha(text, 0.8),
+                        fontStyle: 'italic',
+                        fontSize: '0.65rem'
+                      }}
+                    >
+                      ({statusText})
+                    </Typography>
+                  </Box>
+                );
+              })()}
             </Box>
             
             <IconButton

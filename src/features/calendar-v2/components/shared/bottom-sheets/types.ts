@@ -12,6 +12,7 @@ export interface StudentTemplate {
   id: number;
   student: Student;
   training_template_id: number;
+  start_date?: string; // YYYY-MM-DD format
 }
 
 export interface EventBottomSheetProps {
