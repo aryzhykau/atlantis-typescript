@@ -321,35 +321,44 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
                     </Box>
                   )}
                   {s_template.start_date && (() => {
-                    const startDate = dayjs(s_template.start_date);
+                    const startDate = dayjs(s_template.start_date).startOf('day');
                     const today = dayjs().startOf('day');
                     const isPast = startDate.isBefore(today);
                     const isFuture = startDate.isAfter(today);
                     
                     // Determine colors based on date status
-                    const getIconColor = () => {
-                      if (isPast) return alpha(theme.palette.error.main, 0.6);
-                      if (isFuture) return alpha(theme.palette.success.main, 0.6);
-                      return alpha(theme.palette.text.primary, 0.5);
+                    const getColors = () => {
+                      if (isPast) {
+                        return {
+                          icon: alpha(theme.palette.error.main, 0.6),
+                          text: alpha(theme.palette.error.main, 0.8),
+                        };
+                      }
+                      if (isFuture) {
+                        return {
+                          icon: alpha(theme.palette.success.main, 0.6),
+                          text: alpha(theme.palette.success.main, 0.8),
+                        };
+                      }
+                      return {
+                        icon: alpha(theme.palette.text.primary, 0.5),
+                        text: alpha(theme.palette.text.primary, 0.7),
+                      };
                     };
                     
-                    const getTextColor = () => {
-                      if (isPast) return alpha(theme.palette.error.main, 0.8);
-                      if (isFuture) return alpha(theme.palette.success.main, 0.8);
-                      return alpha(theme.palette.text.primary, 0.7);
-                    };
+                    const colors = getColors();
                     
                     return (
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <CalendarTodayIcon sx={{ 
                           fontSize: '0.9rem', 
                           mr: 0.5, 
-                          color: getIconColor()
+                          color: colors.icon
                         }} />
                         <Typography 
                           variant="body2" 
                           sx={{ 
-                            color: getTextColor(), 
+                            color: colors.text, 
                             fontWeight: 500 
                           }}
                         >
