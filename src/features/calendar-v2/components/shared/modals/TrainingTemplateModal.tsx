@@ -21,7 +21,7 @@ import { useDispatch } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
-
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PhoneIcon from '@mui/icons-material/Phone';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -318,6 +318,20 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
                           </Link>
                         </Box>
                       )}
+                    </Box>
+                  )}
+                  {s_template.start_date && (
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <CalendarTodayIcon sx={{ fontSize: '0.9rem', mr: 0.5, color: alpha(theme.palette.text.primary, 0.5) }} />
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: alpha(theme.palette.text.primary, 0.7), 
+                          fontWeight: 500 
+                        }}
+                      >
+                        Начало: {dayjs(s_template.start_date).format('DD.MM.YYYY')}
+                      </Typography>
                     </Box>
                   )}
                 </Box>
