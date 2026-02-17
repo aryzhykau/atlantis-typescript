@@ -1,7 +1,8 @@
 import React from 'react';
-import { Box, Typography, Avatar, Button, IconButton, useTheme } from '@mui/material';
-import { PersonAdd as PersonAddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Box, Typography, Avatar, Button, IconButton, useTheme, alpha } from '@mui/material';
+import { PersonAdd as PersonAddIcon, Delete as DeleteIcon, CalendarToday as CalendarTodayIcon } from '@mui/icons-material';
 import { AssignedStudentsProps, StudentTemplate } from './types';
+import dayjs from 'dayjs';
 
 /**
  * AssignedStudents - Manages assigned students display and interaction
@@ -130,6 +131,71 @@ const AssignedStudents: React.FC<AssignedStudentsProps> = ({
               >
                 В шаблоне
               </Typography>
+              
+              {/* Start Date with Color Coding and Status Text */}
+              {studentTemplate.start_date && (() => {
+                const startDate = dayjs(studentTemplate.start_date).startOf('day');
+                const today = dayjs().startOf('day');
+                const isPast = startDate.isBefore(today);
+                const isFuture = startDate.isAfter(today);
+                
+                // Determine colors and status text based on date status
+                const getColorsAndStatus = () => {
+                  if (isPast) {
+                    return {
+                      icon: alpha(theme.palette.error.main, 0.6),
+                      text: alpha(theme.palette.error.main, 0.8),
+                      statusText: 'уже начал(а)',
+                    };
+                  }
+                  if (isFuture) {
+                    return {
+                      icon: alpha(theme.palette.success.main, 0.6),
+                      text: alpha(theme.palette.success.main, 0.8),
+                      statusText: 'еще не начал(а) посещать',
+                    };
+                  }
+                  return {
+                    icon: alpha(theme.palette.text.primary, 0.5),
+                    text: alpha(theme.palette.text.primary, 0.7),
+                    statusText: 'начинает сегодня',
+                  };
+                };
+                
+                const { icon, text, statusText } = getColorsAndStatus();
+                
+                return (
+                  <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5, mt: 0.75 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <CalendarTodayIcon sx={{ 
+                        fontSize: '0.75rem', 
+                        mr: 0.5, 
+                        color: icon
+                      }} />
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: text, 
+                          fontWeight: 500,
+                          fontSize: '0.7rem',
+                        }}
+                      >
+                        {startDate.format('DD.MM.YYYY')}
+                      </Typography>
+                    </Box>
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: text,
+                        fontStyle: 'italic',
+                        fontSize: '0.65rem'
+                      }}
+                    >
+                      ({statusText})
+                    </Typography>
+                  </Box>
+                );
+              })()}
             </Box>
             
             <IconButton
