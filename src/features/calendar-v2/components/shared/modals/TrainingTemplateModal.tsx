@@ -326,17 +326,30 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
                     const isPast = startDate.isBefore(today);
                     const isFuture = startDate.isAfter(today);
                     
+                    // Determine colors based on date status
+                    const getIconColor = () => {
+                      if (isPast) return alpha(theme.palette.error.main, 0.6);
+                      if (isFuture) return alpha(theme.palette.success.main, 0.6);
+                      return alpha(theme.palette.text.primary, 0.5);
+                    };
+                    
+                    const getTextColor = () => {
+                      if (isPast) return alpha(theme.palette.error.main, 0.8);
+                      if (isFuture) return alpha(theme.palette.success.main, 0.8);
+                      return alpha(theme.palette.text.primary, 0.7);
+                    };
+                    
                     return (
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <CalendarTodayIcon sx={{ 
                           fontSize: '0.9rem', 
                           mr: 0.5, 
-                          color: isPast ? alpha(theme.palette.error.main, 0.6) : isFuture ? alpha(theme.palette.success.main, 0.6) : alpha(theme.palette.text.primary, 0.5)
+                          color: getIconColor()
                         }} />
                         <Typography 
                           variant="body2" 
                           sx={{ 
-                            color: isPast ? alpha(theme.palette.error.main, 0.8) : isFuture ? alpha(theme.palette.success.main, 0.8) : alpha(theme.palette.text.primary, 0.7), 
+                            color: getTextColor(), 
                             fontWeight: 500 
                           }}
                         >
