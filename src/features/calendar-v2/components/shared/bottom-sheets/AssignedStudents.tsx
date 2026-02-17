@@ -133,8 +133,9 @@ const AssignedStudents: React.FC<AssignedStudentsProps> = ({
               </Typography>
               
               {/* Start Date with Color Coding and Status Text */}
-              {studentTemplate.start_date && (() => {
-                const { icon, text, statusText, formattedDate } = getStartDateColorsAndStatus(studentTemplate.start_date, theme);
+              {(studentTemplate.start_date || studentTemplate.startDate) && (() => {
+                const startDate = studentTemplate.start_date || studentTemplate.startDate!;
+                const { icon, text, statusText, formattedDate } = getStartDateColorsAndStatus(startDate, theme);
                 
                 return (
                   <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5, mt: 0.75 }}>
@@ -144,15 +145,15 @@ const AssignedStudents: React.FC<AssignedStudentsProps> = ({
                         mr: 0.5, 
                         color: alpha(icon, 0.6)
                       }} />
-                      <Typography 
+                      <Typography
                         variant="caption" 
                         sx={{ 
                           color: alpha(text, 0.8), 
                           fontWeight: 500,
-                          fontSize: '0.7rem',
+                          fontSize: '0.75rem',
                         }}
                       >
-                        {formattedDate}
+                        Начало: {formattedDate}
                       </Typography>
                     </Box>
                     <Typography 
@@ -160,7 +161,7 @@ const AssignedStudents: React.FC<AssignedStudentsProps> = ({
                       sx={{ 
                         color: alpha(text, 0.8),
                         fontStyle: 'italic',
-                        fontSize: '0.65rem'
+                        fontSize: '0.7rem'
                       }}
                     >
                       ({statusText})

@@ -1,4 +1,4 @@
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { Theme } from '@mui/material/styles';
 
 export interface StartDateDisplayInfo {
