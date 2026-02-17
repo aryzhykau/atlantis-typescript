@@ -13,6 +13,7 @@ export interface StudentTemplate {
   student: Student;
   training_template_id: number;
   start_date?: string; // YYYY-MM-DD format
+  startDate?: string;
 }
 
 export interface EventBottomSheetProps {
