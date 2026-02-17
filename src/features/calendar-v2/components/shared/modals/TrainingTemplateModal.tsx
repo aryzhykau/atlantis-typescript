@@ -320,20 +320,31 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
                       )}
                     </Box>
                   )}
-                  {s_template.start_date && (
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <CalendarTodayIcon sx={{ fontSize: '0.9rem', mr: 0.5, color: alpha(theme.palette.text.primary, 0.5) }} />
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: alpha(theme.palette.text.primary, 0.7), 
-                          fontWeight: 500 
-                        }}
-                      >
-                        Начало: {dayjs(s_template.start_date).format('DD.MM.YYYY')}
-                      </Typography>
-                    </Box>
-                  )}
+                  {s_template.start_date && (() => {
+                    const startDate = dayjs(s_template.start_date);
+                    const today = dayjs().startOf('day');
+                    const isPast = startDate.isBefore(today);
+                    const isFuture = startDate.isAfter(today);
+                    
+                    return (
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <CalendarTodayIcon sx={{ 
+                          fontSize: '0.9rem', 
+                          mr: 0.5, 
+                          color: isPast ? alpha(theme.palette.error.main, 0.6) : isFuture ? alpha(theme.palette.success.main, 0.6) : alpha(theme.palette.text.primary, 0.5)
+                        }} />
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: isPast ? alpha(theme.palette.error.main, 0.8) : isFuture ? alpha(theme.palette.success.main, 0.8) : alpha(theme.palette.text.primary, 0.7), 
+                            fontWeight: 500 
+                          }}
+                        >
+                          Начало: {startDate.format('DD.MM.YYYY')}
+                        </Typography>
+                      </Box>
+                    );
+                  })()}
                 </Box>
               </Box>
               
