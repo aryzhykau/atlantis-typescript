@@ -134,7 +134,7 @@ const AssignedStudents: React.FC<AssignedStudentsProps> = ({
               
               {/* Start Date with Color Coding and Status Text */}
               {(studentTemplate.start_date || studentTemplate.startDate) && (() => {
-                const startDate = studentTemplate.start_date || studentTemplate.startDate!;
+                const startDate = studentTemplate.start_date || studentTemplate.startDate || '';
                 const { icon, text, statusText, formattedDate } = getStartDateColorsAndStatus(startDate, theme);
                 
                 return (
