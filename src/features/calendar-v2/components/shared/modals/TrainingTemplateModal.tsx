@@ -326,43 +326,58 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
                     const isPast = startDate.isBefore(today);
                     const isFuture = startDate.isAfter(today);
                     
-                    // Determine colors based on date status
-                    const getColors = () => {
+                    // Determine colors and status text based on date status
+                    const getColorsAndStatus = () => {
                       if (isPast) {
                         return {
                           icon: alpha(theme.palette.error.main, 0.6),
                           text: alpha(theme.palette.error.main, 0.8),
+                          statusText: 'уже начал',
                         };
                       }
                       if (isFuture) {
                         return {
                           icon: alpha(theme.palette.success.main, 0.6),
                           text: alpha(theme.palette.success.main, 0.8),
+                          statusText: 'еще не начал посещать',
                         };
                       }
                       return {
                         icon: alpha(theme.palette.text.primary, 0.5),
                         text: alpha(theme.palette.text.primary, 0.7),
+                        statusText: 'начинает сегодня',
                       };
                     };
                     
-                    const colors = getColors();
+                    const { icon, text, statusText } = getColorsAndStatus();
                     
                     return (
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <CalendarTodayIcon sx={{ 
-                          fontSize: '0.9rem', 
-                          mr: 0.5, 
-                          color: colors.icon
-                        }} />
+                      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <CalendarTodayIcon sx={{ 
+                            fontSize: '0.9rem', 
+                            mr: 0.5, 
+                            color: icon
+                          }} />
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              color: text, 
+                              fontWeight: 500 
+                            }}
+                          >
+                            Начало: {startDate.format('DD.MM.YYYY')}
+                          </Typography>
+                        </Box>
                         <Typography 
                           variant="body2" 
                           sx={{ 
-                            color: colors.text, 
-                            fontWeight: 500 
+                            color: text,
+                            fontStyle: 'italic',
+                            fontSize: '0.85rem'
                           }}
                         >
-                          Начало: {startDate.format('DD.MM.YYYY')}
+                          ({statusText})
                         </Typography>
                       </Box>
                     );
