@@ -58,7 +58,7 @@ export function MobilePageShell({
               {title}
             </Typography>
             {subtitle && (
-              <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.95 }}>
+              <Typography variant="body2" sx={{ mt: 0.5, color: 'white' }}>
                 {subtitle}
               </Typography>
             )}

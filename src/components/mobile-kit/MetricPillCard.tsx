@@ -25,12 +25,14 @@ export function MetricPillCard({ icon, label, value, gradient }: MetricPillCardP
       }}
     >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 600 }}>
+        <Typography variant="caption" sx={{ color: 'white', fontWeight: 600 }}>
           {label}
         </Typography>
-        {icon}
+        <Box sx={{ color: 'white', display: 'inline-flex', alignItems: 'center' }}>
+          {icon}
+        </Box>
       </Box>
-      <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.1 }}>
+      <Typography variant="h6" sx={{ color: 'white', fontWeight: 800, lineHeight: 1.1 }}>
         {value}
       </Typography>
     </Paper>
