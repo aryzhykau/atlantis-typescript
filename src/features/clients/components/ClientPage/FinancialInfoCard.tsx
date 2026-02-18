@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { 
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
     Box, 
     Button, 
+    Chip,
+    Divider,
     Modal, 
     Paper, 
     Typography, 
@@ -23,6 +28,8 @@ import AddIcon from '@mui/icons-material/Add';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import useIsMobile from '../../../../hooks/useMobile';
 
 interface FinancialInfoCardProps {
     client: IClientUserGet;
@@ -163,6 +170,7 @@ export const FinancialInfoCard: React.FC<FinancialInfoCardProps> = ({
 }) => {
     const theme = useTheme();
     const gradients = useGradients();
+    const isMobile = useIsMobile();
     const [open, setOpen] = useState(false);
 
     const unpaidSumFromInvoices = invoices.reduce((acc, invoice) => {
@@ -187,10 +195,178 @@ export const FinancialInfoCard: React.FC<FinancialInfoCardProps> = ({
         }
     }, [openPaymentFormSignal]);
 
+    if (isMobile) {
+        return (
+            <Paper
+                elevation={0}
+                sx={{
+                    width: '100%',
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    overflow: 'hidden',
+                    background: theme.palette.background.paper,
+                }}
+            >
+                <Accordion disableGutters defaultExpanded sx={{ background: 'transparent', boxShadow: 'none' }}>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon sx={{ color: 'white' }} />}
+                        sx={{
+                            p: 0,
+                            minHeight: 'unset',
+                            '& .MuiAccordionSummary-content': { m: 0 },
+                            '& .MuiAccordionSummary-expandIconWrapper': { mr: 1.5 },
+                            background: gradients.success,
+                            color: 'white',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                                opacity: 0.3,
+                            }
+                        }}
+                    >
+                        <Box sx={{ position: 'relative', zIndex: 1, px: 2, py: 1.75, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <TrendingUpIcon sx={{ fontSize: 20 }} />
+                                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                    Финансовая информация
+                                </Typography>
+                            </Box>
+                            <Chip
+                                label={`${currentBalance.toLocaleString()} €`}
+                                size="small"
+                                sx={{ background: alpha('#ffffff', 0.2), color: 'white', fontWeight: 700 }}
+                            />
+                        </Box>
+                    </AccordionSummary>
+
+                    <AccordionDetails sx={{ p: 2 }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25 }}>
+                            <Paper variant="outlined" sx={{ p: 1.25, borderRadius: 2 }}>
+                                <Typography variant="caption" color="text.secondary">Баланс</Typography>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: currentBalance >= 0 ? 'success.main' : 'warning.main' }}>
+                                    {currentBalance.toLocaleString()} €
+                                </Typography>
+                            </Paper>
+                            <Paper variant="outlined" sx={{ p: 1.25, borderRadius: 2 }}>
+                                <Typography variant="caption" color="text.secondary">К оплате</Typography>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: unpaidSumFromInvoices > 0 ? 'warning.main' : 'text.primary' }}>
+                                    {unpaidSumFromInvoices.toLocaleString()} €
+                                </Typography>
+                            </Paper>
+                            <Paper variant="outlined" sx={{ p: 1.25, borderRadius: 2 }}>
+                                <Typography variant="caption" color="text.secondary">Нужно доплатить</Typography>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: amountToPayOff > 0 ? 'error.main' : 'success.main' }}>
+                                    {amountToPayOff.toLocaleString()} €
+                                </Typography>
+                            </Paper>
+                            <Paper variant="outlined" sx={{ p: 1.25, borderRadius: 2 }}>
+                                <Typography variant="caption" color="text.secondary">Неоплаченных</Typography>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: unpaidCount > 0 ? 'warning.main' : 'success.main' }}>
+                                    {unpaidCount}
+                                </Typography>
+                            </Paper>
+                        </Box>
+
+                        {!hideAddPaymentButton && (
+                            <>
+                                <Divider sx={{ my: 1.5 }} />
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    startIcon={<AddIcon />}
+                                    onClick={() => setOpen(true)}
+                                    sx={{
+                                        background: gradients.success,
+                                        color: 'white',
+                                        fontWeight: 700,
+                                        '&:hover': { background: gradients.success, filter: 'brightness(0.95)' },
+                                    }}
+                                >
+                                    Добавить платеж
+                                </Button>
+                            </>
+                        )}
+                    </AccordionDetails>
+                </Accordion>
+
+                {useBottomSheetVariant ? (
+                    <MobileFormBottomSheet
+                        open={open}
+                        onClose={handleClose}
+                        title="💰 Добавить платеж"
+                    >
+                        <AddUserPaymentForm
+                            initialValues={{
+                                client_id: client.id,
+                                amount: unpaidSumFromInvoices > 0 ? amountToPayOff : 0,
+                                description: "",
+                            }}
+                            client_name={`${client.first_name} ${client.last_name}`}
+                            onClose={handleClose}
+                        />
+                    </MobileFormBottomSheet>
+                ) : (
+                    <Modal open={open} onClose={() => setOpen(false)}>
+                        <Box sx={modalStyle}>
+                            <Box
+                                sx={{
+                                    p: 3,
+                                    background: gradients.success,
+                                    color: 'white',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    '&::before': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                                        opacity: 0.3,
+                                    }
+                                }}
+                            >
+                                <Box sx={{ position: 'relative', zIndex: 1 }}>
+                                    <Typography variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                                        💰 Добавить платеж
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ opacity: 0.9, mt: 1 }}>
+                                        {client.first_name} {client.last_name}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            <Box sx={{ p: 3 }}>
+                                <AddUserPaymentForm
+                                    initialValues={{
+                                        client_id: client.id,
+                                        amount: unpaidSumFromInvoices > 0 ? amountToPayOff : 0,
+                                        description: "",
+                                    }}
+                                    client_name={`${client.first_name} ${client.last_name}`}
+                                    onClose={handleClose}
+                                />
+                            </Box>
+                        </Box>
+                    </Modal>
+                )}
+            </Paper>
+        );
+    }
+
     return (
         <Paper
             elevation={0}
             sx={{
+                width: '100%',
                 borderRadius: 3,
                 border: '1px solid',
                 borderColor: 'divider',

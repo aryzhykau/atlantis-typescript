@@ -28,6 +28,7 @@ import { useCreateStudentMutation, useGetStudentsQuery, useUpdateStudentMutation
 import { useLazyGetStudentSubscriptionsQuery } from '../../../store/apis/subscriptionsApi';
 import { useSnackbar } from '../../../hooks/useSnackBar';
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
+import useMobile from '../../../hooks/useMobile';
 import {
   MetricPillCard,
   MobileCollapsibleSearch,
@@ -45,7 +46,8 @@ export function MobileStudentsListPage() {
   const navigate = useNavigate();
   const gradients = useGradients();
   const { displaySnackbar } = useSnackbar();
-  const isBottomSheetFormEnabled = import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
+  const isMobile = useMobile();
+  const isBottomSheetFormEnabled = isMobile && import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
 
   const { data: studentsResponse, isLoading, isError, isFetching, refetch } = useGetStudentsQuery();
   const [createStudent, { isLoading: isCreatingStudent }] = useCreateStudentMutation();

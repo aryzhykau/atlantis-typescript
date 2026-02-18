@@ -28,6 +28,7 @@ import EuroIcon from '@mui/icons-material/Euro';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 
 import { useGradients } from '../../trainer-mobile/hooks/useGradients';
+import useMobile from '../../../hooks/useMobile';
 import {
   MetricPillCard,
   MobileCollapsibleSearch,
@@ -60,7 +61,8 @@ const trainingTypeInitialValues: Partial<ITrainingType> = {
 export function MobileTrainingTypesSubscriptionsPage() {
   const gradients = useGradients();
   const { displaySnackbar } = useSnackbar();
-  const isBottomSheetFormEnabled = import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
+  const isMobile = useMobile();
+  const isBottomSheetFormEnabled = isMobile && import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
 
   const [activeTab, setActiveTab] = useState(0);
   const [searchValue, setSearchValue] = useState('');

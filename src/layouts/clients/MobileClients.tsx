@@ -39,10 +39,12 @@ import {
     MobileRefreshContainer,
     SwipeableActionCard,
 } from '../../components/mobile-kit';
+import useMobile from '../../hooks/useMobile';
 
 
 export function MobileClients() {
-    const isBottomSheetFormEnabled = import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
+    const isMobile = useMobile();
+    const isBottomSheetFormEnabled = isMobile && import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
     const navigate = useNavigate();
     const gradients = useGradients();
     const { displaySnackbar } = useSnackbar();

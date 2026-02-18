@@ -11,10 +11,13 @@ interface ClientMobileCardV2Props {
 }
 
 export function ClientMobileCardV2({ client, onOpen, studentsCount }: ClientMobileCardV2Props) {
+  const phoneDisplay = `${client.phone_country_code ? `+${client.phone_country_code}` : ''} ${client.phone_number ?? ''}`.trim();
+
   return (
     <Paper
       elevation={0}
       sx={{
+        backgroundColor: 'background.paper',
         borderRadius: 0,
         border: '1px solid',
         borderColor: 'divider',
@@ -22,6 +25,10 @@ export function ClientMobileCardV2({ client, onOpen, studentsCount }: ClientMobi
         borderRight: 'none',
         borderTop: 'none',
         p: 2,
+        transition: 'background-color 0.2s ease',
+        '&:active': {
+          backgroundColor: 'action.hover',
+        },
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, cursor: 'pointer' }} onClick={onOpen}>
@@ -30,7 +37,7 @@ export function ClientMobileCardV2({ client, onOpen, studentsCount }: ClientMobi
             {client.first_name} {client.last_name}
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-            ID: {client.id}
+            Клиент #{client.id}
           </Typography>
         </Box>
 
@@ -46,19 +53,28 @@ export function ClientMobileCardV2({ client, onOpen, studentsCount }: ClientMobi
 
       <Box sx={{ mt: 1.25, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <PhoneIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
+          <Box sx={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <PhoneIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+          </Box>
           <Typography variant="body2" noWrap>
-            +{client.phone_country_code}{client.phone_number}
+            {phoneDisplay || '—'}
           </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          <SchoolIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
+          <Box sx={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <SchoolIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+          </Box>
           <Typography variant="body2" color="text.secondary">
             Учеников: {studentsCount}
           </Typography>
           {typeof client.balance === 'number' && (
-            <Chip size="small" label={`Баланс: ${client.balance.toLocaleString()} ₽`} variant="outlined" />
+            <Chip
+              size="small"
+              label={`Баланс: ${client.balance.toLocaleString()} ₽`}
+              variant="outlined"
+              color={client.balance < 0 ? 'warning' : 'success'}
+            />
           )}
         </Box>
       </Box>

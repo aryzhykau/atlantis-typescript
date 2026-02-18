@@ -28,6 +28,10 @@ export function TrainerMobileCardV2({ trainer, onOpen }: TrainerMobileCardV2Prop
         borderRight: 'none',
         borderTop: 'none',
         p: 2,
+        transition: 'background-color 0.2s ease',
+        '&:active': {
+          backgroundColor: 'action.hover',
+        },
       }}
     >
       <Box
@@ -39,7 +43,7 @@ export function TrainerMobileCardV2({ trainer, onOpen }: TrainerMobileCardV2Prop
             {trainer.first_name} {trainer.last_name}
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-            ID: {trainer.id}
+            Тренер #{trainer.id}
           </Typography>
         </Box>
 
@@ -55,27 +59,33 @@ export function TrainerMobileCardV2({ trainer, onOpen }: TrainerMobileCardV2Prop
 
       <Box sx={{ mt: 1.25, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <PhoneIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
+          <Box sx={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <PhoneIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+          </Box>
           <Typography variant="body2" noWrap>
             {phone || '—'}
           </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          <BadgeIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
+          <Box sx={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <BadgeIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+          </Box>
           <Typography variant="body2" color="text.secondary">
             Возраст: {age ?? '—'}
           </Typography>
           <Chip
             size="small"
             variant="outlined"
-            color={trainer.is_fixed_salary ? 'info' : 'primary'}
+            color={trainer.is_fixed_salary ? 'info' : 'success'}
             label={trainer.is_fixed_salary ? 'Фикс.' : 'Процент'}
           />
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <WorkOutlineIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
+          <Box sx={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <WorkOutlineIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+          </Box>
           <Typography variant="body2" noWrap color="text.secondary">
             {trainer.email}
           </Typography>

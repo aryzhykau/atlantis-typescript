@@ -72,6 +72,32 @@ Every page uses:
 - `OWNER`: full financial visibility.
 - `ADMIN`: salary blocks removed entirely on trainer details.
 
+### 2.6 Mobile-native section cards (detail pages)
+
+Applies to lower detail blocks such as `Основная информация`, `Финансовая информация`, and similar summary cards on detail pages.
+
+- Use an **accordion sheet** pattern on mobile:
+  - compact gradient header,
+  - one-line title,
+  - 1 quick summary chip/value,
+  - expand icon.
+- Default behavior:
+  - first key section can be expanded by default,
+  - secondary sections can start collapsed if content is long.
+- Inside expanded content:
+  - show concise **label → value rows**,
+  - keep only key financial/profile fields,
+  - move low-priority metadata behind optional “show details”.
+- Financial blocks should prioritize:
+  - balance,
+  - unpaid total,
+  - amount to pay off,
+  - unpaid count.
+- Actions in these cards must be clear and mobile-safe:
+  - one primary action button at section bottom (e.g. `Добавить платеж`),
+  - avoid scattered inline actions in text rows.
+- Keep desktop layout unchanged; apply this pattern specifically to mobile rendering.
+
 ---
 
 ## 3) Page-by-page design specification
@@ -138,9 +164,9 @@ Current route: `/home/clients/:clientId`
 - Remove duplicated inline CTA buttons if action exists in SpeedDial.
 
 ### Container variant policy (implemented)
-- Use env feature flag for client forms on mobile:
+- Use env feature flag for client forms on mobile only:
   - `VITE_MOBILE_CLIENT_FORM_VARIANT="dialog"` → modal/dialog
-  - `VITE_MOBILE_CLIENT_FORM_VARIANT="bottomsheet"` → bottom sheet
+  - `VITE_MOBILE_CLIENT_FORM_VARIANT="bottomsheet"` → bottom sheet on mobile, modal/dialog on desktop
 - Applies to:
   - edit client form
   - add payment form
@@ -442,7 +468,7 @@ Use this checklist for `Students`, `Trainers`, `Client Contacts`, `Invoices`, `T
 6. Use collapsible search + `MobileFilterBottomSheet`.
 7. Add FAB/SpeedDial as single action entrypoint.
 8. Move duplicate inline buttons into FAB/SpeedDial actions.
-9. If forms are complex, support dialog/bottomsheet variant behind env flag.
+9. If forms are complex, support dialog/bottomsheet variant behind env flag, but keep desktop on modal/dialog.
 10. Ensure pull-to-refresh is disabled while overlays are open.
 
 ---

@@ -25,11 +25,13 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
 import { MobileFormBottomSheet } from '../../../../components/mobile-kit';
+import useMobile from '../../../../hooks/useMobile';
 
 dayjs.extend(isBetween);
 
 export function StudentPage() {
-    const isBottomSheetFormEnabled = import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
+    const isMobile = useMobile();
+    const isBottomSheetFormEnabled = isMobile && import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
     const { studentId } = useParams<{ studentId: string }>();
     const navigate = useNavigate();
     const { displaySnackbar } = useSnackbar();

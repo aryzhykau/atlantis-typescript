@@ -42,9 +42,11 @@ import { useSnackbar } from '../../../hooks/useSnackBar';
 import { TrainerMobileCardV2 } from './TrainerMobileCardV2';
 import { IStatusUpdatePayload, ITrainerCreatePayload, ITrainerResponse, ITrainerUpdatePayload } from '../models/trainer';
 import { TrainerForm } from './TrainerForm';
+import useMobile from '../../../hooks/useMobile';
 
 export function MobileTrainersListPage() {
-  const isBottomSheetFormEnabled = import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
+  const isMobile = useMobile();
+  const isBottomSheetFormEnabled = isMobile && import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
   const navigate = useNavigate();
   const gradients = useGradients();
   const { displaySnackbar } = useSnackbar();

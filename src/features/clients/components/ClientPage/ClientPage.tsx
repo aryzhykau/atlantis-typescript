@@ -1,4 +1,4 @@
-import { Box, Typography, CircularProgress, Grid, Tabs, Tab, IconButton, Button, Select, MenuItem, SelectChangeEvent, Modal, Paper, alpha, Stack, SpeedDial, SpeedDialAction, SpeedDialIcon } from "@mui/material";
+import { Alert, Box, Typography, CircularProgress, Grid, Tabs, Tab, IconButton, Button, Select, MenuItem, SelectChangeEvent, Modal, Paper, alpha, Stack, SpeedDial, SpeedDialAction, SpeedDialIcon } from "@mui/material";
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -10,9 +10,11 @@ import React, { useEffect, useState } from "react";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import EmailIcon from '@mui/icons-material/Email';
 import PaymentsIconOutlined from '@mui/icons-material/PaymentsOutlined';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import TuneIcon from '@mui/icons-material/Tune';
+import PhoneInTalkIcon from '@mui/icons-material/PhoneInTalk';
 import { useClients } from "../../hooks/clientManagementHooks";
 import { ClientInfoCard } from "./ClientInfoCard";
 import { FinancialInfoCard } from "./FinancialInfoCard";
@@ -40,6 +42,8 @@ import { useGetSubscriptionsQuery, useLazyGetStudentSubscriptionsQuery } from ".
 import { IStudentSubscriptionResponse, IStudentSubscriptionView } from "../../../subscriptions/models/subscription";
 import { ClientStudentSubscriptionsTable } from "./ClientStudentSubscriptionsTable";
 import { MobileFilterBottomSheet, MobileFormBottomSheet } from "../../../../components/mobile-kit";
+import useIsMobile from '../../../../hooks/useMobile';
+import AnimatedLogoLoader from '../../../calendar-v2/components/common/loaders/AnimatedLogoLoader';
 
 // Вспомогательный компонент для панелей вкладок
 interface TabPanelProps {
@@ -199,7 +203,8 @@ const modalStyle = {
 };
 
 export function ClientPage() {
-    const isBottomSheetFormEnabled = import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
+    const isMobile = useIsMobile();
+    const isBottomSheetFormEnabled = isMobile && import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
     const { clientId } = useParams<{ clientId: string }>();
     const navigate = useNavigate();
     const { displaySnackbar } = useSnackbar();
@@ -219,6 +224,7 @@ export function ClientPage() {
     const [cancelPaymentModalOpen, setCancelPaymentModalOpen] = useState(false);
     const [paymentToCancelId, setPaymentToCancelId] = useState<number | null>(null);
     const [paymentFormSignal, setPaymentFormSignal] = useState(0);
+    const [pendingQuickAction, setPendingQuickAction] = useState<'call' | 'email' | null>(null);
 
     // State for StudentForm initial values when adding to a client
     const [studentFormInitialValues, setStudentFormInitialValues] = useState<StudentFormValuesClientPage>(baseInitialStudentValuesClientPage);
@@ -422,6 +428,51 @@ export function ClientPage() {
         handleCloseCancelPaymentModal();
     };
 
+    const clientPhoneDisplay = [client?.phone_country_code, client?.phone_number].filter(Boolean).join(' ').trim();
+    const clientPhoneForCall = [client?.phone_country_code, client?.phone_number]
+        .filter(Boolean)
+        .join('')
+        .replace(/\s+/g, '')
+        .replace(/(?!^\+)[^\d]/g, '');
+    const clientEmail = (client?.email ?? '').trim();
+
+    const handleOpenQuickCallConfirm = () => {
+        if (!clientPhoneForCall) {
+            displaySnackbar('У клиента не указан телефон для звонка', 'warning');
+            return;
+        }
+        setPendingQuickAction('call');
+    };
+
+    const handleOpenQuickEmailConfirm = () => {
+        if (!clientEmail) {
+            displaySnackbar('У клиента не указан email', 'warning');
+            return;
+        }
+        setPendingQuickAction('email');
+    };
+
+    const handleCloseQuickActionConfirm = () => {
+        setPendingQuickAction(null);
+    };
+
+    const handleConfirmQuickAction = () => {
+        if (pendingQuickAction === 'call' && clientPhoneForCall) {
+            window.location.href = `tel:${clientPhoneForCall}`;
+        }
+
+        if (pendingQuickAction === 'email' && clientEmail) {
+            window.location.href = `mailto:${clientEmail}`;
+        }
+
+        setPendingQuickAction(null);
+    };
+
+    const quickActionTitle = pendingQuickAction === 'call' ? 'Подтвердите звонок' : 'Подтвердите email';
+    const quickActionDescription = pendingQuickAction === 'call'
+        ? `Сейчас откроется набор номера ${clientPhoneDisplay || clientPhoneForCall}. Продолжить?`
+        : `Сейчас откроется почтовое приложение для адреса ${clientEmail}. Продолжить?`;
+
     const initialFormValues: IClientUserFormValues | undefined = client ? {
         first_name: client.first_name,
         last_name: client.last_name,
@@ -442,7 +493,13 @@ export function ClientPage() {
         setSelectedPaymentStatus(event.target.value as string);
     };
 
-    if (isLoadingClient) return <CircularProgress />;
+    if (isLoadingClient) {
+        return (
+            <Box sx={{ position: 'relative', minHeight: '100vh' }}>
+                <AnimatedLogoLoader open={true} message="Загружается карточка клиента..." />
+            </Box>
+        );
+    }
     if (isErrorClient || !client) return <Typography>Ошибка загрузки данных клиента.</Typography>;
 
     // Вычисляем статистику
@@ -450,6 +507,7 @@ export function ClientPage() {
     const invoicesCount = invoices?.items?.length || 0;
     const paymentsCount = payments?.length || 0;
     const balance = client.balance || 0;
+    const clientRequiresCall = (contactTasks ?? []).some(t => t.client_id === client.id);
 
     return (
         <Box sx={{ p: 3 , maxHeight: '90vh', overflowY: 'auto' }}>
@@ -474,7 +532,7 @@ export function ClientPage() {
                 }}
             >
                 <Box sx={{ position: 'relative', zIndex: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, gap: 1.5 }}>
                         <IconButton 
                             onClick={handleBackClick} 
                             sx={{ 
@@ -495,6 +553,26 @@ export function ClientPage() {
                                 Карточка клиента #{client.id}
                             </Typography>
                         </Box>
+                        {!isMobile && (
+                            <Button
+                                variant="contained"
+                                startIcon={<EditIcon />}
+                                onClick={handleOpenEditModal}
+                                sx={{
+                                    background: alpha('#ffffff', 0.2),
+                                    color: 'white',
+                                    fontWeight: 700,
+                                    textTransform: 'none',
+                                    borderRadius: 2,
+                                    px: 2,
+                                    '&:hover': {
+                                        background: alpha('#ffffff', 0.3),
+                                    },
+                                }}
+                            >
+                                Редактировать
+                            </Button>
+                        )}
                     </Box>
                 </Box>
             </Paper>
@@ -507,7 +585,41 @@ export function ClientPage() {
                 balance={balance}
             />
 
-            {/* Стилизованные табы */}
+            {clientRequiresCall && (
+                <Alert
+                    severity="warning"
+                    icon={<PhoneInTalkIcon fontSize="inherit" />}
+                    sx={{
+                        mb: 3,
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'warning.light',
+                        alignItems: 'center',
+                        '& .MuiAlert-message': {
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 1,
+                            flexWrap: 'wrap',
+                        },
+                    }}
+                    action={(
+                        <Button
+                            size="small"
+                            color="warning"
+                            variant="outlined"
+                            onClick={() => navigate('/home/client-contacts')}
+                            sx={{ fontWeight: 700, textTransform: 'none' }}
+                        >
+                            Открыть контакты
+                        </Button>
+                    )}
+                >
+                    Клиенту требуется звонок. Есть активная задача в списке контактов.
+                </Alert>
+            )}
+
             <Paper
                 elevation={0}
                 sx={{
@@ -555,15 +667,8 @@ export function ClientPage() {
 
             <TabPanel value={activeTab} index={0}>
                 <Grid container spacing={2} alignItems="stretch">
-                    <Grid item xs={12} md={6} >
+                    <Grid item xs={12} md={6}>
                         {client && <ClientInfoCard client={client} onClientUpdate={refetchClient} />}
-                        {client && (contactTasks ?? []).some(t => t.client_id === client.id) && (
-                            <Paper sx={{ p: 2, mt: 2, backgroundColor: '#fff3cd' }}>
-                                <Typography variant="body2" sx={{ color: '#856404', fontWeight: 600 }}>
-                                    Этому клиенту нужен звонок
-                                </Typography>
-                            </Paper>
-                        )}
                     </Grid>
                     <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
                         {client && (
@@ -601,9 +706,9 @@ export function ClientPage() {
                         </Select>
                     )}
                 </Box>
-                <ClientInvoicesDataCard 
-                    invoices={invoices?.items} 
-                    isLoading={isLoadingInvoices} 
+                <ClientInvoicesDataCard
+                    invoices={invoices?.items}
+                    isLoading={isLoadingInvoices}
                 />
             </TabPanel>
             <TabPanel value={activeTab} index={2}>
@@ -911,6 +1016,43 @@ export function ClientPage() {
                 </DialogActions>
             </Dialog>
 
+            <Dialog
+                open={pendingQuickAction !== null}
+                onClose={handleCloseQuickActionConfirm}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogContent sx={{ p: 3 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                        {quickActionTitle}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                        {quickActionDescription}
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2.5, pt: 0 }}>
+                    <Button onClick={handleCloseQuickActionConfirm} sx={{ textTransform: 'none', fontWeight: 600 }}>
+                        Отмена
+                    </Button>
+                    <Button
+                        onClick={handleConfirmQuickAction}
+                        variant="contained"
+                        sx={{
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            background: gradients.primary,
+                            '&:hover': {
+                                background: gradients.primary,
+                                filter: 'brightness(0.95)',
+                            },
+                        }}
+                    >
+                        Подтвердить
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {isMobile && (
             <SpeedDial
                 ariaLabel="Client page actions"
                 sx={{
@@ -977,6 +1119,36 @@ export function ClientPage() {
                     }}
                 />
                 <SpeedDialAction
+                    icon={<PhoneInTalkIcon />}
+                    tooltipTitle="Позвонить клиенту"
+                    onClick={handleOpenQuickCallConfirm}
+                    FabProps={{
+                        sx: {
+                            background: gradients.warning,
+                            color: 'white',
+                            '&:hover': {
+                                background: gradients.warning,
+                                filter: 'brightness(0.95)',
+                            },
+                        },
+                    }}
+                />
+                <SpeedDialAction
+                    icon={<EmailIcon />}
+                    tooltipTitle="Написать email"
+                    onClick={handleOpenQuickEmailConfirm}
+                    FabProps={{
+                        sx: {
+                            background: gradients.info,
+                            color: 'white',
+                            '&:hover': {
+                                background: gradients.info,
+                                filter: 'brightness(0.95)',
+                            },
+                        },
+                    }}
+                />
+                <SpeedDialAction
                     icon={<ReceiptLongIcon />}
                     tooltipTitle="Фильтр инвойсов"
                     onClick={() => {
@@ -1017,6 +1189,7 @@ export function ClientPage() {
                     }}
                 />
             </SpeedDial>
+            )}
         </Box>
     );
 } 

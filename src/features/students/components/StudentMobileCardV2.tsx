@@ -20,6 +20,7 @@ export function StudentMobileCardV2({ student, onOpen, hasSubscription }: Studen
     <Paper
       elevation={0}
       sx={{
+        backgroundColor: 'background.paper',
         borderRadius: 0,
         border: '1px solid',
         borderColor: 'divider',
@@ -27,6 +28,10 @@ export function StudentMobileCardV2({ student, onOpen, hasSubscription }: Studen
         borderRight: 'none',
         borderTop: 'none',
         p: 2,
+        transition: 'background-color 0.2s ease',
+        '&:active': {
+          backgroundColor: 'action.hover',
+        },
       }}
     >
       <Box
@@ -38,7 +43,7 @@ export function StudentMobileCardV2({ student, onOpen, hasSubscription }: Studen
             {student.first_name} {student.last_name}
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-            ID: {student.id}
+            Ученик #{student.id}
           </Typography>
         </Box>
 
@@ -54,14 +59,18 @@ export function StudentMobileCardV2({ student, onOpen, hasSubscription }: Studen
 
       <Box sx={{ mt: 1.25, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <PersonIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
+          <Box sx={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <PersonIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+          </Box>
           <Typography variant="body2" noWrap>
             Родитель: {parentName || '—'}
           </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          <SchoolIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
+          <Box sx={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <SchoolIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+          </Box>
           <Typography variant="body2" color="text.secondary">
             Возраст: {age ?? '—'}
           </Typography>
@@ -69,7 +78,7 @@ export function StudentMobileCardV2({ student, onOpen, hasSubscription }: Studen
             size="small"
             label={hasStudentSubscription ? 'Есть абонемент' : 'Без абонемента'}
             variant="outlined"
-            color={hasStudentSubscription ? 'success' : 'default'}
+            color={hasStudentSubscription ? 'success' : 'warning'}
           />
         </Box>
       </Box>

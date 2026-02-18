@@ -165,14 +165,14 @@ const TrainerStats: React.FC<TrainerStatsProps> = ({ age, salary, isActive, isFi
 };
 
 export function TrainerPage() {
-    const isBottomSheetFormEnabled = import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
+    const isMobile = useMobile();
+    const isBottomSheetFormEnabled = isMobile && import.meta.env.VITE_MOBILE_CLIENT_FORM_VARIANT === 'bottomsheet';
     const { trainerId } = useParams<{ trainerId: string }>();
     const navigate = useNavigate();
     const { displaySnackbar } = useSnackbar();
     const theme = useTheme();
     const gradients = useGradients();
     const isOwner = useIsOwner();
-    const isMobile = useMobile();
     const [activeTab, setActiveTab] = React.useState(0);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTrainerData, setEditingTrainerData] = useState<Partial<ITrainerResponse> | null>(null);
