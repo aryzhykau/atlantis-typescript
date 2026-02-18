@@ -1,4 +1,4 @@
-import { Box, Chip, Paper, Typography } from '@mui/material';
+import { Box, Chip, CircularProgress, Paper, Typography } from '@mui/material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SchoolIcon from '@mui/icons-material/School';
 import PersonIcon from '@mui/icons-material/Person';
@@ -9,9 +9,10 @@ interface StudentMobileCardV2Props {
   student: IStudent;
   onOpen: () => void;
   hasSubscription?: boolean;
+  isSubscriptionLoading?: boolean;
 }
 
-export function StudentMobileCardV2({ student, onOpen, hasSubscription }: StudentMobileCardV2Props) {
+export function StudentMobileCardV2({ student, onOpen, hasSubscription, isSubscriptionLoading = false }: StudentMobileCardV2Props) {
   const age = student.date_of_birth ? dayjs().diff(dayjs(student.date_of_birth), 'year') : null;
   const parentName = `${student.client?.first_name ?? ''} ${student.client?.last_name ?? ''}`.trim();
   const hasStudentSubscription = hasSubscription ?? Boolean(student.active_subscription_id);
@@ -74,12 +75,22 @@ export function StudentMobileCardV2({ student, onOpen, hasSubscription }: Studen
           <Typography variant="body2" color="text.secondary">
             Возраст: {age ?? '—'}
           </Typography>
-          <Chip
-            size="small"
-            label={hasStudentSubscription ? 'Есть абонемент' : 'Без абонемента'}
-            variant="outlined"
-            color={hasStudentSubscription ? 'success' : 'warning'}
-          />
+          {isSubscriptionLoading ? (
+            <Chip
+              size="small"
+              label="Абонемент..."
+              variant="outlined"
+              color="default"
+              icon={<CircularProgress size={12} />}
+            />
+          ) : (
+            <Chip
+              size="small"
+              label={hasStudentSubscription ? 'Есть абонемент' : 'Без абонемента'}
+              variant="outlined"
+              color={hasStudentSubscription ? 'success' : 'warning'}
+            />
+          )}
         </Box>
       </Box>
     </Paper>

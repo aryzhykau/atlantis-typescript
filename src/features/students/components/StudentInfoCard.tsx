@@ -1,5 +1,8 @@
 import React from 'react';
 import { 
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
     Paper, 
     Typography, 
     Chip, 
@@ -7,7 +10,8 @@ import {
     Button, 
     CircularProgress,
     alpha,
-    Tooltip
+    Tooltip,
+    Divider
 } from '@mui/material';
 import { IStudent, IStudentStatusUpdatePayload } from '../models/student';
 import dayjs from 'dayjs';
@@ -25,6 +29,8 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import EventBusyIcon from '@mui/icons-material/EventBusy'; // для даты деактивации
 import SchoolIcon from '@mui/icons-material/School';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import useMobile from '../../../hooks/useMobile';
 
 interface StudentInfoCardProps {
     student: IStudent;
@@ -131,6 +137,7 @@ export const StudentInfoCard: React.FC<StudentInfoCardProps> = ({ student, onSta
     const { displaySnackbar } = useSnackbar();
     const theme = useTheme();
     const gradients = useGradients();
+    const isMobile = useMobile();
     const [updateStudentStatus, { isLoading: isUpdatingStatus }] = useUpdateStudentStatusMutation();
 
     const handleToggleStatus = async () => {
@@ -161,6 +168,112 @@ export const StudentInfoCard: React.FC<StudentInfoCardProps> = ({ student, onSta
     const getStatusText = () => {
         return student.is_active ? "Активен" : "Неактивен";
     };
+
+    if (isMobile) {
+        return (
+            <Paper
+                elevation={0}
+                sx={{
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    overflow: 'hidden',
+                    background: theme.palette.background.paper,
+                }}
+            >
+                <Accordion disableGutters defaultExpanded sx={{ background: 'transparent', boxShadow: 'none' }}>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon sx={{ color: 'white' }} />}
+                        sx={{
+                            p: 0,
+                            minHeight: 'unset',
+                            '& .MuiAccordionSummary-content': { m: 0 },
+                            '& .MuiAccordionSummary-expandIconWrapper': { mr: 1.5 },
+                            background: gradients.primary,
+                            color: 'white',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                                opacity: 0.3,
+                            }
+                        }}
+                    >
+                        <Box sx={{ position: 'relative', zIndex: 1, px: 2, py: 1.75, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <SchoolIcon sx={{ fontSize: 20 }} />
+                                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                    Информация об ученике
+                                </Typography>
+                            </Box>
+                            <Chip
+                                label={getStatusText()}
+                                size="small"
+                                sx={{ background: alpha('#ffffff', 0.2), color: 'white', fontWeight: 700 }}
+                            />
+                        </Box>
+                    </AccordionSummary>
+
+                    <AccordionDetails sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.25, gap: 1 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>Статус ученика</Typography>
+                            <Button
+                                variant="contained"
+                                onClick={handleToggleStatus}
+                                disabled={isUpdatingStatus}
+                                sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 700,
+                                    minWidth: 128,
+                                    background: student.is_active ? gradients.warning : gradients.success,
+                                    color: 'white',
+                                    '&:hover': {
+                                        background: student.is_active ? gradients.warning : gradients.success,
+                                        filter: 'brightness(0.95)',
+                                    }
+                                }}
+                            >
+                                {isUpdatingStatus ? <CircularProgress size={18} color="inherit" /> : (student.is_active ? 'Деактивировать' : 'Активировать')}
+                            </Button>
+                        </Box>
+
+                        <Divider sx={{ mb: 1.25 }} />
+
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary">ID ученика</Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>#{student.id}</Typography>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary">ФИО</Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{student.first_name} {student.last_name}</Typography>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary">Дата рождения</Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{dayjs(student.date_of_birth).format('DD.MM.YYYY')}</Typography>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary">Возраст</Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{calculateAge(student.date_of_birth)} лет</Typography>
+                            </Box>
+                            {student.deactivation_date && !student.is_active && (
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Дата деактивации</Typography>
+                                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{dayjs(student.deactivation_date).format('DD.MM.YYYY HH:mm')}</Typography>
+                                </Box>
+                            )}
+                        </Box>
+                    </AccordionDetails>
+                </Accordion>
+            </Paper>
+        );
+    }
 
     return (
         <Paper

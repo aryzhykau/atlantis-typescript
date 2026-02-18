@@ -70,14 +70,28 @@ export function MobileStudentsListPage() {
   const [openForm, setOpenForm] = useState(false);
   const [studentToEdit, setStudentToEdit] = useState<IStudent | null>(null);
   const [studentSubscriptionPresenceMap, setStudentSubscriptionPresenceMap] = useState<Record<number, boolean>>({});
+  const [studentSubscriptionLoadingMap, setStudentSubscriptionLoadingMap] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     let isMounted = true;
 
     const resolveStudentSubscriptions = async () => {
       if (!students.length) {
-        if (isMounted) setStudentSubscriptionPresenceMap({});
+        if (isMounted) {
+          setStudentSubscriptionPresenceMap({});
+          setStudentSubscriptionLoadingMap({});
+        }
         return;
+      }
+
+      const initialLoadingMap = students.reduce<Record<number, boolean>>((acc, student) => {
+        acc[student.id] = true;
+        return acc;
+      }, {});
+
+      if (isMounted) {
+        setStudentSubscriptionPresenceMap({});
+        setStudentSubscriptionLoadingMap(initialLoadingMap);
       }
 
       const requests = students.map(async (student) => {
@@ -107,6 +121,7 @@ export function MobileStudentsListPage() {
       }, {});
 
       setStudentSubscriptionPresenceMap(nextMap);
+      setStudentSubscriptionLoadingMap({});
     };
 
     resolveStudentSubscriptions();
@@ -116,15 +131,34 @@ export function MobileStudentsListPage() {
     };
   }, [students, triggerGetStudentSubscriptions]);
 
-  const hasSubscription = (student: IStudent) => {
+  const hasSubscription = (student: IStudent): boolean | undefined => {
+    if (studentSubscriptionLoadingMap[student.id]) {
+      return undefined;
+    }
+
     const resolved = studentSubscriptionPresenceMap[student.id];
-    return resolved ?? Boolean(student.active_subscription_id);
+    if (resolved !== undefined) {
+      return resolved;
+    }
+
+    if (students.length > 0) {
+      return undefined;
+    }
+
+    return Boolean(student.active_subscription_id);
+  };
+
+  const isSubscriptionLoading = (student: IStudent) => {
+    return studentSubscriptionLoadingMap[student.id] || (students.length > 0 && studentSubscriptionPresenceMap[student.id] === undefined);
   };
 
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
       if (showOnlyActive && !student.is_active) return false;
-      if (showWithSubscriptionOnly && !hasSubscription(student)) return false;
+      if (showWithSubscriptionOnly) {
+        const subscriptionStatus = hasSubscription(student);
+        if (subscriptionStatus === false) return false;
+      }
 
       if (!searchValue.trim()) return true;
 
@@ -139,15 +173,15 @@ export function MobileStudentsListPage() {
         student.client?.phone_number,
       ].some((field) => field?.toLowerCase().includes(query));
     });
-  }, [students, showOnlyActive, showWithSubscriptionOnly, searchValue, studentSubscriptionPresenceMap]);
+  }, [students, showOnlyActive, showWithSubscriptionOnly, searchValue, studentSubscriptionPresenceMap, studentSubscriptionLoadingMap]);
 
   const stats = useMemo(() => {
     const total = students.length;
     const active = students.filter((student) => student.is_active).length;
-    const withSubscription = students.filter((student) => hasSubscription(student)).length;
+    const withSubscription = students.filter((student) => hasSubscription(student) === true).length;
     const inactive = students.filter((student) => !student.is_active).length;
     return { total, active, withSubscription, inactive };
-  }, [students, studentSubscriptionPresenceMap]);
+  }, [students, studentSubscriptionPresenceMap, studentSubscriptionLoadingMap]);
 
   const handleOpenCreate = () => {
     setStudentToEdit(null);
@@ -351,6 +385,7 @@ export function MobileStudentsListPage() {
                 student={student}
                 onOpen={() => navigate(`/home/students/${student.id}`)}
                 hasSubscription={hasSubscription(student)}
+                isSubscriptionLoading={isSubscriptionLoading(student)}
               />
             </SwipeableActionCard>
           ))}

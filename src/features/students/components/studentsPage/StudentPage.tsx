@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams} from 'react-router-dom';
-import { Box, Typography, SpeedDial, SpeedDialAction, SpeedDialIcon, IconButton, Paper, alpha } from '@mui/material';
-import { MiniSpringLoader } from '../../../../components/loading/MiniSpringLoader';
+import { Box, Typography, SpeedDial, SpeedDialAction, SpeedDialIcon, IconButton, Paper, alpha, Button } from '@mui/material';
 import { useGetStudentByIdQuery, useUpdateStudentMutation } from '../../../../store/apis/studentsApi';
 import { useGetStudentSubscriptionsQuery, useGetSubscriptionsQuery, useAddSubscriptionToStudentMutation, useFreezeStudentSubscriptionMutation, useUnfreezeStudentSubscriptionMutation } from '../../../../store/apis/subscriptionsApi';
 import { IStudentUpdatePayload } from '../../models/student';
@@ -26,6 +25,7 @@ import AcUnitIcon from '@mui/icons-material/AcUnit';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
 import { MobileFormBottomSheet } from '../../../../components/mobile-kit';
 import useMobile from '../../../../hooks/useMobile';
+import AnimatedLogoLoader from '../../../calendar-v2/components/common/loaders/AnimatedLogoLoader';
 
 dayjs.extend(isBetween);
 
@@ -221,7 +221,11 @@ export function StudentPage() {
     if (isLoadingStudent || (student && (isLoadingAllBaseSubscriptions || isLoadingStudentSubscriptions && !studentSubscriptionsData))) {
         // Показываем основной лоадер, если грузится студент, 
         // или если студент загружен, но еще грузятся его абонементы или базовые абонементы
-        return <MiniSpringLoader />;
+        return (
+            <Box sx={{ position: 'relative', minHeight: '100vh' }}>
+                <AnimatedLogoLoader open={true} message="Загружается карточка ученика..." />
+            </Box>
+        );
     }
 
     if (!student) {
@@ -254,7 +258,7 @@ export function StudentPage() {
                 }}
             >
                 <Box sx={{ position: 'relative', zIndex: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, gap: 1.5 }}>
                         <IconButton
                             onClick={handleBackClick}
                             sx={{
@@ -275,6 +279,26 @@ export function StudentPage() {
                                 Карточка ученика #{student.id} • {calculateAge(student.date_of_birth)} лет
                             </Typography>
                         </Box>
+                        {!isMobile && (
+                            <Button
+                                variant="contained"
+                                startIcon={<EditIcon />}
+                                onClick={handleOpenEditModalHandler}
+                                sx={{
+                                    background: alpha('#ffffff', 0.2),
+                                    color: 'white',
+                                    fontWeight: 700,
+                                    textTransform: 'none',
+                                    borderRadius: 2,
+                                    px: 2,
+                                    '&:hover': {
+                                        background: alpha('#ffffff', 0.3),
+                                    },
+                                }}
+                            >
+                                Редактировать
+                            </Button>
+                        )}
                     </Box>
                 </Box>
             </Paper>
@@ -352,6 +376,7 @@ export function StudentPage() {
                 useBottomSheetVariant={isBottomSheetFormEnabled}
             />
 
+            {isMobile && (
             <SpeedDial
                 ariaLabel="Student detail actions"
                 sx={{
@@ -412,6 +437,7 @@ export function StudentPage() {
                     />
                 )}
             </SpeedDial>
+            )}
         </Box>
     );
 } 

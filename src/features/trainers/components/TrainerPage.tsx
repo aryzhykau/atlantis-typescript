@@ -16,7 +16,6 @@ import {
     SpeedDialAction,
     SpeedDialIcon
 } from '@mui/material';
-import { MiniSpringLoader } from '../../../components/loading/MiniSpringLoader';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useGetTrainerByIdQuery, useUpdateTrainerStatusMutation, useUpdateTrainerMutation } from '../../../store/apis/trainersApi';
 import { useSnackbar } from '../../../hooks/useSnackBar';
@@ -38,6 +37,7 @@ import WorkIcon from '@mui/icons-material/Work';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import EditIcon from '@mui/icons-material/Edit';
 import useMobile from '../../../hooks/useMobile.tsx';
+import AnimatedLogoLoader from '../../calendar-v2/components/common/loaders/AnimatedLogoLoader';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -250,7 +250,11 @@ export function TrainerPage() {
     };
 
     if (isLoading) {
-        return <MiniSpringLoader />;
+        return (
+            <Box sx={{ position: 'relative', minHeight: '100vh' }}>
+                <AnimatedLogoLoader open={true} message="Загружается карточка тренера..." />
+            </Box>
+        );
     }
 
     if (!trainer) {
