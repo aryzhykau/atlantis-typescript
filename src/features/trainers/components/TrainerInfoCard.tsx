@@ -1,5 +1,8 @@
 import React from 'react';
 import { 
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
     Paper, 
     Typography, 
     Box, 
@@ -7,7 +10,9 @@ import {
     Link, 
     IconButton,
     alpha,
-    Tooltip
+    Tooltip,
+    Divider,
+    Button
 } from '@mui/material';
 import { ITrainerResponse } from '../models/trainer';
 import dayjs from 'dayjs';
@@ -25,6 +30,8 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import PersonIcon from '@mui/icons-material/Person';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import useMobile from '../../../hooks/useMobile';
 
 interface TrainerInfoCardProps {
     trainer: ITrainerResponse;
@@ -133,6 +140,7 @@ const InfoItem: React.FC<InfoItemProps> = ({ icon, label, value, color = 'primar
 export const TrainerInfoCard: React.FC<TrainerInfoCardProps> = ({ trainer, onEdit, onStatusChange, showSalary = true, hideActions = false }) => {
     const theme = useTheme();
     const gradients = useGradients();
+    const isMobile = useMobile();
 
     const getStatusColor = () => {
         return trainer.is_active ? 'success' : 'error';
@@ -149,6 +157,156 @@ export const TrainerInfoCard: React.FC<TrainerInfoCardProps> = ({ trainer, onEdi
     const getStatusText = () => {
         return trainer.is_active ? "Активен" : "Неактивен";
     };
+
+    if (isMobile) {
+        return (
+            <Paper
+                elevation={0}
+                sx={{
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    overflow: 'hidden',
+                    background: theme.palette.background.paper,
+                    width: '100%',
+                }}
+            >
+                <Accordion disableGutters defaultExpanded sx={{ background: 'transparent', boxShadow: 'none' }}>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon sx={{ color: 'white' }} />}
+                        sx={{
+                            p: 0,
+                            minHeight: 'unset',
+                            '& .MuiAccordionSummary-content': { m: 0 },
+                            '& .MuiAccordionSummary-expandIconWrapper': { mr: 1.5 },
+                            background: gradients.primary,
+                            color: 'white',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&::before': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+                                opacity: 0.3,
+                            }
+                        }}
+                    >
+                        <Box sx={{ position: 'relative', zIndex: 1, px: 2, py: 1.75, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <TrendingUpIcon sx={{ fontSize: 20 }} />
+                                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                    Основная информация
+                                </Typography>
+                            </Box>
+                            <Chip
+                                label={getStatusText()}
+                                size="small"
+                                sx={{ background: alpha('#ffffff', 0.2), color: 'white', fontWeight: 700 }}
+                            />
+                        </Box>
+                    </AccordionSummary>
+
+                    <AccordionDetails sx={{ p: 2 }}>
+                        {!hideActions && (
+                            <>
+                                <Box sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
+                                    <Button
+                                        fullWidth
+                                        variant="contained"
+                                        startIcon={<EditIcon />}
+                                        onClick={onEdit}
+                                        sx={{
+                                            textTransform: 'none',
+                                            fontWeight: 700,
+                                            background: gradients.primary,
+                                            color: 'white',
+                                            '&:hover': {
+                                                background: gradients.primary,
+                                                filter: 'brightness(0.95)',
+                                            },
+                                        }}
+                                    >
+                                        Редактировать
+                                    </Button>
+                                    <Button
+                                        fullWidth
+                                        variant="contained"
+                                        onClick={onStatusChange}
+                                        sx={{
+                                            textTransform: 'none',
+                                            fontWeight: 700,
+                                            background: trainer.is_active ? gradients.warning : gradients.success,
+                                            color: 'white',
+                                            '&:hover': {
+                                                background: trainer.is_active ? gradients.warning : gradients.success,
+                                                filter: 'brightness(0.95)',
+                                            },
+                                        }}
+                                    >
+                                        {trainer.is_active ? 'Деактивировать' : 'Активировать'}
+                                    </Button>
+                                </Box>
+                                <Divider sx={{ mb: 1.5 }} />
+                            </>
+                        )}
+
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary">ID тренера</Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>#{trainer.id}</Typography>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary">ФИО</Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{trainer.first_name} {trainer.last_name}</Typography>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary">Дата рождения</Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>{dayjs(trainer.date_of_birth).format('DD.MM.YYYY')}</Typography>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary">Email</Typography>
+                                <Link href={`mailto:${trainer.email}`} sx={{ display: 'block', textDecoration: 'none' }}>
+                                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{trainer.email || 'Не указан'}</Typography>
+                                </Link>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary">Телефон</Typography>
+                                <Link href={`tel:+${trainer.phone_country_code}${trainer.phone_number}`} sx={{ display: 'block', textDecoration: 'none' }}>
+                                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{trainer.phone_country_code} {trainer.phone_number}</Typography>
+                                </Link>
+                            </Box>
+                            {showSalary && (
+                                <>
+                                    <Divider />
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">Оклад</Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 800 }}>
+                                            {trainer.salary !== null ? `${trainer.salary} €` : 'Не указан'}
+                                        </Typography>
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">Тип оклада</Typography>
+                                        <Box sx={{ mt: 0.5 }}>
+                                            <Chip
+                                                label={trainer.is_fixed_salary ? 'Фиксированный' : 'Процентный'}
+                                                size="small"
+                                                color={trainer.is_fixed_salary ? 'info' : 'default'}
+                                                variant="outlined"
+                                            />
+                                        </Box>
+                                    </Box>
+                                </>
+                            )}
+                        </Box>
+                    </AccordionDetails>
+                </Accordion>
+            </Paper>
+        );
+    }
 
     return (
         <Paper

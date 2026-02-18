@@ -1,4 +1,4 @@
-import { Box, Chip, Paper, Typography } from '@mui/material';
+import { Box, Chip, CircularProgress, Paper, Typography } from '@mui/material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import PhoneIcon from '@mui/icons-material/Phone';
 import SchoolIcon from '@mui/icons-material/School';
@@ -8,9 +8,10 @@ interface ClientMobileCardV2Props {
   client: IClientUserGet;
   onOpen: () => void;
   studentsCount: number;
+  isStudentsCountLoading?: boolean;
 }
 
-export function ClientMobileCardV2({ client, onOpen, studentsCount }: ClientMobileCardV2Props) {
+export function ClientMobileCardV2({ client, onOpen, studentsCount, isStudentsCountLoading = false }: ClientMobileCardV2Props) {
   const phoneDisplay = `${client.phone_country_code ? `+${client.phone_country_code}` : ''} ${client.phone_number ?? ''}`.trim();
 
   return (
@@ -66,8 +67,17 @@ export function ClientMobileCardV2({ client, onOpen, studentsCount }: ClientMobi
             <SchoolIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Учеников: {studentsCount}
+            Учеников: {isStudentsCountLoading ? '...' : studentsCount}
           </Typography>
+          {isStudentsCountLoading && (
+            <Chip
+              size="small"
+              label="Ученики..."
+              variant="outlined"
+              color="default"
+              icon={<CircularProgress size={12} />}
+            />
+          )}
           {typeof client.balance === 'number' && (
             <Chip
               size="small"

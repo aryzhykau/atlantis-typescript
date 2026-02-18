@@ -61,6 +61,7 @@ export function MobileClients() {
     const [showOnlyWithStudents, setShowOnlyWithStudents] = useState(false);
     const [clientToToggleStatus, setClientToToggleStatus] = useState<IClientUserGet | null>(null);
     const [studentCountsByClientId, setStudentCountsByClientId] = useState<Record<number, number>>({});
+    const [studentCountsLoadingByClientId, setStudentCountsLoadingByClientId] = useState<Record<number, boolean>>({});
     const [showSwipeTip, setShowSwipeTip] = useState<boolean>(() => {
         if (typeof window === 'undefined') return false;
         return window.localStorage.getItem('atlantis_mobile_clients_swipe_tip_seen') !== '1';
@@ -96,8 +97,9 @@ export function MobileClients() {
                 return false;
             }
 
+            const isStudentsCountLoading = studentCountsLoadingByClientId[client.id] || (base.length > 0 && studentCountsByClientId[client.id] === undefined);
             const studentCount = studentCountsByClientId[client.id] ?? client.students?.length ?? 0;
-            if (showOnlyWithStudents && !studentCount) {
+            if (showOnlyWithStudents && !isStudentsCountLoading && !studentCount) {
                 return false;
             }
 
@@ -115,18 +117,37 @@ export function MobileClients() {
                 || client.email?.toLowerCase().includes(query)
             );
         });
-    }, [clients, showOnlyActive, showOnlyWithStudents, searchValue, studentCountsByClientId]);
+    }, [clients, showOnlyActive, showOnlyWithStudents, searchValue, studentCountsByClientId, studentCountsLoadingByClientId]);
 
     useEffect(() => {
+        let isMounted = true;
+
         const loadStudentCounts = async () => {
             if (!clients || clients.length === 0) {
-                setStudentCountsByClientId({});
+                if (isMounted) {
+                    setStudentCountsByClientId({});
+                    setStudentCountsLoadingByClientId({});
+                }
                 return;
+            }
+
+            const initialLoadingMap = clients.reduce<Record<number, boolean>>((acc, client) => {
+                acc[client.id] = true;
+                return acc;
+            }, {});
+
+            if (isMounted) {
+                setStudentCountsByClientId({});
+                setStudentCountsLoadingByClientId(initialLoadingMap);
             }
 
             const results = await Promise.allSettled(
                 clients.map((client) => triggerGetClientStudents(client.id, false).unwrap()),
             );
+
+            if (!isMounted) {
+                return;
+            }
 
             const nextCounts: Record<number, number> = {};
             results.forEach((result, idx) => {
@@ -139,19 +160,33 @@ export function MobileClients() {
             });
 
             setStudentCountsByClientId(nextCounts);
+            setStudentCountsLoadingByClientId({});
         };
 
         loadStudentCounts();
+
+        return () => {
+            isMounted = false;
+        };
     }, [clients, triggerGetClientStudents]);
 
     const stats = useMemo(() => {
         const base = clients ?? [];
         const total = base.length;
         const active = base.filter((client) => client.is_active).length;
-        const withStudents = base.filter((client) => (studentCountsByClientId[client.id] ?? client.students?.length ?? 0) > 0).length;
+        const withStudents = base.filter((client) => {
+            const isStudentsCountLoading = studentCountsLoadingByClientId[client.id] || (base.length > 0 && studentCountsByClientId[client.id] === undefined);
+            if (isStudentsCountLoading) return false;
+            return (studentCountsByClientId[client.id] ?? client.students?.length ?? 0) > 0;
+        }).length;
         const pending = pendingContacts?.length ?? 0;
         return { total, active, withStudents, pending };
-    }, [clients, pendingContacts, studentCountsByClientId]);
+    }, [clients, pendingContacts, studentCountsByClientId, studentCountsLoadingByClientId]);
+
+    const isStudentsCountLoading = (client: IClientUserGet) => {
+        const base = clients ?? [];
+        return studentCountsLoadingByClientId[client.id] || (base.length > 0 && studentCountsByClientId[client.id] === undefined);
+    };
 
     const handleConfirmToggleStatus = async () => {
         if (!clientToToggleStatus) return;
@@ -329,6 +364,7 @@ export function MobileClients() {
                                 client={client}
                                 onOpen={() => handleClientOpen(client.id)}
                                 studentsCount={studentCountsByClientId[client.id] ?? client.students?.length ?? 0}
+                                isStudentsCountLoading={isStudentsCountLoading(client)}
                             />
                         </SwipeableActionCard>
                     ))}

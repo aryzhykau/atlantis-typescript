@@ -1,4 +1,4 @@
-import {Box, Typography, IconButton, Drawer, Dialog, DialogTitle, DialogContent, DialogActions, Button, Tooltip, useTheme} from "@mui/material";
+import {Box, Typography, IconButton, Drawer, Dialog, DialogTitle, DialogContent, DialogActions, Button, Tooltip, useTheme, alpha} from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
 import {Logout, LightMode as LightModeIcon, DarkMode as DarkModeIcon} from '@mui/icons-material';
 import { useThemeMode } from '../theme/ThemeModeProvider';
@@ -7,7 +7,7 @@ import {MobileSideBar} from "../components/sideBar/MobileSidebar.tsx";
 import {useAuth} from "../hooks/useAuth.tsx";
 
 export function MobileHomeLayout({children}:{children: React.ReactNode}) {
-    const HEADER_HEIGHT = 80;
+    const HEADER_CONTENT_HEIGHT = 64;
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
     const { doLogout } = useAuth();
@@ -40,59 +40,125 @@ export function MobileHomeLayout({children}:{children: React.ReactNode}) {
                 right: 0,
                 zIndex: (theme) => theme.zIndex.appBar,
                 pt: "env(safe-area-inset-top)",
-                px: "env(safe-area-inset-left)",
-                height: HEADER_HEIGHT,
+                pl: "env(safe-area-inset-left)",
+                pr: "env(safe-area-inset-right)",
+                backdropFilter: 'blur(10px)',
                 width: "100%",
                 borderBottom: '1px solid',
                 borderColor: 'divider',
+                boxShadow: theme.palette.mode === 'dark'
+                    ? `0 6px 20px ${alpha(theme.palette.common.black, 0.3)}`
+                    : `0 6px 18px ${alpha(theme.palette.primary.main, 0.08)}`,
             }}
         >
-            <Typography variant="h5" component="h1" align="center" sx={{fontSize: '1.5rem'}}>
-                ATLANTIS
-            </Typography>
-            <Typography variant="body2" align="center" sx={{fontSize: '1rem'}}>
-                Swimming School
-            </Typography>
-            <Box sx={{position: 'absolute', top: 20, left: 20}}>
-                <IconButton edge="start" color="inherit" aria-label="menu" onClick={() => toggleDrawer(true)}>
-                    <MenuIcon/>
-                </IconButton>
-                <Drawer anchor="left" open={drawerOpen} onClose={() => toggleDrawer(false)}>
-                    <Box
-                        sx={{width: 250, py: 3}}
-                        role="presentation"
-                        onClick={() => toggleDrawer(false)}
-                        onKeyDown={() => toggleDrawer(false)}
-                        display="flex"
-                        flex="column"
+            <Box
+                sx={{
+                    height: HEADER_CONTENT_HEIGHT,
+                    px: 2,
+                    display: 'grid',
+                    gridTemplateColumns: '88px 1fr 88px',
+                    alignItems: 'center',
+                    columnGap: 0,
+                }}
+            >
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                    <IconButton
+                        edge="start"
+                        color="inherit"
+                        aria-label="menu"
+                        onClick={() => toggleDrawer(true)}
+                        sx={{
+                            width: 40,
+                            height: 40,
+                            '&:hover': {
+                                backgroundColor: 'transparent',
+                            },
+                        }}
                     >
-                        <MobileSideBar/>
-                    </Box>
-                </Drawer>
-            </Box>
-            <Box sx={{position: 'absolute', top: 20, right: 20}}>
-                <Box sx={{display: 'flex', gap: 1}}>
+                        <MenuIcon sx={{ fontSize: 24 }} />
+                    </IconButton>
+                </Box>
+
+                <Box sx={{ minWidth: 0, textAlign: 'center', px: 1 }}>
+                    <Typography
+                        variant="h6"
+                        component="h1"
+                        sx={{ fontWeight: 800, lineHeight: 1.1, letterSpacing: '0.02em', fontSize: '1.2rem' }}
+                    >
+                        ATLANTIS
+                    </Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.84, letterSpacing: '0.04em', fontSize: '0.72rem' }}>
+                        Swimming School
+                    </Typography>
+                </Box>
+
+                <Box sx={{display: 'flex', gap: 0.5, justifyContent: 'flex-end', alignItems: 'center'}}>
                     <Tooltip title="Переключить тему">
-                        <IconButton onClick={() => toggleMode?.()}>
-                            {theme.palette.mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+                        <IconButton
+                            onClick={() => toggleMode?.()}
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                color: theme.palette.mode === 'dark' ? 'warning.main' : 'primary.main',
+                                '&:hover': {
+                                    backgroundColor: 'transparent',
+                                },
+                                transition: 'all 0.2s ease',
+                            }}
+                        >
+                            {theme.palette.mode === 'dark' ? (
+                                <LightModeIcon sx={{ color: 'inherit', fontSize: 24 }} />
+                            ) : (
+                                <DarkModeIcon sx={{ color: 'inherit', fontSize: 24 }} />
+                            )}
                         </IconButton>
                     </Tooltip>
                     <IconButton
                         color="inherit"
                         onClick={handleLogoutClick}
-                        sx={{ 
+                        sx={{
+                            width: 40,
+                            height: 40,
                             color: 'error.main',
                             '&:hover': {
-                                backgroundColor: 'error.light + 20',
+                                backgroundColor: 'transparent',
                             }
                         }}
                     >
-                        <Logout />
+                        <Logout sx={{ fontSize: 24 }} />
                     </IconButton>
                 </Box>
             </Box>
+
+            <Drawer
+                anchor="left"
+                open={drawerOpen}
+                onClose={() => toggleDrawer(false)}
+                PaperProps={{
+                    sx: {
+                        width: 'min(86vw, 320px)',
+                        borderTopRightRadius: 16,
+                        borderBottomRightRadius: 16,
+                        borderRight: '1px solid',
+                        borderColor: 'divider',
+                        overflow: 'hidden',
+                        backgroundColor: 'background.paper',
+                    },
+                }}
+            >
+                <Box
+                    sx={{height: '100%', py: 1}}
+                    role="presentation"
+                    onClick={() => toggleDrawer(false)}
+                    onKeyDown={() => toggleDrawer(false)}
+                    display="flex"
+                    flex="column"
+                >
+                    <MobileSideBar/>
+                </Box>
+            </Drawer>
         </Box>
-        <Box sx={{ mt: `calc(${HEADER_HEIGHT}px + env(safe-area-inset-top))` }}>
+        <Box sx={{ mt: `calc(${HEADER_CONTENT_HEIGHT}px + env(safe-area-inset-top))` }}>
             {children}
         </Box>
 
