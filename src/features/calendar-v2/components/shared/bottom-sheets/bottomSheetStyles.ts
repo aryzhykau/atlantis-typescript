@@ -8,9 +8,9 @@ export const getBottomSheetPaperSx = (
 ) => ({
   borderTopLeftRadius: 24,
   borderTopRightRadius: 24,
-  background: `linear-gradient(180deg, ${theme.palette.background.paper}, ${theme.palette.background.default})`,
+  background: theme.palette.background.paper,
   boxShadow: '0px -12px 30px rgba(15,23,42,0.18)',
-  backdropFilter: 'blur(8px)',
+  backdropFilter: 'none',
   ...overrides,
 });
 

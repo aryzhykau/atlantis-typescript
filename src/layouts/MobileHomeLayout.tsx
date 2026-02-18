@@ -142,7 +142,11 @@ export function MobileHomeLayout({children}:{children: React.ReactNode}) {
                         borderRight: '1px solid',
                         borderColor: 'divider',
                         overflow: 'hidden',
-                        backgroundColor: 'background.paper',
+                        background: `linear-gradient(180deg, ${theme.palette.background.paper}, ${theme.palette.background.default})`,
+                        boxShadow: theme.palette.mode === 'dark'
+                            ? `0 18px 50px ${alpha(theme.palette.common.black, 0.45)}`
+                            : `0 18px 40px ${alpha(theme.palette.common.black, 0.18)}`,
+                        backdropFilter: 'blur(10px)',
                     },
                 }}
             >
