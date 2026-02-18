@@ -8,6 +8,7 @@ import EditBottomSheet from './EditBottomSheet';
 import TransferBottomSheet from './TransferBottomSheet';
 import RealTrainingView from './RealTrainingView';
 import { NormalizedEvent } from '../../../utils/normalizeEventsForWeek';
+import { BottomSheetHandle, getBottomSheetPaperSx } from './bottomSheetStyles';
 
 // Simple guard: check whether passed event is a real training
 // Accepts multiple signals: normalized isTemplate flag OR raw payload fields
@@ -46,6 +47,8 @@ const EventBottomSheetRefactored: React.FC<EventBottomSheetProps> = ({
   open,
   eventOrHourGroup,
   mode,
+  relatedEvents,
+  onSelectRelated,
   onClose,
   onDelete,
   onRequestEdit,
@@ -146,32 +149,18 @@ const EventBottomSheetRefactored: React.FC<EventBottomSheetProps> = ({
         onOpen={() => {}}
         disableSwipeToOpen
         PaperProps={{
-          sx: {
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
+          sx: getBottomSheetPaperSx(theme, {
             zIndex: 1400,
-            background: `linear-gradient(180deg, ${theme.palette.background.paper}, ${theme.palette.background.default})`,
-            boxShadow: '0px -12px 30px rgba(15,23,42,0.18)',
-            backdropFilter: 'blur(8px)',
             maxHeight: '85vh',
             overflow: 'hidden',
-          },
+          }),
         }}
         ModalProps={{
           keepMounted: true, // Better performance on mobile
         }}
       >
         {/* Handle bar for visual feedback */}
-        <Box sx={{ 
-          width: 48, 
-          height: 4, 
-          background: theme.palette.divider, 
-          borderRadius: 2, 
-          mx: 'auto', 
-          mt: 2, 
-          mb: 1,
-          opacity: 0.6,
-        }} />
+        <BottomSheetHandle />
 
         {/* Content container with proper padding */}
         <Box sx={{ 
@@ -185,6 +174,8 @@ const EventBottomSheetRefactored: React.FC<EventBottomSheetProps> = ({
             (isRealTrainingEvent(eventOrHourGroup as NormalizedEvent)) ? (
               <RealTrainingView
                 event={eventOrHourGroup as NormalizedEvent}
+                relatedEvents={relatedEvents}
+                onSelectRelated={onSelectRelated}
                 onClose={onClose}
                 onRequestEdit={handleOpenEdit}
                 onRequestMove={handleOpenTransfer}
@@ -194,6 +185,8 @@ const EventBottomSheetRefactored: React.FC<EventBottomSheetProps> = ({
               <SingleEventView
                 event={eventOrHourGroup}
                 eventOrHourGroup={eventOrHourGroup}
+                relatedEvents={relatedEvents}
+                onSelectRelated={onSelectRelated}
                 onClose={onClose}
                 // override: let SingleEventView call this to open inline forms
                 onRequestEdit={handleOpenEdit}

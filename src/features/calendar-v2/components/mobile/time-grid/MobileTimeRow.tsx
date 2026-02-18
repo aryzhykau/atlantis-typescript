@@ -11,7 +11,8 @@ interface MobileTimeRowProps {
   selectedDay: Dayjs;
   dayEvents: NormalizedEvent[];
   readOnlyForTrainer?: boolean;
-  onEventClick: (event: NormalizedEvent | NormalizedEvent[]) => void;
+  onEventClick: (event: NormalizedEvent, slotEvents: NormalizedEvent[]) => void;
+  onGroupClick: (events: NormalizedEvent[]) => void;
   onEventDrop: (
     event: any,
     sourceDay: Dayjs,
@@ -32,6 +33,7 @@ const MobileTimeRow: React.FC<MobileTimeRowProps> = ({
   dayEvents,
   readOnlyForTrainer = false,
   onEventClick,
+  onGroupClick,
   onEventDrop,
 }) => {
   const theme = useTheme();
@@ -171,12 +173,7 @@ const MobileTimeRow: React.FC<MobileTimeRowProps> = ({
               isVisible={isInView}
               isPartiallyHidden={isPartiallyHidden}
               onClick={() => {
-                if (dayEvents.length === 1) {
-                  onEventClick(event);
-                } else {
-                  // Multiple events - show group view
-                  onEventClick(dayEvents);
-                }
+                onEventClick(event, dayEvents);
               }}
               onIntersectionChange={(ratio: number) => handleIntersectionChange(eventKey, ratio)}
               day={selectedDay}
@@ -185,6 +182,27 @@ const MobileTimeRow: React.FC<MobileTimeRowProps> = ({
             />
           );
         })}
+
+        {dayEvents.length > 3 && !readOnlyForTrainer && (
+          <Box
+            onClick={() => onGroupClick(dayEvents)}
+            sx={{
+              minWidth: 64,
+              height: 'calc(var(--hour-row-h, 44px) - 8px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 2,
+              backgroundColor: theme.palette.action.hover,
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            +{dayEvents.length - 3}
+          </Box>
+        )}
       </MobileDropZone>
     </Box>
   );

@@ -5,8 +5,10 @@ import {
   Drawer,
   Stack,
   Typography,
+  useTheme,
 } from '@mui/material';
 import React from 'react';
+import { BottomSheetHandle, getBottomSheetPaperSx } from '../../features/calendar-v2/components/shared/bottom-sheets/bottomSheetStyles';
 
 interface MobileFilterBottomSheetProps {
   open: boolean;
@@ -25,22 +27,28 @@ export function MobileFilterBottomSheet({
   onReset,
   children,
 }: MobileFilterBottomSheetProps) {
+  const theme = useTheme();
+
   return (
-    <Drawer anchor="bottom" open={open} onClose={onClose}>
+    <Drawer
+      anchor="bottom"
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: getBottomSheetPaperSx(theme, {
+          maxHeight: '78vh',
+          overflow: 'hidden',
+        }),
+      }}
+    >
+      <BottomSheetHandle />
       <Box
         sx={{
           p: 2,
           pb: 'calc(16px + env(safe-area-inset-bottom))',
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-          maxHeight: '78vh',
           overflowY: 'auto',
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-          <Box sx={{ width: 44, height: 4, borderRadius: 999, backgroundColor: 'divider' }} />
-        </Box>
-
         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>
           {title}
         </Typography>

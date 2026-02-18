@@ -115,6 +115,18 @@ const lightTheme = createTheme({
             color: '#7f8c8d',
         },
     },
+    components: {
+        MuiDialog: {
+            styleOverrides: {
+                paper: ({ theme }) => ({
+                    borderRadius: 24,
+                    background: `linear-gradient(180deg, ${theme.palette.background.paper}, ${theme.palette.background.default})`,
+                    boxShadow: '0px 18px 50px rgba(15,23,42,0.25)',
+                    backdropFilter: 'blur(8px)',
+                }),
+            },
+        },
+    },
 }, ruRU);
 
 const darkTheme = createTheme({
@@ -229,6 +241,18 @@ const darkTheme = createTheme({
             fontWeight: 500,
             lineHeight: 1.6,
             color: '#bdc3c7',
+        },
+    },
+    components: {
+        MuiDialog: {
+            styleOverrides: {
+                paper: ({ theme }) => ({
+                    borderRadius: 24,
+                    background: `linear-gradient(180deg, ${theme.palette.background.paper}, ${theme.palette.background.default})`,
+                    boxShadow: '0px 18px 50px rgba(15,23,42,0.35)',
+                    backdropFilter: 'blur(8px)',
+                }),
+            },
         },
     },
 }, ruRU);

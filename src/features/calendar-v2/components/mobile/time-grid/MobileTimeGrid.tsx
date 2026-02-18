@@ -48,6 +48,7 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
   const [selectedEvent, setSelectedEvent] = useState<NormalizedEvent | NormalizedEvent[] | null>(null);
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
   const [viewportOffset, setViewportOffset] = useState<number>(0);
+  const [relatedEvents, setRelatedEvents] = useState<NormalizedEvent[] | null>(null);
 
   // Update local events when eventsMap changes
   React.useEffect(() => {
@@ -56,9 +57,9 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
 
   // Keep selectedEvent in sync with incoming events so BottomSheet reflects optimistic changes
   React.useEffect(() => {
-    if (!selectedEvent) return;
+    if (!selectedEvent || Array.isArray(selectedEvent)) return;
     try {
-      const eventObj = Array.isArray(selectedEvent) ? selectedEvent[0] : selectedEvent;
+      const eventObj = selectedEvent;
       if (!eventObj) return;
       const dayKey = (eventObj.start && typeof eventObj.start.format === 'function') ? eventObj.start.format('YYYY-MM-DD') : '';
       const updatedForDay = eventsMap[dayKey] || [];
@@ -98,11 +99,27 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
   const activeDayKey = activeDay.format('YYYY-MM-DD');
 
   // Handle event click - open bottom sheet with selected event
-  const handleEventClick = useCallback((event: NormalizedEvent | NormalizedEvent[]) => {
-    setSelectedEvent(event);
+  const handleEventClick = useCallback((event: NormalizedEvent, slotEvents: NormalizedEvent[]) => {
+    if (slotEvents.length >= 4) {
+      setSelectedEvent(slotEvents);
+      setRelatedEvents(null);
+    } else {
+      setSelectedEvent(event);
+      setRelatedEvents(slotEvents);
+    }
     setBottomSheetOpen(true);
     console.log('Event clicked:', event);
     console.log('BottomSheet open:', true);
+  }, []);
+
+  const handleGroupClick = useCallback((slotEvents: NormalizedEvent[]) => {
+    setSelectedEvent(slotEvents);
+    setRelatedEvents(null);
+    setBottomSheetOpen(true);
+  }, []);
+
+  const handleSelectRelated = useCallback((event: NormalizedEvent) => {
+    setSelectedEvent(event);
   }, []);
 
   // Handler invoked from EventBottomSheet when user requests a transfer
@@ -254,6 +271,7 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
   const handleBottomSheetClose = useCallback(() => {
     setBottomSheetOpen(false);
     setSelectedEvent(null);
+    setRelatedEvents(null);
     console.log('BottomSheet closed');
   }, []);
 
@@ -325,6 +343,7 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
               dayEvents={updatedDayEvents}
               readOnlyForTrainer={readOnlyForTrainer}
               onEventClick={handleEventClick}
+              onGroupClick={handleGroupClick}
               onEventDrop={handleEventDrop}
             />
           );
@@ -347,6 +366,8 @@ const MobileTimeGrid: React.FC<MobileTimeGridProps> = ({
           open={bottomSheetOpen}
           eventOrHourGroup={Array.isArray(selectedEvent) ? selectedEvent : selectedEvent}
           mode="event"
+          relatedEvents={relatedEvents || undefined}
+          onSelectRelated={handleSelectRelated}
           onClose={handleBottomSheetClose}
           onRequestMove={handleRequestMove}
           onRequestEdit={handleRequestEdit}

@@ -20,6 +20,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
 import { NormalizedEvent } from '../../../utils/normalizeEventsForWeek';
+import { BottomSheetHandle, getBottomSheetPaperSx } from './bottomSheetStyles';
 
 interface TransferBottomSheetProps {
   event: NormalizedEvent | null;
@@ -79,31 +80,17 @@ const TransferBottomSheet: React.FC<TransferBottomSheetProps> = ({
         onOpen={() => {}}
         disableSwipeToOpen
         PaperProps={{
-          sx: {
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
+          sx: getBottomSheetPaperSx(theme, {
             zIndex: 1600, // Higher than main bottom sheet (1500)
-            background: theme.palette.background.paper,
-            boxShadow: '0px -12px 30px rgba(15,23,42,0.35)',
-            backdropFilter: 'blur(12px)',
             maxHeight: '80vh',
-          },
+          }),
         }}
         ModalProps={{
           keepMounted: false,
         }}
       >
         {/* Handle bar for visual feedback */}
-        <Box sx={{ 
-          width: 48, 
-          height: 4, 
-          background: theme.palette.divider, 
-          borderRadius: 2, 
-          mx: 'auto', 
-          mt: 2, 
-          mb: 1,
-          opacity: 0.6,
-        }} />
+        <BottomSheetHandle />
 
         <Box sx={{ p: 3 }}>
           {/* Header */}

@@ -20,6 +20,7 @@ import { NormalizedEvent } from '../../../utils/normalizeEventsForWeek';
 import { useAddStudentToRealTrainingMutation } from '../../../../../store/apis/calendarApi-v2';
 import { useGetStudentsQuery } from '../../../../../store/apis/studentsApi';
 import { useSnackbar } from '../../../../../hooks/useSnackBar';
+import { BottomSheetHandle, getBottomSheetPaperSx } from './bottomSheetStyles';
 
 interface Student {
   id: number;
@@ -125,28 +126,13 @@ const AddStudentToRealTrainingBottomSheet: React.FC<AddStudentToRealTrainingBott
       onOpen={() => {}}
       disableSwipeToOpen
       PaperProps={{
-        sx: {
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
+        sx: getBottomSheetPaperSx(theme, {
           zIndex: 1500,
-          background: `linear-gradient(180deg, ${theme.palette.background.paper}, ${theme.palette.background.default})`,
-          boxShadow: '0px -12px 30px rgba(15,23,42,0.18)',
-          backdropFilter: 'blur(8px)',
           maxHeight: '85vh',
-        },
+        }),
       }}
     >
-      {/* Handle bar */}
-      <Box sx={{ 
-        width: 48, 
-        height: 4, 
-        background: theme.palette.divider, 
-        borderRadius: 2, 
-        mx: 'auto', 
-        mt: 2, 
-        mb: 1,
-        opacity: 0.6,
-      }} />
+      <BottomSheetHandle />
 
       <Box sx={{ p: 3 }}>
         {/* Header */}

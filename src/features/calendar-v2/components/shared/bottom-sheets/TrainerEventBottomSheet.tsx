@@ -25,6 +25,7 @@ import {
 import dayjs from 'dayjs';
 import { useSnackbar } from '../../../../../hooks/useSnackBar';
 import { NormalizedEvent } from '../../../utils/normalizeEventsForWeek';
+import { BottomSheetHandle, getBottomSheetPaperSx } from './bottomSheetStyles';
 
 interface TrainerEventBottomSheetProps {
   open: boolean;
@@ -165,14 +166,15 @@ const TrainerEventBottomSheet: React.FC<TrainerEventBottomSheetProps> = ({
       onOpen={() => {}} // Required for SwipeableDrawer
       disableSwipeToOpen
       PaperProps={{
-        sx: {
+        sx: getBottomSheetPaperSx(theme, {
           borderTopLeftRadius: 16,
           borderTopRightRadius: 16,
           maxHeight: '90vh',
           minHeight: '50vh',
-        },
+        }),
       }}
     >
+      <BottomSheetHandle />
       <Box sx={{ p: 3, pb: 4 }}>
         {/* Header */}
         <Box sx={{ 

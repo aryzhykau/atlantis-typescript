@@ -13,6 +13,7 @@ import {
   ChevronRight,
 } from '@mui/icons-material';
 import dayjs, { Dayjs } from 'dayjs';
+import { BottomSheetHandle, getBottomSheetPaperSx } from '../../shared/bottom-sheets/bottomSheetStyles';
 
 interface MobileMonthPickerOverlayProps {
   open: boolean;
@@ -80,14 +81,14 @@ const MobileMonthPickerOverlay: React.FC<MobileMonthPickerOverlayProps> = ({
       open={open}
       onClose={onClose}
       PaperProps={{
-        sx: {
+        sx: getBottomSheetPaperSx(theme, {
           maxHeight: '75vh',
           borderTopLeftRadius: theme.spacing(3),
           borderTopRightRadius: theme.spacing(3),
-          backgroundColor: theme.palette.background.paper,
-        },
+        }),
       }}
     >
+      <BottomSheetHandle />
       <Box sx={{ p: 3 }}>
         {/* Header */}
         <Box

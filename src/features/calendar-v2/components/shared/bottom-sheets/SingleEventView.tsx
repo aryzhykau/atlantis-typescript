@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Box, useTheme } from '@mui/material';
+import { Box, useTheme, Typography, Chip } from '@mui/material';
 import { NormalizedEvent } from '../../../utils/normalizeEventsForWeek';
 import { Student, StudentTemplate } from './types';
 import { useEventStudentManagement } from '../../../hooks/useEventStudentManagement';
@@ -17,6 +17,8 @@ import DeleteConfirmation from './DeleteConfirmation';
 interface SingleEventViewProps {
   event: NormalizedEvent;
   eventOrHourGroup: NormalizedEvent | NormalizedEvent[] | null;
+  relatedEvents?: NormalizedEvent[];
+  onSelectRelated?: (event: NormalizedEvent) => void;
   onClose: () => void;
   onRequestEdit?: (event: NormalizedEvent) => void;
   onRequestMove?: (event: NormalizedEvent, transferData?: any) => void;
@@ -31,6 +33,8 @@ interface SingleEventViewProps {
 const SingleEventView: React.FC<SingleEventViewProps> = ({
   event,
   eventOrHourGroup,
+  relatedEvents,
+  onSelectRelated,
   onClose,
   onRequestEdit,
   onRequestMove,
@@ -58,6 +62,7 @@ const SingleEventView: React.FC<SingleEventViewProps> = ({
   } = useEventDeletion(onDelete);
 
   const typeColor = event.training_type?.color || theme.palette.primary.main;
+  const otherEvents = (relatedEvents || []).filter(ev => ev.id !== event.id);
 
   // Event handlers
   const handleEdit = useCallback(() => {
@@ -96,6 +101,26 @@ const SingleEventView: React.FC<SingleEventViewProps> = ({
     <Box sx={{ p: 3 }}>
       {/* Event Header */}
       <EventHeader event={event} onClose={onClose} />
+
+      {/* Related events in the same slot */}
+      {otherEvents.length > 0 && (
+        <Box sx={{ mb: 2 }}>
+          <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: theme.palette.text.secondary, mb: 1 }}>
+            Другие в этот час
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {otherEvents.map(ev => (
+              <Chip
+                key={ev.id}
+                label={ev.title}
+                onClick={() => onSelectRelated?.(ev)}
+                size="small"
+                sx={{ fontWeight: 600, maxWidth: '100%' }}
+              />
+            ))}
+          </Box>
+        </Box>
+      )}
 
       {/* Trainer Information */}
       <TrainerInfo trainer={event.trainer} typeColor={typeColor} />

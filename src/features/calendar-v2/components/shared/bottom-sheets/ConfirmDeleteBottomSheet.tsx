@@ -1,6 +1,7 @@
 import { SwipeableDrawer, Box, Typography, Button, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useTheme } from '@mui/material/styles';
+import { BottomSheetHandle, getBottomSheetPaperSx } from './bottomSheetStyles';
 
 interface Props {
   open: boolean;
@@ -21,9 +22,15 @@ export default function ConfirmDeleteBottomSheet({ open, title = 'Подтвер
       onClose={onClose}
       onOpen={() => {}}
       disableSwipeToOpen
-      PaperProps={{ sx: { borderTopLeftRadius: 28, borderTopRightRadius: 28, p: 3 } }}
+      PaperProps={{
+        sx: getBottomSheetPaperSx(theme, {
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 28,
+          p: 3,
+        }),
+      }}
     >
-      <Box sx={{ width: 56, height: 6, background: theme.palette.primary.light, borderRadius: 3, mx: 'auto', mt: 1, mb: 2, opacity: 0.95 }} />
+      <BottomSheetHandle />
       <Box sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>{title}</Typography>

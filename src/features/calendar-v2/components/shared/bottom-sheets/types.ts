@@ -20,6 +20,8 @@ export interface EventBottomSheetProps {
   open: boolean;
   eventOrHourGroup: NormalizedEvent | NormalizedEvent[] | null;
   mode: 'event' | 'group';
+  relatedEvents?: NormalizedEvent[];
+  onSelectRelated?: (event: NormalizedEvent) => void;
   onClose: () => void;
   onSave?: (event: NormalizedEvent) => void;
   onMove?: (event: NormalizedEvent) => void;

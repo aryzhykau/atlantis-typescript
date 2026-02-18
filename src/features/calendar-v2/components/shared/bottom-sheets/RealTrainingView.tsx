@@ -4,6 +4,7 @@ import {
   Typography,
   useTheme,
   Button,
+  Chip,
 } from '@mui/material';
 import { AccessTime as TimeIcon, Edit as EditIcon, Cancel as CancelIcon } from '@mui/icons-material';
 import dayjs from 'dayjs';
@@ -19,6 +20,8 @@ import StudentListItem from './StudentListItem';
 
 interface RealTrainingViewProps {
   event: NormalizedEvent;
+  relatedEvents?: NormalizedEvent[];
+  onSelectRelated?: (event: NormalizedEvent) => void;
   onClose: () => void;
   onRequestMove?: (event: NormalizedEvent, transferData?: any) => void;
   onRequestEdit?: (event: NormalizedEvent) => void;
@@ -33,6 +36,8 @@ interface RealTrainingViewProps {
  */
 const RealTrainingView: React.FC<RealTrainingViewProps> = ({
   event,
+  relatedEvents,
+  onSelectRelated,
   onClose,
   onRequestMove,
   onRequestEdit,
@@ -157,6 +162,7 @@ const RealTrainingView: React.FC<RealTrainingViewProps> = ({
   void trainerInitials;
 
   const typeColor = event.training_type?.color || theme.palette.primary.main;
+  const otherEvents = (relatedEvents || []).filter(ev => ev.id !== event.id);
 
   // Handlers that wire to provided callbacks / local state
   const handleEdit = useCallback(() => handleOpenEdit(), [/* deps handled */]);
@@ -175,6 +181,26 @@ const RealTrainingView: React.FC<RealTrainingViewProps> = ({
     <>
       <Box sx={{ p: 3, pb: 4 }}>
         <EventHeader event={event} onClose={onClose} />
+
+        {/* Related events in the same slot */}
+        {otherEvents.length > 0 && (
+          <Box sx={{ mb: 2 }}>
+            <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: theme.palette.text.secondary, mb: 1 }}>
+              Другие в этот час
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {otherEvents.map(ev => (
+                <Chip
+                  key={ev.id}
+                  label={ev.title}
+                  onClick={() => onSelectRelated?.(ev)}
+                  size="small"
+                  sx={{ fontWeight: 600, maxWidth: '100%' }}
+                />
+              ))}
+            </Box>
+          </Box>
+        )}
         {/* Students */}
         {activeStudents.length > 0 && (
           <Box sx={{ mb: 3 }}>

@@ -23,6 +23,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
 import { NormalizedEvent } from '../../../utils/normalizeEventsForWeek';
+import { BottomSheetHandle, getBottomSheetPaperSx } from './bottomSheetStyles';
 
 interface TransferBottomSheetProps {
   event: NormalizedEvent | null;
@@ -124,14 +125,14 @@ const TransferBottomSheet: React.FC<TransferBottomSheetProps> = ({
         keepMounted: true,
       }}
       PaperProps={{
-        sx: {
+        sx: getBottomSheetPaperSx(theme, {
           borderRadius: '16px 16px 0 0',
           maxHeight: '70vh',
-          backgroundColor: theme.palette.background.paper,
           zIndex: 1600, // Above main event sheet (1500)
-        },
+        }),
       }}
     >
+      <BottomSheetHandle />
       <Box sx={{ 
         padding: 3,
         paddingBottom: 0,

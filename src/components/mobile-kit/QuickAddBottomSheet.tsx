@@ -1,5 +1,6 @@
-import { Box, Button, Stack, SwipeableDrawer, Typography } from '@mui/material';
+import { Box, Button, Stack, SwipeableDrawer, Typography, useTheme } from '@mui/material';
 import React from 'react';
+import { BottomSheetHandle, getBottomSheetPaperSx } from '../../features/calendar-v2/components/shared/bottom-sheets/bottomSheetStyles';
 
 interface QuickAddBottomSheetProps {
   open: boolean;
@@ -22,6 +23,8 @@ export function QuickAddBottomSheet({
   submitAnotherLabel = 'Сохранить и добавить ещё',
   children,
 }: QuickAddBottomSheetProps) {
+  const theme = useTheme();
+
   return (
     <SwipeableDrawer
       anchor="bottom"
@@ -29,21 +32,21 @@ export function QuickAddBottomSheet({
       onClose={onClose}
       onOpen={() => {}}
       disableSwipeToOpen
+      PaperProps={{
+        sx: getBottomSheetPaperSx(theme, {
+          maxHeight: '82vh',
+          overflow: 'hidden',
+        }),
+      }}
     >
+      <BottomSheetHandle />
       <Box
         sx={{
           p: 2,
           pb: 'calc(16px + env(safe-area-inset-bottom))',
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-          maxHeight: '82vh',
           overflowY: 'auto',
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-          <Box sx={{ width: 44, height: 4, borderRadius: 999, backgroundColor: 'divider' }} />
-        </Box>
-
         <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
           {title}
         </Typography>
