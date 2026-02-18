@@ -2,7 +2,7 @@ import React, { useMemo, memo, useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, CircularProgress, 
   Typography, Chip, IconButton, Box,
-  useTheme, alpha, Divider, Paper, Card, CardContent, Autocomplete, TextField, useMediaQuery, SwipeableDrawer
+  useTheme, alpha, Autocomplete, TextField, useMediaQuery, SwipeableDrawer
 } from '@mui/material';
 import { FormikAutocomplete, FormikDatePicker } from '../../../../../components/forms/fields';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
