@@ -78,15 +78,18 @@ export const StudentForm: React.FC<StudentFormProps> = ({
             onSubmit={handleSubmit}
             enableReinitialize
         >
-            {({ setFieldValue, values, isSubmitting, isValid }) => {
+            {({ setFieldValue, values, touched, isSubmitting, isValid }) => {
                     React.useEffect(() => {
                         if (values.client_id) {
                             const selectedClient = clients.find(client => client.id === values.client_id);
-                            if (selectedClient && values.last_name !== selectedClient.last_name) {
+                            const isLastNameTouched = Boolean(touched.last_name);
+                            const isLastNameEmpty = !values.last_name?.trim();
+
+                            if (selectedClient && !isLastNameTouched && isLastNameEmpty) {
                                 setFieldValue('last_name', selectedClient.last_name);
                             }
                         }
-                    }, [values.client_id, clients, setFieldValue, values.last_name]);
+                    }, [values.client_id, clients, setFieldValue, values.last_name, touched.last_name]);
 
                     return (
                         <Form>
