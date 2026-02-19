@@ -3,7 +3,7 @@ import { OwnerDashboardDesktop } from "../features/dashboard/components/OwnerDas
 
 export function DashboardLayout() {
   return (
-    <Box display={"flex"} flexDirection={"column"} gap={2}>
+    <Box display={"flex"} flexDirection={"column"} gap={2} height="100%" minHeight={0}>
       <OwnerDashboardDesktop />
     </Box>
   );
