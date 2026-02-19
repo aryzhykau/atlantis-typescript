@@ -9,6 +9,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import {ClientsLayout} from "../layouts/clients/Clients.tsx";
 import { UnifiedTrainersDataGrid } from "../features/trainers/components/UnifiedTrainersDataGrid.tsx";
 import {DashboardLayout} from "../layouts/Dashboard.tsx";
+import { OwnerDashboardMobile } from "../features/dashboard/components/OwnerDashboardMobile.tsx";
 import { TrainingSettings } from "../layouts/trainingTypesSubscriptions/TrainingSettings.tsx";
 import {MobileClients} from "../layouts/clients/MobileClients.tsx";
 import InvoicesPayments from "../layouts/invoicesPyaments/InvoicesPayments.tsx";
@@ -34,7 +35,7 @@ export const MenuItems: IMenuItems[] = [
         link: "dashboard",
         icon: <DashboardIcon/>,
         page: <DashboardLayout/>,
-        mobilePage: <></>,
+        mobilePage: <OwnerDashboardMobile />,
         ownerOnly: true
     },
     {
