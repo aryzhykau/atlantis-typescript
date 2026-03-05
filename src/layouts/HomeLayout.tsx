@@ -197,11 +197,13 @@ export default function HomeLayout({ children,  data, isLoading }: HomeLayoutPro
                     gridColumn: "2", 
                     gridRow: "2", 
                     p: 3, 
-                    overflow: "hidden", // prevent parent scrolling; child scrollers handle scroll
-                    overscrollBehavior: 'contain', // avoid scroll chaining to body
+                    overflow: "auto",
+                    overscrollBehavior: 'contain',
                     WebkitOverflowScrolling: 'touch',
                     background: theme.palette.background.default,
                     borderRadius: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
                 }}>
                     {children}
                 </Box>

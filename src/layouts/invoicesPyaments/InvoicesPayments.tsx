@@ -37,7 +37,7 @@ const InvoicesPayments: React.FC = () => {
     };
 
     return (
-        <Box sx={{ width: '100%' }}>
+        <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={tabValue} onChange={handleTabChange} aria-label="payment tabs">
                     <Tab label="Инвойсы" id="payment-tab-0" aria-controls="payment-tabpanel-0" />

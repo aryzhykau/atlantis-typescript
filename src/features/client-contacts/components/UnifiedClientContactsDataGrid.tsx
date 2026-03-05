@@ -72,7 +72,7 @@ export const UnifiedClientContactsDataGrid: React.FC = () => {
   });
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <Paper
         elevation={0}

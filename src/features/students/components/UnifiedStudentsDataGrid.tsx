@@ -102,7 +102,7 @@ export const UnifiedStudentsDataGrid: React.FC = () => {
   const columns = createEnhancedStudentColumns();
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header with filters */}
       <Paper
         elevation={0}
