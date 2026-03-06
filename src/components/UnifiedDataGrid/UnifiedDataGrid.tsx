@@ -282,7 +282,7 @@ export const UnifiedDataGrid = <T extends Record<string, any>>({
           paginationModel,
           onPaginationModelChange,
         })}
-        sx={{ ...getDataGridStyling(), flex: 1, minHeight: 0 }}
+        sx={{ ...getDataGridStyling(), flex: 1, minHeight: 0, height }}
         aria-label={ariaLabel || `Таблица данных${title ? ` для ${title}` : ''}`}
         // Performance optimizations
         rowBufferPx={100}
