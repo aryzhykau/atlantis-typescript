@@ -226,7 +226,7 @@ export const UnifiedDataGrid = <T extends Record<string, any>>({
   // Show skeleton loader when loading
   if (loading && (!rows || rows.length === 0)) {
     return (
-      <Box sx={{ width: '100%', ...sx }}>
+      <Box sx={{ width: '100%', flex: 1, minHeight: 0, ...sx }}>
         {renderHeader()}
         <DataGridSkeleton 
           height={height}
@@ -258,7 +258,7 @@ export const UnifiedDataGrid = <T extends Record<string, any>>({
   }
 
   return (
-    <Box sx={{ width: '100%', ...sx }}>
+    <Box sx={{ width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', ...sx }}>
       {renderHeader()}
       
       <DataGrid
@@ -282,7 +282,7 @@ export const UnifiedDataGrid = <T extends Record<string, any>>({
           paginationModel,
           onPaginationModelChange,
         })}
-        sx={getDataGridStyling()}
+        sx={{ ...getDataGridStyling(), flex: 1, minHeight: 0, height }}
         aria-label={ariaLabel || `Таблица данных${title ? ` для ${title}` : ''}`}
         // Performance optimizations
         rowBufferPx={100}

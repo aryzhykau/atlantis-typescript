@@ -11,21 +11,30 @@ interface TabPanelProps {
 
 function TabPanel(props: TabPanelProps) {
     const { children, value, index, ...other } = props;
+    const isActive = value === index;
 
     return (
-        <div
+        <Box
+            component="div"
             role="tabpanel"
-            hidden={value !== index}
             id={`payment-tabpanel-${index}`}
             aria-labelledby={`payment-tab-${index}`}
+            aria-hidden={!isActive}
+            sx={{
+                flex: 1,
+                minHeight: 0,
+                display: isActive ? 'flex' : 'none',
+                flexDirection: 'column',
+                overflow: 'hidden',
+            }}
             {...other}
         >
-            {value === index && (
-                <Box sx={{ p: 3 }}>
+            {isActive && (
+                <Box sx={{ p: 3, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                     {children}
                 </Box>
             )}
-        </div>
+        </Box>
     );
 }
 
@@ -37,7 +46,7 @@ const InvoicesPayments: React.FC = () => {
     };
 
     return (
-        <Box sx={{ width: '100%' }}>
+        <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={tabValue} onChange={handleTabChange} aria-label="payment tabs">
                     <Tab label="Инвойсы" id="payment-tab-0" aria-controls="payment-tabpanel-0" />

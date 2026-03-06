@@ -64,7 +64,7 @@ export function ClientsLayout() {
     const handleModalClose = () => setModalOpen(false);
 
     return (
-        <Box sx={{ display: "flex", flexDirection: "column" }}>
+        <Box sx={{ display: "flex", flexDirection: "column", height: '100%' }}>
             <UnifiedClientsDataGrid 
                 onClientSelect={handleClientSelect}
                 onAddClient={handleAddClient}
