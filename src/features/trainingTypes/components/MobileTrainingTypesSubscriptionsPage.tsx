@@ -186,6 +186,7 @@ export function MobileTrainingTypesSubscriptionsPage() {
       validity_days: 30,
       number_of_sessions: 1,
       is_active: true,
+      sessions_per_week: null,
     });
     setSubscriptionFormOpen(true);
   };
@@ -551,12 +552,20 @@ export function MobileTrainingTypesSubscriptionsPage() {
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {item.price.toFixed(2)} €
                   </Typography>
-                  <Typography variant="caption" color="text.disabled">
-                    Занятий: {item.number_of_sessions}
-                  </Typography>
-                  <Typography variant="caption" color="text.disabled">
-                    Действует: {item.validity_days} дн.
-                  </Typography>
+                  {item.sessions_per_week != null && item.sessions_per_week > 0 ? (
+                    <Typography variant="caption" color="primary" sx={{ fontWeight: 700 }}>
+                      {item.sessions_per_week}×/нед · По расписанию (v2)
+                    </Typography>
+                  ) : (
+                    <>
+                      <Typography variant="caption" color="text.disabled">
+                        Занятий: {item.number_of_sessions}
+                      </Typography>
+                      <Typography variant="caption" color="text.disabled">
+                        Действует: {item.validity_days} дн.
+                      </Typography>
+                    </>
+                  )}
                 </Box>
               </Box>
             </SwipeableActionCard>
@@ -664,7 +673,6 @@ export function MobileTrainingTypesSubscriptionsPage() {
                   setSubscriptionForForm(null);
                   void refetchSubscriptions();
                 }}
-                useDialogContainer={false}
               />
             )}
           </MobileFormBottomSheet>
@@ -696,16 +704,24 @@ export function MobileTrainingTypesSubscriptionsPage() {
             </DialogContent>
           </Dialog>
 
-          <SubscriptionForm
-            isCreating={isCreatingSubscription}
-            initialValues={subscriptionForForm || {}}
-            onClose={() => {
-              setSubscriptionFormOpen(false);
-              setSubscriptionForForm(null);
-              void refetchSubscriptions();
-            }}
+          <Dialog
             open={subscriptionFormOpen}
-          />
+            onClose={() => { setSubscriptionFormOpen(false); setSubscriptionForForm(null); }}
+            maxWidth="sm"
+            fullWidth
+          >
+            <DialogContent sx={{ p: 0, '&:first-of-type': { pt: 0 } }}>
+              <SubscriptionForm
+                isCreating={isCreatingSubscription}
+                initialValues={subscriptionForForm || {}}
+                onClose={() => {
+                  setSubscriptionFormOpen(false);
+                  setSubscriptionForForm(null);
+                  void refetchSubscriptions();
+                }}
+              />
+            </DialogContent>
+          </Dialog>
         </>
       )}
 

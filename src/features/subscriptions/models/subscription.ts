@@ -5,6 +5,7 @@ export interface ISubscriptionBase {
     number_of_sessions: number;
     validity_days: number;
     is_active?: boolean; // На бэке default: true для SubscriptionCreate
+    sessions_per_week?: number | null;  // v2: занятий в неделю
 }
 
 // Соответствует SubscriptionResponse из openapi.json
@@ -23,6 +24,7 @@ export interface ISubscriptionUpdatePayload {
     number_of_sessions?: number | null;
     validity_days?: number | null;
     is_active?: boolean | null;
+    sessions_per_week?: number | null;
 }
 
 // Для ответа от эндпоинта /subscriptions (список абонементов)
@@ -70,4 +72,8 @@ export interface IStudentSubscriptionAutoRenewalUpdatePayload {
 export interface IStudentSubscriptionView extends IStudentSubscriptionResponse {
     subscription_name: string; // Название абонемента из ISubscriptionResponse
     student_name: string;    // Имя студента (first_name + last_name)
+    // v2-поля (опциональны для backward-compat)
+    sessions_per_week?: number | null;
+    payment_due_date?: string | null;
+    is_prorated?: boolean;
 }

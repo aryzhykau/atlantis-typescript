@@ -5,6 +5,7 @@ import { StudentActiveSubscriptionCard } from "../StudentActiveSubscriptionCard"
 import { useState } from "react"
 import { StudentTabPanel } from "./StudentTabPanel"
 import { StudentSubscriptionsTable } from "../StudentSubscriptionsTable"
+import { MissedSessionsTable } from "../MissedSessionsTable"
 import { IStudentSubscriptionView } from "../../../subscriptions/models/subscription"
 import { IStudent } from "../../models/student"
 import { useGradients } from "../../../trainer-mobile/hooks/useGradients"
@@ -80,6 +81,7 @@ export const StudentContent = ({
                 >
                     <Tab label="📊 Информация" {...a11yProps(0)} />
                     <Tab label="🎫 Абонементы" {...a11yProps(1)} />
+                    <Tab label="❌ Пропуски" {...a11yProps(2)} />
                 </Tabs>
             </Paper>
 
@@ -106,6 +108,10 @@ export const StudentContent = ({
                     subscriptions={enrichedStudentSubscriptions}
                     isLoading={isLoadingStudentSubscriptions}
                 />
+            </StudentTabPanel>
+
+            <StudentTabPanel value={tabValue} index={2}>
+                <MissedSessionsTable studentId={student.id} />
             </StudentTabPanel>
         </Box>  
     )

@@ -8,7 +8,8 @@ import {
   CardMembership, 
   FitnessCenter, 
   AcUnit,
-  Autorenew
+  Autorenew,
+  Payment,
 } from '@mui/icons-material';
 import { IStudentSubscriptionView } from '../../subscriptions/models/subscription';
 import dayjs from 'dayjs';
@@ -102,19 +103,56 @@ export const createEnhancedStudentSubscriptionColumns = ({
 
     {
       field: 'sessions_left',
-      headerName: 'Остаток',
-      width: 100,
-      type: 'number',
+      headerName: 'Занятия',
+      width: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params: GridRenderCellParams<IStudentSubscriptionView>) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <FitnessCenter sx={{ fontSize: 16, color: 'success.main' }} />
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {params.value ?? 0}
-          </Typography>
-        </Box>
-      ),
+      sortable: false,
+      renderCell: (params: GridRenderCellParams<IStudentSubscriptionView>) => {
+        const row = params.row;
+        if (row.sessions_per_week != null) {
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <FitnessCenter sx={{ fontSize: 16, color: 'primary.main' }} />
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {row.sessions_per_week}×/нед
+              </Typography>
+            </Box>
+          );
+        }
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <FitnessCenter sx={{ fontSize: 16, color: 'success.main' }} />
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {row.sessions_left ?? 0} занятий
+            </Typography>
+          </Box>
+        );
+      },
+    },
+
+    {
+      field: 'payment_due_date',
+      headerName: 'Оплата до',
+      width: 140,
+      align: 'center',
+      headerAlign: 'center',
+      sortable: false,
+      renderCell: (params: GridRenderCellParams<IStudentSubscriptionView>) => {
+        const dueDate = params.row.payment_due_date;
+        if (!dueDate) return <Typography variant="body2" color="text.disabled">—</Typography>;
+        const isOverdue = dayjs(dueDate).isBefore(dayjs(), 'day');
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Payment sx={{ fontSize: 16, color: isOverdue ? 'error.main' : 'warning.main' }} />
+            <Chip
+              label={isOverdue ? 'Просрочен' : dayjs(dueDate).format('DD.MM.YY')}
+              color={isOverdue ? 'error' : 'warning'}
+              size="small"
+            />
+          </Box>
+        );
+      },
     },
 
     {

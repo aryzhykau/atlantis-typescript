@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams} from 'react-router-dom';
 import { Box, Typography, SpeedDial, SpeedDialAction, SpeedDialIcon, IconButton, Paper, alpha, Button } from '@mui/material';
 import { useGetStudentByIdQuery, useUpdateStudentMutation } from '../../../../store/apis/studentsApi';
-import { useGetStudentSubscriptionsQuery, useGetSubscriptionsQuery, useAddSubscriptionToStudentMutation, useFreezeStudentSubscriptionMutation, useUnfreezeStudentSubscriptionMutation } from '../../../../store/apis/subscriptionsApi';
+import { useGetSubscriptionsQuery, useFreezeStudentSubscriptionMutation, useUnfreezeStudentSubscriptionMutation } from '../../../../store/apis/subscriptionsApi';
+import { useAddSubscriptionToStudentV2Mutation, useGetStudentSubscriptionsV2Query } from '../../../../store/apis/subscriptionsV2Api';
 import { IStudentUpdatePayload } from '../../models/student';
-import { IStudentSubscriptionView, IStudentSubscriptionCreatePayload, IStudentSubscriptionFreezePayload } from '../../../subscriptions/models/subscription';
+import { IStudentSubscriptionView, IStudentSubscriptionFreezePayload } from '../../../subscriptions/models/subscription';
+import { IStudentSubscriptionCreateV2Payload } from '../../../subscriptions/models/subscription_v2';
 import { useSnackbar } from '../../../../hooks/useSnackBar';
 import { useTheme } from '@mui/material';
 import dayjs from 'dayjs';
@@ -57,8 +59,8 @@ export function StudentPage() {
         isError: isErrorStudentSubscriptions, 
         error: studentSubscriptionsError,
         refetch: refetchStudentSubscriptions
-    } = useGetStudentSubscriptionsQuery({ studentId: Number(studentId) }, {
-        skip: !studentId || !student, // Не запрашивать, если нет studentId или данных самого студента
+    } = useGetStudentSubscriptionsV2Query({ studentId: Number(studentId) }, {
+        skip: !studentId || !student,
         refetchOnMountOrArgChange: true,
     });
 
@@ -69,7 +71,7 @@ export function StudentPage() {
         error: allBaseSubscriptionsError
     } = useGetSubscriptionsQuery(undefined, {skip: !student}); // Передаем undefined как первый аргумент и skip во втором
 
-    const [addSubscriptionToStudent, { isLoading: isAddingSubscription }] = useAddSubscriptionToStudentMutation();
+    const [addSubscriptionToStudent, { isLoading: isAddingSubscription }] = useAddSubscriptionToStudentV2Mutation();
     const [freezeSubscription, { isLoading: isFreezing }] = useFreezeStudentSubscriptionMutation();
     const [unfreezeSubscription, { isLoading: isUnfreezing }] = useUnfreezeStudentSubscriptionMutation();
     const [enrichedStudentSubscriptions, setEnrichedStudentSubscriptions] = useState<IStudentSubscriptionView[]>([]);
@@ -96,8 +98,8 @@ export function StudentPage() {
     }, [isErrorStudent, studentError, isErrorStudentSubscriptions, studentSubscriptionsError, isErrorAllBaseSubscriptions, allBaseSubscriptionsError, displaySnackbar]);
 
     useEffect(() => {
-        if (student && studentSubscriptionsData && allBaseSubscriptionsData?.items) {
-            const enriched = studentSubscriptionsData.map(sub => {
+        if (student && studentSubscriptionsData?.items && allBaseSubscriptionsData?.items) {
+            const enriched = studentSubscriptionsData.items.map(sub => {
                 const baseSub = allBaseSubscriptionsData.items.find(bs => bs.id === sub.subscription_id);
                 return {
                     ...sub,
@@ -125,7 +127,7 @@ export function StudentPage() {
         setIsFreezeModalOpen(false);
     };
 
-    const handleAddSubscriptionSubmit = async (payload: IStudentSubscriptionCreatePayload) => {
+    const handleAddSubscriptionSubmit = async (payload: IStudentSubscriptionCreateV2Payload) => {
         if (!payload.subscription_id) {
             displaySnackbar('Выберите абонемент', 'warning');
             return;

@@ -1,15 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  Box, 
-  Paper, 
-  Typography, 
-  alpha, 
+import {
+  Box,
+  Paper,
+  Typography,
+  alpha,
   InputAdornment,
   TextField,
   Button,
+  Chip,
   Dialog,
-  DialogContent
-} from "@mui/material";
+  DialogContent,
+} from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CardMembershipIcon from '@mui/icons-material/CardMembership';
 import AddIcon from '@mui/icons-material/Add';
@@ -22,44 +23,35 @@ import { ISubscriptionResponse, ISubscriptionCreatePayload } from '../models/sub
 import SubscriptionForm from './SubscriptionForm';
 
 const subscriptionInitialValues: ISubscriptionCreatePayload = {
-  name: "", 
-  price: 0, 
-  is_active: true, 
-  validity_days: 30, 
-  number_of_sessions: 1
+  name: '',
+  price: 0,
+  is_active: true,
+  validity_days: 30,
+  number_of_sessions: 1,
+  sessions_per_week: null,
 };
 
 export const UnifiedSubscriptionsDataView: React.FC = () => {
   const gradients = useGradients();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  
-  const [searchValue, setSearchValue] = useState("");
+
+  const [searchValue, setSearchValue] = useState('');
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [subscriptionId, setSubscriptionId] = useState<number | null>(null);
   const [formInitValues, setFormInitValues] = useState<Partial<ISubscriptionResponse>>(subscriptionInitialValues);
   const [isCreating, setIsCreating] = useState(true);
-  
-  const { data: subscriptionsData, isLoading, isError, error } = useGetSubscriptionsQuery();
+
+  const { data: subscriptionsData, isLoading, isError } = useGetSubscriptionsQuery();
   const subscriptions = subscriptionsData?.items || [];
 
   const filteredSubscriptions = useMemo(() => {
-    if (!searchValue.trim()) {
-      return subscriptions;
-    }
-
-    const searchLower = searchValue.toLowerCase();
-    return subscriptions.filter(subscription => [
-      subscription.name,
-      subscription.price?.toString(),
-      subscription.number_of_sessions?.toString(),
-      subscription.validity_days?.toString()
-    ].some(field => field?.toLowerCase().includes(searchLower)));
+    const q = searchValue.trim().toLowerCase();
+    if (!q) return subscriptions;
+    return subscriptions.filter((s) =>
+      [s.name, s.price?.toString()].some((f) => f?.toLowerCase().includes(q))
+    );
   }, [subscriptions, searchValue]);
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchValue(event.target.value);
-  };
 
   const handleCreateButtonClick = () => {
     setIsCreating(true);
@@ -70,15 +62,7 @@ export const UnifiedSubscriptionsDataView: React.FC = () => {
 
   const handleEdit = (row: ISubscriptionResponse) => {
     setSubscriptionId(row.id);
-    const initialData: Partial<ISubscriptionResponse> = {
-      name: row.name,
-      price: row.price,
-      validity_days: row.validity_days,
-      is_active: row.is_active,
-      number_of_sessions: row.number_of_sessions,
-      id: row.id
-    };
-    setFormInitValues(initialData);
+    setFormInitValues({ ...row });
     setIsCreating(false);
     setFormModalOpen(true);
   };
@@ -88,16 +72,12 @@ export const UnifiedSubscriptionsDataView: React.FC = () => {
     setSubscriptionId(null);
   };
 
-  const columns = createEnhancedSubscriptionColumns({
-    onEdit: handleEdit
-  });
+  const columns = createEnhancedSubscriptionColumns({ onEdit: handleEdit });
 
   if (isError) {
     return (
-      <Box sx={{ width: '49%', display: 'flex', flexDirection: 'column' }}>
-        <Typography color="error">
-          Ошибка загрузки абонементов: {JSON.stringify(error)}
-        </Typography>
+      <Box sx={{ width: '49%' }}>
+        <Typography color="error">Ошибка загрузки абонементов</Typography>
       </Box>
     );
   }
@@ -115,60 +95,44 @@ export const UnifiedSubscriptionsDataView: React.FC = () => {
           color: 'white',
           mb: 3,
           p: 3,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 3,
-          flexWrap: 'wrap',
-          boxShadow: isDark ? '0 2px 8px 0 rgba(0,0,0,0.25)' : '0 2px 8px 0 rgba(80,0,120,0.08)',
           position: 'relative',
           overflow: 'hidden',
           '&::before': {
             content: '""',
             position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'url("data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.1\"%3E%3Ccircle cx=\"30\" cy=\"30\" r=\"2\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+            inset: 0,
+            background: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='2' fill='%23fff' fill-opacity='0.1'/%3E%3C/svg%3E")`,
             opacity: isDark ? 0.18 : 0.3,
-          }
+          },
         }}
       >
-        <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', width: '100%', gap: 3, flexWrap: 'wrap' }}>
+        <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-            <CardMembershipIcon sx={{ fontSize: 28, mr: 1.5 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, color: 'white' }}>
+            <CardMembershipIcon sx={{ fontSize: 26, mr: 1.5 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
               Абонементы
             </Typography>
+            <Chip
+              label={subscriptions.length}
+              size="small"
+              sx={{ ml: 1.5, background: alpha('#fff', 0.2), color: 'white', fontWeight: 700, height: 22 }}
+            />
           </Box>
-          
           <TextField
-            id="search-subscriptions"
             placeholder="Поиск..."
-            type="search"
-            variant="outlined"
-            value={searchValue}
-            onChange={handleSearchChange}
             size="small"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
             InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: 'white' }} />
-                </InputAdornment>
-              ),
-              sx: {
-                borderRadius: 2,
-                background: alpha('#fff', 0.12),
-                color: 'white',
-                '& .MuiInputBase-input': { color: 'white' },
-              }
+              startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: 'white', fontSize: 18 }} /></InputAdornment>,
+              sx: { borderRadius: 2, background: alpha('#fff', 0.12), color: 'white', '& input': { color: 'white', '&::placeholder': { color: alpha('#fff', 0.7) } } },
             }}
-            sx={{ 
-              width: 200,
-              input: { color: 'white' },
+            sx={{
+              width: 180,
               '& .MuiOutlinedInput-notchedOutline': { borderColor: alpha('#fff', 0.3) },
               '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#fff' },
-              '& .MuiInputAdornment-root svg': { color: 'white' },
             }}
           />
-          
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -176,15 +140,11 @@ export const UnifiedSubscriptionsDataView: React.FC = () => {
             sx={{
               background: 'white',
               color: theme.palette.info.main,
-              fontWeight: 600,
+              fontWeight: 700,
               textTransform: 'none',
-              px: 2,
-              boxShadow: 'none',
               borderRadius: 2,
-              fontSize: '0.875rem',
-              '&:hover': {
-                background: alpha('#ffffff', isDark ? 0.7 : 0.9),
-              }
+              boxShadow: 'none',
+              '&:hover': { background: alpha('#fff', 0.9) },
             }}
           >
             Добавить
@@ -192,7 +152,7 @@ export const UnifiedSubscriptionsDataView: React.FC = () => {
         </Box>
       </Paper>
 
-      {/* Unified DataGrid */}
+      {/* DataGrid */}
       <UnifiedDataGrid
         rows={filteredSubscriptions}
         columns={columns}
@@ -210,23 +170,14 @@ export const UnifiedSubscriptionsDataView: React.FC = () => {
         onClose={onFormClose}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ 
-          sx: { 
-            m: { xs: 1, sm: 2 }, 
-            borderRadius: 3,
-            border: '1px solid',
-            borderColor: 'divider',
-          } 
-        }}
-        aria-labelledby="dialog-title-subscription-form"
+        PaperProps={{ sx: { m: { xs: 1, sm: 2 }, borderRadius: 3, border: '1px solid', borderColor: 'divider' } }}
       >
         <DialogContent sx={{ p: 0, '&:first-of-type': { pt: 0 } }}>
           <SubscriptionForm
             isCreating={isCreating}
             initialValues={formInitValues}
             onClose={onFormClose}
-            useDialogContainer={false}
-            key={subscriptionId || 'new'}
+            key={subscriptionId ?? 'new'}
           />
         </DialogContent>
       </Dialog>

@@ -10,10 +10,13 @@ import {
   IconButton,
   Avatar,
   Alert,
+  Chip,
 } from '@mui/material';
 import {
   Close as CloseIcon,
   PersonAdd as PersonAddIcon,
+  Warning as WarningIcon,
+  Block as BlockIcon,
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import { NormalizedEvent } from '../../../utils/normalizeEventsForWeek';
@@ -50,6 +53,7 @@ const AddStudentToRealTrainingBottomSheet: React.FC<AddStudentToRealTrainingBott
   const { data: allStudents } = useGetStudentsQuery();
   
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [v2Error, setV2Error] = useState<{ type: 'limit' | 'debt' | 'generic'; message: string } | null>(null);
 
   // Get available students (not already in training and active)
   const availableStudents = useMemo(() => {
@@ -89,6 +93,7 @@ const AddStudentToRealTrainingBottomSheet: React.FC<AddStudentToRealTrainingBott
 
   const handleAddStudent = useCallback(async () => {
     if (!selectedStudent || !training) return;
+    setV2Error(null);
     
       try {
       await addStudentToTraining({
@@ -102,10 +107,15 @@ const AddStudentToRealTrainingBottomSheet: React.FC<AddStudentToRealTrainingBott
       onClose();
     } catch (err: any) {
       console.error('[AddStudentToRealTrainingBottomSheet] Failed to add student:', err);
-      displaySnackbar(
-        err?.data?.detail || 'Ошибка при добавлении ученика', 
-        'error'
-      );
+      const detail: string = err?.data?.detail || 'Ошибка при добавлении ученика';
+
+      if (detail.toLowerCase().includes('лимит') || detail.toLowerCase().includes('limit')) {
+        setV2Error({ type: 'limit', message: detail });
+      } else if (detail.toLowerCase().includes('задолженност') || detail.toLowerCase().includes('заблокирован')) {
+        setV2Error({ type: 'debt', message: detail });
+      } else {
+        displaySnackbar(detail, 'error');
+      }
     }
   }, [selectedStudent, training, addStudentToTraining, displaySnackbar, onClose]);
 
@@ -212,6 +222,18 @@ const AddStudentToRealTrainingBottomSheet: React.FC<AddStudentToRealTrainingBott
         {availableStudents.length === 0 && !capacityInfo.isFull && (
           <Alert severity="info" sx={{ mb: 3 }}>
             Все активные ученики уже записаны на эту тренировку.
+          </Alert>
+        )}
+
+        {/* V2 error alerts (weekly limit / debt) */}
+        {v2Error && (
+          <Alert
+            severity={v2Error.type === 'debt' ? 'error' : 'warning'}
+            icon={v2Error.type === 'debt' ? <BlockIcon /> : <WarningIcon />}
+            sx={{ mb: 2 }}
+            onClose={() => setV2Error(null)}
+          >
+            {v2Error.message}
           </Alert>
         )}
 

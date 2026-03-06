@@ -124,10 +124,29 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
                                         {dayjs(activeSubscription.start_date).format('DD.MM.YYYY')} — {dayjs(activeSubscription.end_date).format('DD.MM.YYYY')}
                                     </Typography>
                                 </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Осталось занятий</Typography>
-                                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{activeSubscription.sessions_left}</Typography>
-                                </Box>
+                                {activeSubscription.sessions_per_week != null ? (
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">Занятий в неделю</Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{activeSubscription.sessions_per_week}×/нед</Typography>
+                                    </Box>
+                                ) : (
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">Осталось занятий</Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{activeSubscription.sessions_left}</Typography>
+                                    </Box>
+                                )}
+                                {activeSubscription.payment_due_date && (
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">Статус оплаты</Typography>
+                                        <Box sx={{ mt: 0.5 }}>
+                                            {dayjs(activeSubscription.payment_due_date).isBefore(dayjs(), 'day') ? (
+                                                <Chip label="Просрочен" color="error" size="small" />
+                                            ) : (
+                                                <Chip label={`Оплатить до ${dayjs(activeSubscription.payment_due_date).format('D MMMM')}`} color="warning" size="small" />
+                                            )}
+                                        </Box>
+                                    </Box>
+                                )}
                                 {activeSubscription.transferred_sessions > 0 && (
                                     <Box>
                                         <Typography variant="caption" color="text.secondary">Перенесено занятий</Typography>
@@ -194,12 +213,33 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
                         color="warning"
                     />
                    
-                    <StudentInfoItem
-                        icon={<FitnessCenterIcon />}
-                        label="Осталось занятий"
-                        value={activeSubscription.sessions_left}
-                        color="primary"
-                    />
+                    {activeSubscription.sessions_per_week != null ? (
+                        <StudentInfoItem
+                            icon={<FitnessCenterIcon />}
+                            label="Занятий в неделю"
+                            value={`${activeSubscription.sessions_per_week}×/нед`}
+                            color="primary"
+                        />
+                    ) : (
+                        <StudentInfoItem
+                            icon={<FitnessCenterIcon />}
+                            label="Осталось занятий"
+                            value={activeSubscription.sessions_left}
+                            color="primary"
+                        />
+                    )}
+                    {activeSubscription.payment_due_date && (
+                        <StudentInfoItem
+                            icon={<PaymentIcon />}
+                            label="Статус оплаты"
+                            value={
+                                dayjs(activeSubscription.payment_due_date).isBefore(dayjs(), 'day')
+                                    ? <Chip label="Просрочен" color="error" size="small" />
+                                    : <Chip label={`Оплатить до ${dayjs(activeSubscription.payment_due_date).format('D MMMM')}`} color="warning" size="small" />
+                            }
+                            color="warning"
+                        />
+                    )}
                     {activeSubscription.transferred_sessions > 0 && (
                         
                     <StudentInfoItem

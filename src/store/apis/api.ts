@@ -77,5 +77,8 @@ export const baseApi = createApi({
         'OwnerStats',
         'Invoice',
         'ExpenseTypes',
+        'MissedSession',
+        'SystemSettings',
+        'StudentSubscriptionsV2',
     ],
 });
