@@ -31,6 +31,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 import dayjs from 'dayjs';
 import { 
     useGetRealTrainingByIdQuery, 
@@ -364,6 +365,15 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
                   >
                     {s_real.student ? `${s_real.student.first_name || ''} ${s_real.student.last_name || ''}`.trim() : 'Имя не найдено'}
                     {s_real.is_trial && <Chip label="Пробное" size="small" color="success" sx={{ ml: 1 }} />}
+                    {s_real.student?.has_unpaid_invoice && (
+                      <Chip
+                        label="Должник"
+                        size="small"
+                        color="error"
+                        icon={<MoneyOffIcon />}
+                        sx={{ ml: 1 }}
+                      />
+                    )}
                   </Typography>
                   {s_real.student.client && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>

@@ -14,9 +14,10 @@ import { StudentPage } from './features/students/components/studentsPage/Student
 import { TrainerPage } from './features/trainers/components/TrainerPage';
 import { TrainerMobileApp } from './features/trainer-mobile/components/TrainerMobileApp';
 import { useGetCurrentUserQuery } from './store/apis/userApi';
-
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import useMobile from "./hooks/useMobile.tsx";
+import { MaintenancePage } from "./pages/MaintenancePage.tsx";
+import SystemSettingsPage from "./features/admin-management/components/SystemSettingsPage.tsx";
 
 
 function App() {
@@ -26,7 +27,16 @@ function App() {
     const isMobile = useMobile();
     const {isAuthenticated} = useAuth();
     const {data: user} = useGetCurrentUserQuery(undefined, { skip: !isAuthenticated });
-    
+
+    if (import.meta.env.VITE_MAINTENANCE_MODE === 'true') {
+        return (
+            <ThemeProvider theme={theme}>
+                <CssBaseline />
+                <MaintenancePage />
+            </ThemeProvider>
+        );
+    }
+
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -71,6 +81,11 @@ function App() {
                                                   <Route key={item.link} path={item.link}>
                                                       <Route index element={isMobile ? item.mobilePage : item.page} />
                                                   </Route>
+                                              );
+                                          }
+                                          if (item.link === "system-settings") {
+                                              return (
+                                                  <Route key={item.link} path={item.link} element={<SystemSettingsPage />} />
                                               );
                                           }
                                           return <Route key={item.link} path={item.link} element={isMobile ? item.mobilePage : item.page} />;

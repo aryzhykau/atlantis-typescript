@@ -88,6 +88,7 @@ export const subscriptionSchemas = {
     validity_days: commonValidations.validityDays,
     number_of_sessions: commonValidations.numberOfSessions,
     is_active: commonValidations.isActive,
+    sessions_per_week: Yup.number().nullable().min(0, 'Минимум 0').max(20, 'Максимум 20').optional(),
   }),
 
   update: Yup.object({
@@ -96,6 +97,7 @@ export const subscriptionSchemas = {
     validity_days: commonValidations.validityDays,
     number_of_sessions: commonValidations.numberOfSessions,
     is_active: commonValidations.isActive,
+    sessions_per_week: Yup.number().nullable().min(0, 'Минимум 0').max(20, 'Максимум 20').optional(),
   }),
 
   addToStudent: Yup.object({

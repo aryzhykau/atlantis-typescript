@@ -23,7 +23,9 @@ import CallIcon from '@mui/icons-material/Call';
 import { UnifiedClientContactsDataGrid } from "../features/client-contacts/components/UnifiedClientContactsDataGrid";
 import { MobileClientContactsPage } from "../features/client-contacts/components/MobileClientContactsPage";
 import AdminManagementPage from "../features/admin-management/components/AdminManagementPage.tsx";
+import SystemSettingsPage from "../features/admin-management/components/SystemSettingsPage.tsx";
 import AdminIcon from '@mui/icons-material/AdminPanelSettings';
+import SettingsIcon from '@mui/icons-material/Settings';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import {ExpensesSettings} from "../layouts/expenses/ExpensesSettings.tsx";
 import { MobileTrainingTypesSubscriptionsPage } from "../features/trainingTypes/components/MobileTrainingTypesSubscriptionsPage";
@@ -101,6 +103,14 @@ export const MenuItems: IMenuItems[] = [
         icon: <AdminIcon />,
         page: <AdminManagementPage />,
         mobilePage: <AdminManagementPage />,
+        ownerOnly: true
+    },
+    {
+        title: "Настройки системы",
+        link: "system-settings",
+        icon: <SettingsIcon />,
+        page: <SystemSettingsPage />,
+        mobilePage: <SystemSettingsPage />,
         ownerOnly: true
     }
 ];

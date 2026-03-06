@@ -26,6 +26,7 @@ export interface IStudent extends IStudentBase {
   client: IStudentParentClientData; // Вложенная информация о клиенте-родителе
   active_subscription_id: number | null;
   deactivation_date: string | null; // Формат 'YYYY-MM-DDTHH:mm:ss.sssZ'
+  has_unpaid_invoice?: boolean; // True если есть UNPAID инвойс
 }
 
 // Для создания нового студента, соответствует StudentCreate

@@ -116,11 +116,29 @@ export const StudentSubscriptionsTable: React.FC<StudentSubscriptionsTableProps>
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                                     <FitnessCenterIcon sx={{ fontSize: 15, color: 'success.main' }} />
-                                    <Typography variant="body2">Остаток: {subscription.sessions_left}</Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Перенесено: {subscription.transferred_sessions}
-                                    </Typography>
+                                    {subscription.sessions_per_week != null ? (
+                                        <Typography variant="body2">{subscription.sessions_per_week}×/нед</Typography>
+                                    ) : (
+                                        <Typography variant="body2">Остаток: {subscription.sessions_left}</Typography>
+                                    )}
+                                    {subscription.transferred_sessions > 0 && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Перенесено: {subscription.transferred_sessions}
+                                        </Typography>
+                                    )}
                                 </Box>
+
+                                {subscription.payment_due_date && (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Chip
+                                            size="small"
+                                            color={dayjs(subscription.payment_due_date).isBefore(dayjs(), 'day') ? 'error' : 'warning'}
+                                            label={dayjs(subscription.payment_due_date).isBefore(dayjs(), 'day')
+                                                ? 'Оплата просрочена'
+                                                : `Оплатить до ${dayjs(subscription.payment_due_date).format('DD.MM')}`}
+                                        />
+                                    </Box>
+                                )}
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                                     <AutorenewIcon sx={{ fontSize: 15, color: subscription.is_auto_renew ? 'success.main' : 'text.disabled' }} />
