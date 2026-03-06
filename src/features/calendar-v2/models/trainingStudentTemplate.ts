@@ -21,6 +21,7 @@ export interface StudentBasicInfo {
   date_of_birth?: string; // YYYY-MM-DD
   is_active?: boolean;
   client?: ClientBasicInfo; // Добавляем опциональное поле клиента
+  has_unpaid_invoice?: boolean;
   // active_subscription_id?: number; // Эти поля могут быть излишни для базовой информации в календаре
   // deactivation_date?: string | null;
 }
