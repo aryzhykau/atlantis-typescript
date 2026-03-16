@@ -19,6 +19,7 @@ import {
   Autocomplete,
   FormControlLabel,
   Checkbox,
+  Tooltip,
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close';
@@ -26,6 +27,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
 import PhoneIcon from '@mui/icons-material/Phone';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import CakeIcon from '@mui/icons-material/Cake';
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
@@ -33,6 +35,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 import dayjs from 'dayjs';
+import { isBirthday } from '../../../utils/birthdayUtils';
 import { 
     useGetRealTrainingByIdQuery, 
     useCancelRealTrainingMutation, 
@@ -354,16 +357,22 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
                   <PersonIcon sx={{ color: isCancelled ? alpha('#ffffff', 0.5) : '#ffffff', fontSize: '1.2rem' }} />
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      fontWeight: 600, 
-                      mb: 0.5,
-                      textDecoration: isCancelled ? 'line-through' : 'none',
-                      opacity: isCancelled ? 0.7 : 1
-                    }}
-                  >
-                    {s_real.student ? `${s_real.student.first_name || ''} ${s_real.student.last_name || ''}`.trim() : 'Имя не найдено'}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        fontWeight: 600, 
+                        textDecoration: isCancelled ? 'line-through' : 'none',
+                        opacity: isCancelled ? 0.7 : 1
+                      }}
+                    >
+                      {s_real.student ? `${s_real.student.first_name || ''} ${s_real.student.last_name || ''}`.trim() : 'Имя не найдено'}
+                    </Typography>
+                    {isBirthday(s_real.student?.date_of_birth) && (
+                      <Tooltip title="День рождения! 🎂">
+                        <CakeIcon fontSize="small" sx={{ color: '#e91e63' }} />
+                      </Tooltip>
+                    )}
                     {s_real.is_trial && <Chip label="Пробное" size="small" color="success" sx={{ ml: 1 }} />}
                     {s_real.student?.has_unpaid_invoice && (
                       <Chip
@@ -374,7 +383,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
                         sx={{ ml: 1 }}
                       />
                     )}
-                  </Typography>
+                  </Box>
                   {s_real.student.client && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                       <Typography 
