@@ -9,6 +9,7 @@ export interface TrainingTypeBasicInfo {
   name: string;
   color: string; // Цвет обязателен для календаря
   max_participants: number | null; // Для показа загруженности
+  is_subscription_only?: boolean; // Только для абонементных тренировок
   // Optional cancellation policy fields
   cancellation_mode?: 'FIXED' | 'FLEXIBLE';
   safe_cancel_hours?: number | null;

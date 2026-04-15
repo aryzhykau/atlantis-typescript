@@ -19,6 +19,7 @@ import {
   Autocomplete,
   FormControlLabel,
   Checkbox,
+  Tooltip,
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import CloseIcon from '@mui/icons-material/Close';
@@ -26,6 +27,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
 import PhoneIcon from '@mui/icons-material/Phone';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import CakeIcon from '@mui/icons-material/Cake';
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
@@ -33,6 +35,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 import dayjs from 'dayjs';
+import { isBirthday } from '../../../utils/birthdayUtils';
 import { 
     useGetRealTrainingByIdQuery, 
     useCancelRealTrainingMutation, 
@@ -87,6 +90,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
   const [addStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [selectedStudentToAdd, setSelectedStudentToAdd] = useState<any>(null);
   const [isTrial, setIsTrial] = useState(false);
+  const [trialWarning, setTrialWarning] = useState<string | null>(null);
 
   // Состояние для отображения информации о зарплате тренера
   const [salaryResult, setSalaryResult] = useState<StudentCancellationResponse['trainer_salary_result'] | null>(null);
@@ -214,6 +218,8 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
       // Close dialog and reset selection
       setAddStudentDialogOpen(false);
       setSelectedStudentToAdd(null);
+      setIsTrial(false);
+      setTrialWarning(null);
     } catch (err: any) {
       console.error('[RealTrainingModal] Failed to add student:', err);
       displaySnackbar(
@@ -354,16 +360,22 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
                   <PersonIcon sx={{ color: isCancelled ? alpha('#ffffff', 0.5) : '#ffffff', fontSize: '1.2rem' }} />
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      fontWeight: 600, 
-                      mb: 0.5,
-                      textDecoration: isCancelled ? 'line-through' : 'none',
-                      opacity: isCancelled ? 0.7 : 1
-                    }}
-                  >
-                    {s_real.student ? `${s_real.student.first_name || ''} ${s_real.student.last_name || ''}`.trim() : 'Имя не найдено'}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        fontWeight: 600, 
+                        textDecoration: isCancelled ? 'line-through' : 'none',
+                        opacity: isCancelled ? 0.7 : 1
+                      }}
+                    >
+                      {s_real.student ? `${s_real.student.first_name || ''} ${s_real.student.last_name || ''}`.trim() : 'Имя не найдено'}
+                    </Typography>
+                    {isBirthday(s_real.student?.date_of_birth) && (
+                      <Tooltip title="День рождения! 🎂">
+                        <CakeIcon fontSize="small" sx={{ color: '#e91e63' }} />
+                      </Tooltip>
+                    )}
                     {s_real.is_trial && <Chip label="Пробное" size="small" color="success" sx={{ ml: 1 }} />}
                     {s_real.student?.has_unpaid_invoice && (
                       <Chip
@@ -374,7 +386,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
                         sx={{ ml: 1 }}
                       />
                     )}
-                  </Typography>
+                  </Box>
                   {s_real.student.client && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                       <Typography 
@@ -861,7 +873,26 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
             options={getAvailableStudents()}
             getOptionLabel={(student) => `${student.first_name} ${student.last_name}`}
             value={selectedStudentToAdd}
-            onChange={(_, newValue) => setSelectedStudentToAdd(newValue)}
+            onChange={(_, newValue) => {
+              setSelectedStudentToAdd(newValue);
+              if (newValue && realTrainingData?.training_type?.is_subscription_only) {
+                const hasSubscription = !!newValue.active_subscription_id;
+                const trialUsed = !!newValue.trial_used_at;
+                if (!hasSubscription && !trialUsed) {
+                  setIsTrial(true);
+                  setTrialWarning(null);
+                } else if (!hasSubscription && trialUsed) {
+                  setIsTrial(false);
+                  setTrialWarning('Пробное занятие уже использовалось. Необходим активный абонемент.');
+                } else {
+                  setIsTrial(false);
+                  setTrialWarning(null);
+                }
+              } else {
+                setIsTrial(false);
+                setTrialWarning(null);
+              }
+            }}
             disabled={getCapacityInfo().isFull}
             renderInput={(params) => (
               <TextField
@@ -940,9 +971,15 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
           />
 
           <FormControlLabel
-            control={<Checkbox checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} />}
+            control={<Checkbox checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} disabled={!!trialWarning} />}
             label="Пробное занятие"
           />
+
+          {trialWarning && (
+            <Alert severity="warning" sx={{ mt: 1, fontSize: '0.85rem', py: 0.5 }}>
+              {trialWarning}
+            </Alert>
+          )}
           
           {selectedStudentToAdd && (
             <Box sx={{ 
@@ -989,7 +1026,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
         alignItems: 'center' 
       }}>
         <Button 
-          onClick={() => setAddStudentDialogOpen(false)} 
+          onClick={() => { setAddStudentDialogOpen(false); setSelectedStudentToAdd(null); setIsTrial(false); setTrialWarning(null); }} 
           disabled={isAddingStudent}
           variant="outlined"
           sx={{ 
@@ -1009,7 +1046,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
         <Button 
           onClick={handleAddStudent} 
           variant="contained" 
-          disabled={!selectedStudentToAdd || isAddingStudent || getCapacityInfo().isFull}
+          disabled={!selectedStudentToAdd || isAddingStudent || getCapacityInfo().isFull || !!trialWarning}
           startIcon={isAddingStudent ? <CircularProgress size={20} color="inherit" /> : <PersonAddIcon />}
           sx={{
             background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.8)} 100%)`,

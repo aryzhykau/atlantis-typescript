@@ -7,6 +7,7 @@ export interface IStudentSubscriptionV2Response extends IStudentSubscriptionResp
     sessions_per_week: number | null;
     payment_due_date: string | null;   // Формат YYYY-MM-DD
     is_prorated: boolean;
+    schedule_confirmed_at: string | null;  // NULL = pending_schedule
 }
 
 // Payload для создания абонемента v2 (start_date вычисляется сервером)
@@ -56,4 +57,14 @@ export interface ISystemSetting {
 export interface ISystemSettingUpdate {
     key: string;
     value: string;
+}
+
+// Ответ при добавлении студента в шаблон тренировки (со статусом активации абонемента)
+export interface ITemplateAddStudentResponse {
+    id: number;
+    training_template_id: number;
+    student_id: number;
+    start_date: string;
+    subscription_activated: boolean;
+    subscription_sessions_left_to_add: number | null;
 }

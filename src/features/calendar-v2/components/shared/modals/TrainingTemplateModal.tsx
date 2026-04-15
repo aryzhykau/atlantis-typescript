@@ -205,11 +205,17 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
         student_id: selectedStudent.id,
         start_date: startDate,
       };
-      await createTrainingStudentTemplate(newStudentTemplate).unwrap();
+      const result = await createTrainingStudentTemplate(newStudentTemplate).unwrap();
       dispatch(calendarApiV2.util.invalidateTags([{ type: 'TrainingTemplateV2', id: templateData.id }]));
       setIsAddStudentFormOpen(false);
       setSelectedStudent(null);
-      displaySnackbar(`Ученик ${selectedStudent.first_name} ${selectedStudent.last_name} добавлен`, 'success');
+      if (result.subscription_activated) {
+        displaySnackbar(`Ученик добавлен, абонемент активирован — счёт выставлен`, 'success');
+      } else if (result.subscription_sessions_left_to_add != null) {
+        displaySnackbar(`Ученик добавлен. Для активации абонемента добавьте ещё ${result.subscription_sessions_left_to_add} ${result.subscription_sessions_left_to_add === 1 ? 'день' : 'дней'} в расписание`, 'info');
+      } else {
+        displaySnackbar(`Ученик ${selectedStudent.first_name} ${selectedStudent.last_name} добавлен`, 'success');
+      }
     } catch (err) {
       console.error('[TrainingTemplateModal] Failed to add student:', err);
       displaySnackbar('Ошибка при добавлении ученика', 'error');

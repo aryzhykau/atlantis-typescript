@@ -15,14 +15,17 @@ import {
   Chip,
   Button,
   CircularProgress,
+  Tooltip,
 } from '@mui/material';
 import {
   Close as CloseIcon,
   Person as PersonIcon,
   AccessTime as AccessTimeIcon,
-  FitnessCenter as FitnessCenterIcon
+  FitnessCenter as FitnessCenterIcon,
+  Cake as CakeIcon
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
+import { isBirthday } from '../../../utils/birthdayUtils';
 import { useSnackbar } from '../../../../../hooks/useSnackBar';
 import { NormalizedEvent } from '../../../utils/normalizeEventsForWeek';
 import { BottomSheetHandle, getBottomSheetPaperSx } from './bottomSheetStyles';
@@ -307,9 +310,16 @@ const TrainerEventBottomSheet: React.FC<TrainerEventBottomSheetProps> = ({
                     
                     <ListItemText
                       primary={
-                        <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-                          {student?.first_name} {student?.last_name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                            {student?.first_name} {student?.last_name}
+                          </Typography>
+                          {isBirthday(student?.date_of_birth) && (
+                            <Tooltip title="День рождения! 🎂">
+                              <CakeIcon fontSize="small" sx={{ color: '#e91e63' }} />
+                            </Tooltip>
+                          )}
+                        </Box>
                       }
                       secondary={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>

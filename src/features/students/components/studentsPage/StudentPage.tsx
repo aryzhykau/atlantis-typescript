@@ -282,24 +282,44 @@ export function StudentPage() {
                             </Typography>
                         </Box>
                         {!isMobile && (
-                            <Button
-                                variant="contained"
-                                startIcon={<EditIcon />}
-                                onClick={handleOpenEditModalHandler}
-                                sx={{
-                                    background: alpha('#ffffff', 0.2),
-                                    color: 'white',
-                                    fontWeight: 700,
-                                    textTransform: 'none',
-                                    borderRadius: 2,
-                                    px: 2,
-                                    '&:hover': {
-                                        background: alpha('#ffffff', 0.3),
-                                    },
-                                }}
-                            >
-                                Редактировать
-                            </Button>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Button
+                                    variant="contained"
+                                    startIcon={<LibraryAddIcon />}
+                                    onClick={handleOpenAddSubscriptionModalHandler}
+                                    sx={{
+                                        background: alpha('#ffffff', 0.2),
+                                        color: 'white',
+                                        fontWeight: 700,
+                                        textTransform: 'none',
+                                        borderRadius: 2,
+                                        px: 2,
+                                        '&:hover': {
+                                            background: alpha('#ffffff', 0.3),
+                                        },
+                                    }}
+                                >
+                                    Добавить абонемент
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    startIcon={<EditIcon />}
+                                    onClick={handleOpenEditModalHandler}
+                                    sx={{
+                                        background: alpha('#ffffff', 0.2),
+                                        color: 'white',
+                                        fontWeight: 700,
+                                        textTransform: 'none',
+                                        borderRadius: 2,
+                                        px: 2,
+                                        '&:hover': {
+                                            background: alpha('#ffffff', 0.3),
+                                        },
+                                    }}
+                                >
+                                    Редактировать
+                                </Button>
+                            </Box>
                         )}
                     </Box>
                 </Box>
