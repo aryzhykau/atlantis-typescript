@@ -27,6 +27,7 @@ export interface IStudent extends IStudentBase {
   active_subscription_id: number | null;
   deactivation_date: string | null; // Формат 'YYYY-MM-DDTHH:mm:ss.sssZ'
   has_unpaid_invoice?: boolean; // True если есть UNPAID инвойс
+  trial_used_at?: string | null; // ISO datetime или null если пробное занятие не использовалось
 }
 
 // Для создания нового студента, соответствует StudentCreate

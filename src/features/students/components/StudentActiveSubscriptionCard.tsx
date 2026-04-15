@@ -1,5 +1,5 @@
 import React from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Paper, Box, Chip, Switch, Typography, Divider, alpha } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Paper, Box, Chip, Switch, Typography, Divider, alpha, Alert } from '@mui/material';
 import { IStudentSubscriptionView, IStudentSubscriptionAutoRenewalUpdatePayload } from '../../subscriptions/models/subscription';
 import dayjs from 'dayjs';
 import { useUpdateStudentSubscriptionAutoRenewalMutation } from '../../../store/apis/subscriptionsApi';
@@ -11,6 +11,7 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import PaymentIcon from '@mui/icons-material/Payment';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import { StudentInfoItem } from './studentsPage/studentSubscriptions/StudentInfoItem';
 import { SubscriptionCardHeader } from './studentsPage/studentSubscriptions/SubscriptionCardHeader';
 import { SubscriptionCardST } from '../styles/styles';
@@ -31,9 +32,11 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
     const gradients = useGradients();
     const isMobile = useMobile();
     const now = dayjs();
-    const activeSubscription = subscriptions.find(sub => 
+    const pendingScheduleSub = subscriptions.find(sub => sub.status?.toLowerCase() === 'pending_schedule');
+    const activeSubscription = pendingScheduleSub ?? subscriptions.find(sub => 
         now.isBetween(dayjs(sub.start_date), dayjs(sub.end_date), null, '[]')
     );
+    const isPendingSchedule = activeSubscription?.status?.toLowerCase() === 'pending_schedule';
 
     const isFrozen = !!(activeSubscription?.freeze_start_date && activeSubscription?.freeze_end_date);
     const [updateAutoRenewal, { isLoading: isUpdatingAutoRenewal }] = useUpdateStudentSubscriptionAutoRenewalMutation();
@@ -116,6 +119,17 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
                             <Typography variant="body2" color="text.secondary">Загрузка данных абонемента...</Typography>
                         ) : !activeSubscription ? (
                             <Typography variant="body2" color="text.secondary">У ученика нет активного абонемента.</Typography>
+                        ) : isPendingSchedule ? (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                <Alert severity="warning" icon={<PendingActionsIcon fontSize="small" />} sx={{ fontSize: '0.85rem', py: 0.5 }}>
+                                    Ожидает расписания — счёт будет выставлен после добавления в календарь
+                                    {activeSubscription.sessions_per_week != null && ` (${activeSubscription.sessions_per_week}×/нед)`}
+                                </Alert>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Абонемент</Typography>
+                                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{activeSubscription.subscription_name}</Typography>
+                                </Box>
+                            </Box>
                         ) : (
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
                                 <Box>
@@ -199,6 +213,27 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
             <SubscriptionCardHeader isLoading={isLoading} activeSubscription={activeSubscription}/>
             {!isLoading && activeSubscription && (
                 <Box sx={{ p: 3 }}>
+                    {isPendingSchedule ? (
+                        <>
+                            <Alert severity="warning" icon={<PendingActionsIcon />} sx={{ mb: 2 }}>
+                                Абонемент ожидает расписания — счёт выставится после добавления студента в календарь
+                                {activeSubscription.sessions_per_week != null && ` (${activeSubscription.sessions_per_week}×/нед)`}
+                            </Alert>
+                            <StudentInfoItem
+                                icon={<EventAvailableIcon />}
+                                label="Дата начала"
+                                value={dayjs(activeSubscription.start_date).format('DD.MM.YYYY HH:mm')}
+                                color="success"
+                            />
+                            <StudentInfoItem
+                                icon={<EventBusyIcon />}
+                                label="Дата окончания"
+                                value={dayjs(activeSubscription.end_date).format('DD.MM.YYYY HH:mm')}
+                                color="warning"
+                            />
+                        </>
+                    ) : (
+                        <>
                     <StudentInfoItem
                         icon={<EventAvailableIcon />}
                         label="Дата начала"
@@ -293,6 +328,8 @@ export const StudentActiveSubscriptionCard: React.FC<StudentActiveSubscriptionCa
                             }
                             color="info"
                         />
+                        </>
+                    )}
                    
                 </Box>
             )}

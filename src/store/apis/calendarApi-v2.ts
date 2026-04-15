@@ -12,6 +12,7 @@ import {
   TrainingStudentTemplateCreate,
   TrainingStudentTemplateUpdate,
 } from '../../features/calendar-v2/models/trainingStudentTemplate';
+import { ITemplateAddStudentResponse } from '../../features/subscriptions/models/subscription_v2';
 import {
   RealTraining,
   RealTrainingCreate,
@@ -190,7 +191,7 @@ export const calendarApiV2 = baseApi.injectEndpoints({
       query: (id) => `training_student_templates/${id}`,
       providesTags: (_, __, id) => [{ type: TRAINING_STUDENT_TEMPLATE_TAG, id }],
     }),
-    createTrainingStudentTemplate: builder.mutation<TrainingStudentTemplate, TrainingStudentTemplateCreate>({
+    createTrainingStudentTemplate: builder.mutation<ITemplateAddStudentResponse, TrainingStudentTemplateCreate>({
       query: (newStudentTemplate) => ({
         url: 'training_student_templates/',
         method: 'POST',
@@ -198,8 +199,9 @@ export const calendarApiV2 = baseApi.injectEndpoints({
       }),
       invalidatesTags: (result) => [
         { type: TRAINING_STUDENT_TEMPLATE_TAG, id: 'LIST' },
-        // If server returns the created student-template, also invalidate the parent training template so assigned_students are refreshed
-        result ? { type: TRAINING_TEMPLATE_TAG, id: (result as any).training_template_id } : { type: TRAINING_TEMPLATE_TAG, id: 'LIST' },
+        result ? { type: TRAINING_TEMPLATE_TAG, id: result.training_template_id } : { type: TRAINING_TEMPLATE_TAG, id: 'LIST' },
+        // If subscription was activated, refresh student data (subscription status changed)
+        ...(result?.subscription_activated ? [{ type: 'Students' as const, id: result.student_id }] : []),
       ],
     }),
     updateTrainingStudentTemplate: builder.mutation<TrainingStudentTemplate, { id: number; data: TrainingStudentTemplateUpdate }>({

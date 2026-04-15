@@ -90,6 +90,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
   const [addStudentDialogOpen, setAddStudentDialogOpen] = useState(false);
   const [selectedStudentToAdd, setSelectedStudentToAdd] = useState<any>(null);
   const [isTrial, setIsTrial] = useState(false);
+  const [trialWarning, setTrialWarning] = useState<string | null>(null);
 
   // Состояние для отображения информации о зарплате тренера
   const [salaryResult, setSalaryResult] = useState<StudentCancellationResponse['trainer_salary_result'] | null>(null);
@@ -217,6 +218,8 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
       // Close dialog and reset selection
       setAddStudentDialogOpen(false);
       setSelectedStudentToAdd(null);
+      setIsTrial(false);
+      setTrialWarning(null);
     } catch (err: any) {
       console.error('[RealTrainingModal] Failed to add student:', err);
       displaySnackbar(
@@ -870,7 +873,26 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
             options={getAvailableStudents()}
             getOptionLabel={(student) => `${student.first_name} ${student.last_name}`}
             value={selectedStudentToAdd}
-            onChange={(_, newValue) => setSelectedStudentToAdd(newValue)}
+            onChange={(_, newValue) => {
+              setSelectedStudentToAdd(newValue);
+              if (newValue && realTrainingData?.training_type?.is_subscription_only) {
+                const hasSubscription = !!newValue.active_subscription_id;
+                const trialUsed = !!newValue.trial_used_at;
+                if (!hasSubscription && !trialUsed) {
+                  setIsTrial(true);
+                  setTrialWarning(null);
+                } else if (!hasSubscription && trialUsed) {
+                  setIsTrial(false);
+                  setTrialWarning('Пробное занятие уже использовалось. Необходим активный абонемент.');
+                } else {
+                  setIsTrial(false);
+                  setTrialWarning(null);
+                }
+              } else {
+                setIsTrial(false);
+                setTrialWarning(null);
+              }
+            }}
             disabled={getCapacityInfo().isFull}
             renderInput={(params) => (
               <TextField
@@ -949,9 +971,15 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
           />
 
           <FormControlLabel
-            control={<Checkbox checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} />}
+            control={<Checkbox checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} disabled={!!trialWarning} />}
             label="Пробное занятие"
           />
+
+          {trialWarning && (
+            <Alert severity="warning" sx={{ mt: 1, fontSize: '0.85rem', py: 0.5 }}>
+              {trialWarning}
+            </Alert>
+          )}
           
           {selectedStudentToAdd && (
             <Box sx={{ 
@@ -998,7 +1026,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
         alignItems: 'center' 
       }}>
         <Button 
-          onClick={() => setAddStudentDialogOpen(false)} 
+          onClick={() => { setAddStudentDialogOpen(false); setSelectedStudentToAdd(null); setIsTrial(false); setTrialWarning(null); }} 
           disabled={isAddingStudent}
           variant="outlined"
           sx={{ 
@@ -1018,7 +1046,7 @@ const RealTrainingModal: React.FC<RealTrainingModalProps> = ({ open, onClose, tr
         <Button 
           onClick={handleAddStudent} 
           variant="contained" 
-          disabled={!selectedStudentToAdd || isAddingStudent || getCapacityInfo().isFull}
+          disabled={!selectedStudentToAdd || isAddingStudent || getCapacityInfo().isFull || !!trialWarning}
           startIcon={isAddingStudent ? <CircularProgress size={20} color="inherit" /> : <PersonAddIcon />}
           sx={{
             background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.8)} 100%)`,
