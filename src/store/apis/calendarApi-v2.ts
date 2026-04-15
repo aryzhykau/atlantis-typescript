@@ -165,6 +165,12 @@ export const calendarApiV2 = baseApi.injectEndpoints({
         { type: TRAINING_TEMPLATE_TAG, id: 'LIST' },
       ],
     }),
+    generateTrainingsForTemplate: builder.mutation<{ created_count: number; dates: string[] }, number>({
+      query: (id) => ({
+        url: `training_templates/${id}/generate-trainings`,
+        method: 'POST',
+      }),
+    }),
 
     // --- Training Student Templates Endpoints ---
     getTrainingStudentTemplates: builder.query<TrainingStudentTemplate[], { trainingTemplateId?: number } | void>({
@@ -438,6 +444,7 @@ export const {
   useUpdateTrainingTemplateMutation,
   useMoveTrainingTemplateMutation,
   useDeleteTrainingTemplateMutation,
+  useGenerateTrainingsForTemplateMutation,
   useGetTrainingStudentTemplatesQuery,
   useGetTrainingStudentTemplateByIdQuery,
   useCreateTrainingStudentTemplateMutation,
