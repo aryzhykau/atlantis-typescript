@@ -33,6 +33,7 @@ import {
     useDeleteTrainingTemplateMutation, 
     useUpdateTrainingTemplateMutation, 
     useCreateTrainingTemplateMutation,
+    useGenerateTrainingsForTemplateMutation,
 } from '../../../../../store/apis/calendarApi-v2';
 import { calendarApiV2 } from '../../../../../store/apis/calendarApi-v2';
 import { useGetStudentsQuery } from '../../../../../store/apis/studentsApi';
@@ -64,6 +65,7 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
   const [deleteTrainingTemplate, { isLoading: isDeletingTemplate }] = useDeleteTrainingTemplateMutation();
   const [updateTrainingTemplate, { isLoading: isUpdatingTemplate }] = useUpdateTrainingTemplateMutation();
   const [createTrainingTemplate, { isLoading: isCreatingTemplate }] = useCreateTrainingTemplateMutation();
+  const [generateTrainingsForTemplate, { isLoading: isGeneratingTrainings }] = useGenerateTrainingsForTemplateMutation();
   
   const { data: students } = useGetStudentsQuery();
   const { data: trainersData } = useGetTrainersQuery();
@@ -137,8 +139,22 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
   }, [templateData]);
 
   // Handlers
-  const handleDeleteTraining = async () => {
+  const handleGenerateTrainings = async () => {
     if (!templateData) return;
+    try {
+      const result = await generateTrainingsForTemplate(templateData.id).unwrap();
+      if (result.created_count > 0) {
+        displaySnackbar(`Создано ${result.created_count} тренировок: ${result.dates.join(', ')}`, 'success');
+      } else {
+        displaySnackbar('Тренировки на эти недели уже существуют', 'info');
+      }
+    } catch (err) {
+      console.error('[TrainingTemplateModal] Failed to generate trainings:', err);
+      displaySnackbar('Ошибка при создании тренировок', 'error');
+    }
+  };
+
+  const handleDeleteTraining = async () => {    if (!templateData) return;
     
     try {
       await deleteTrainingTemplate(templateData.id).unwrap();
@@ -501,6 +517,15 @@ const TrainingTemplateModal: React.FC<TrainingTemplateModalProps> = ({ open, onC
           )}
         </Box>
         <Button onClick={onClose} variant="outlined" sx={{ borderColor: alpha(borderColor, 0.4), color: borderColor }}>Закрыть</Button>
+        <Button
+          onClick={handleGenerateTrainings}
+          variant="contained"
+          disabled={isGeneratingTrainings}
+          startIcon={isGeneratingTrainings ? <CircularProgress size={16} /> : <CalendarTodayIcon />}
+          sx={{ ml: 1 }}
+        >
+          Создать тренировки
+        </Button>
       </Box>
     </Dialog>
 
