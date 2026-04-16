@@ -16,6 +16,7 @@ import WeekdaySelector from '../controls/WeekdaySelector';
 import TabsContainer from '../controls/TabsContainer';
 import MobileMonthPickerOverlay from '../controls/MobileMonthPickerOverlay';
 import TrainingTemplateForm from '../../shared/forms/TrainingTemplateForm';
+import RealTrainingForm from '../../shared/forms/RealTrainingForm';
 import { normalizeEventsForWeek } from '../../../utils/normalizeEventsForWeek';
 
 // Mobile full calendar: reuse CalendarShell but adapt paddings to mobile
@@ -25,6 +26,7 @@ const MobileFullCalendarV2Page: React.FC = () => {
   const [viewMode, setViewMode] = useState<CalendarViewMode>('scheduleTemplate');
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [isTrainingFormOpen, setIsTrainingFormOpen] = useState(false);
+  const [isRealTrainingFormOpen, setIsRealTrainingFormOpen] = useState(false);
 
   const isAdminOrOwner = useIsAdminOrOwner();
 
@@ -80,7 +82,11 @@ const MobileFullCalendarV2Page: React.FC = () => {
 
   // Handle training form
   const handleAddTraining = () => {
-    setIsTrainingFormOpen(true);
+    if (viewMode === 'actualTrainings') {
+      setIsRealTrainingFormOpen(true);
+    } else {
+      setIsTrainingFormOpen(true);
+    }
   };
 
   const handleCloseTrainingForm = () => {
@@ -162,6 +168,15 @@ const MobileFullCalendarV2Page: React.FC = () => {
           onClose={handleCloseTrainingForm}
           selectedDate={selectedDay}
           selectedTime="08:00"
+        />
+
+        {/* Real Training Creation Form */}
+        <RealTrainingForm
+          open={isRealTrainingFormOpen}
+          onClose={() => setIsRealTrainingFormOpen(false)}
+          selectedDate={selectedDay}
+          selectedTime={null}
+          forceSheet
         />
       </Box>
     </LocalizationProvider>

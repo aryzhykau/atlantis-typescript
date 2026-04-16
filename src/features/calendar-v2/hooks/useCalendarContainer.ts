@@ -49,6 +49,8 @@ export const useCalendarContainer = ({
   const handleSlotClick = (day: Dayjs, time: string, _events: CalendarEvent[]) => {
     if (viewMode === 'scheduleTemplate') {
       calendarActions.openCreateForm({ date: day, time });
+    } else {
+      calendarActions.openCreateRealTrainingForm({ date: day, time });
     }
   };
 

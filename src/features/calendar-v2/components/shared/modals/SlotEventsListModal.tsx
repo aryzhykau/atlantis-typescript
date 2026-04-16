@@ -280,7 +280,7 @@ export const SlotEventsListModal: React.FC<SlotEventsListModalProps> = ({
                 transition: 'all 0.2s ease',
               }}
             >
-              Добавить пробную
+              Добавить тренировку
             </Button>
           )}
         </Box>
