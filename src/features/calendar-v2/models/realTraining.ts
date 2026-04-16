@@ -67,8 +67,8 @@ export interface RealTrainingCreate {
   responsible_trainer_id: number;
   training_type_id: number;
   template_id?: number;
-  student_ids?: number[]; // Массив ID студентов для немедленного добавления
-  trial_student_id?: number; // ID пробного студента (если создаём тренировку с пробным студентом)
+  student_id?: number; // ID студента для добавления при создании
+  is_trial?: boolean;  // Пробное занятие (по умолчанию false)
 }
 
 /**

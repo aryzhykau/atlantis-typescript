@@ -45,6 +45,7 @@ export const CalendarSlot: React.FC<CalendarSlotProps> = ({
   const visibleEvents = events.slice(0, maxVisibleEvents);
   const hiddenEventsCount = events.length - maxVisibleEvents;
   const isDragging = dragState.isDragging;
+  const isClickableMode = viewMode === 'scheduleTemplate' || viewMode === 'actualTrainings';
 
   const handleSlotClickInternal = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -89,10 +90,10 @@ export const CalendarSlot: React.FC<CalendarSlotProps> = ({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'flex-start',
-        cursor: viewMode === 'scheduleTemplate' ? 'pointer' : 'default',
+        cursor: isClickableMode ? 'pointer' : 'default',
         transition: 'background-color 0.15s ease-out, box-shadow 0.15s ease-out',
         overflow: 'visible',
-        '&:hover': viewMode === 'scheduleTemplate' ? {
+        '&:hover': isClickableMode ? {
           backgroundColor: events.length === 0 
             ? theme.palette.background.default 
             : alpha(theme.palette.primary.main, 0.04),
@@ -114,7 +115,7 @@ export const CalendarSlot: React.FC<CalendarSlotProps> = ({
           gap: 0.5,
           height: '100%',
           overflow: 'visible',
-          paddingRight: viewMode === 'scheduleTemplate' ? '28px' : '0px',
+          paddingRight: isClickableMode ? '28px' : '0px',
         }}>
           {/* Visible events */}
           {visibleEvents.map((event) => (
@@ -169,7 +170,7 @@ export const CalendarSlot: React.FC<CalendarSlotProps> = ({
         </Box>
       ) : (
         // Empty slot with create hint
-        viewMode === 'scheduleTemplate' && (
+        isClickableMode && (
           <Box
             className="create-hint"
             sx={{
@@ -195,7 +196,7 @@ export const CalendarSlot: React.FC<CalendarSlotProps> = ({
       )}
 
       {/* Add button for occupied slots */}
-      {events.length > 0 && viewMode === 'scheduleTemplate' && (
+      {events.length > 0 && isClickableMode && (
         <Tooltip 
           title={isDragging ? '' : "Добавить ещё одну тренировку в этот слот"} 
           arrow 
